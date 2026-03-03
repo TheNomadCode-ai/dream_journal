@@ -3,13 +3,10 @@
 import { useState } from 'react'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
-  const router = useRouter()
-
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
