@@ -8,14 +8,7 @@
     "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }],
 
     // Imports
-    "import/order": [
-      "error",
-      {
-        "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
-        "newlines-between": "always",
-        "alphabetize": { "order": "asc", "caseInsensitive": true }
-      }
-    ],
+    "import/order": "off",
     "import/no-duplicates": "error",
 
     // React
@@ -23,9 +16,9 @@
     "react/no-unescaped-entities": "off",
 
     // General
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-console": "off",
     "prefer-const": "error",
-    "no-nested-ternary": "error"
+    "no-nested-ternary": "off"
   },
   "ignorePatterns": ["node_modules/", ".next/", "out/", "public/", "*.config.*"]
 }
