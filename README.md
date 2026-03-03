@@ -27,7 +27,6 @@ Somnia is a full-stack web application built with Next.js 14 (App Router) and Su
 | Rich text | Tiptap 2 |
 | Database | Supabase (Postgres + Auth + Storage) |
 | Email | Resend |
-| Payments | Stripe |
 | Error tracking | Sentry |
 | Deployment | Vercel |
 | Testing | Vitest + Testing Library |
@@ -187,9 +186,6 @@ npm run dev
 | `AUTH_SECRET` | ✓ | Random secret for auth |
 | `RESEND_API_KEY` | prod | Resend email API key |
 | `RESEND_FROM_EMAIL` | prod | Verified sender email |
-| `STRIPE_SECRET_KEY` | prod | Stripe secret key |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | prod | Stripe publishable key |
-| `STRIPE_WEBHOOK_SECRET` | prod | Stripe webhook signing secret |
 | `NEXT_PUBLIC_SENTRY_DSN` | prod | Sentry DSN |
 | `SENTRY_AUTH_TOKEN` | prod | Sentry auth token for source maps |
 

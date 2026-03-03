@@ -129,19 +129,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
               >
                 {user.email?.split('@')[0]}
               </p>
-              <p
+              <a
+                href="https://sushankhanal.gumroad.com/l/jhdln"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   fontFamily: "'Josefin Sans', sans-serif",
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                   fontSize: '9px',
                   fontWeight: 300,
-                  color: '#6B6F85',
+                  color: '#C9A84C',
                   marginTop: '2px',
+                  display: 'block',
+                  textDecoration: 'none',
                 }}
               >
-                Free tier
-              </p>
+                Upgrade to Pro →
+              </a>
             </div>
           </div>
         </div>
