@@ -2,6 +2,16 @@ import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/server'
 
+interface DreamRow {
+  id: string
+  title: string | null
+  body_text: string | null
+  mood_score: number | null
+  lucid: boolean
+  date_of_dream: string
+  created_at: string
+}
+
 const MOOD_LABELS: Record<number, string> = {
   1: 'Restless',
   2: 'Melancholy',
@@ -22,12 +32,14 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   await supabase.auth.getUser()
 
-  const { data: dreams } = await supabase
+  const { data } = await supabase
     .from('dreams')
     .select('id, title, body_text, mood_score, lucid, date_of_dream, created_at')
     .is('deleted_at', null)
     .order('date_of_dream', { ascending: false })
     .limit(30)
+
+  const dreams = (data ?? []) as DreamRow[]
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 40px 120px' }}>
