@@ -20,7 +20,7 @@ function formatDate(dateStr: string) {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  await supabase.auth.getUser()
 
   const { data: dreams } = await supabase
     .from('dreams')
