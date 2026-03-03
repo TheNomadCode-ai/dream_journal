@@ -4,8 +4,6 @@ import { Component } from 'react'
 
 import type { ErrorInfo, ReactNode } from 'react'
 
-import { captureError } from '@/lib/sentry'
-
 interface Props {
   children: ReactNode
   fallback?: ReactNode
@@ -27,9 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
-    captureError(error, {
-      componentStack: info.componentStack ?? undefined,
-    })
+    console.error('[ErrorBoundary]', error, info.componentStack)
   }
 
   override render() {
