@@ -1,0 +1,123 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+
+# Required GitHub secrets:
+# ─────────────────────────────────────────────────────────────────────
+# VERCEL_TOKEN           — Vercel personal access token
+# VERCEL_ORG_ID          — Vercel org/team ID (found in Vercel project settings)
+# VERCEL_PROJECT_ID      — Vercel project ID (found in Vercel project settings)
+# SUPABASE_ACCESS_TOKEN  — Supabase personal access token (app.supabase.com/account/tokens)
+# SUPABASE_PROJECT_REF   — Supabase project ref (e.g. abcdefghij)
+# SUPABASE_DB_PASSWORD   — Supabase database password
+# SLACK_WEBHOOK_URL      — Slack incoming webhook URL (optional)
+# NEXT_PUBLIC_SUPABASE_URL         — Supabase project URL
+# NEXT_PUBLIC_SUPABASE_ANON_KEY    — Supabase anon key
+# NEXT_PUBLIC_SENTRY_DSN           — Sentry DSN
+# SENTRY_AUTH_TOKEN                — Sentry auth token
+# SENTRY_ORG                       — Sentry organisation slug
+#
+# Branch protection recommendations:
+# - Require status checks: lint, type-check, test, build (from ci.yml)
+# - Require branches to be up to date before merging
+# - Require review from code owners
+# - Restrict pushes to main to admins only
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false  # Never cancel in-flight production deploys
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run Supabase migrations
+        run: |
+          supabase db push \
+            --db-url "postgresql://postgres.${{ secrets.SUPABASE_PROJECT_REF }}:${{ secrets.SUPABASE_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel production environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: dreamlog
+
+      - name: Deploy to Vercel production
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      - name: Notify Slack — success
+        if: success()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "✅ *DreamLog deployed to production*",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  {"title": "Commit", "value": "${{ github.sha }}", "short": true},
+                  {"title": "Author", "value": "${{ github.actor }}", "short": true},
+                  {"title": "URL", "value": "${{ steps.deploy.outputs.deploy_url }}", "short": false}
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack — failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "❌ *DreamLog production deploy FAILED*",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  {"title": "Commit", "value": "${{ github.sha }}", "short": true},
+                  {"title": "Author", "value": "${{ github.actor }}", "short": true},
+                  {"title": "Run", "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false}
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

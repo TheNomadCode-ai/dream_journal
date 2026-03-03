@@ -1,0 +1,45 @@
+version: 2
+updates:
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "your-github-username"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group minor/patch updates to reduce noise
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      supabase:
+        patterns:
+          - "@supabase/*"
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+    # Only auto-merge patch updates (requires branch protection + auto-merge enabled)
+    versioning-strategy: increase
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "ci"

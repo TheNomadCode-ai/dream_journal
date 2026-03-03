@@ -1,0 +1,378 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Crimson+Pro:wght@400;600&family=Josefin+Sans:wght@300;400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────
+   CSS Custom Properties
+───────────────────────────────── */
+:root {
+  --bg:       #0A0B12;
+  --surface:  #12141F;
+  --border:   #1E2235;
+  --gold:     #C9A84C;
+  --lavender: #7B6EAB;
+  --text:     #E8E4D9;
+  --muted:    #6B6F85;
+}
+
+/* ─────────────────────────────────
+   Base reset + body
+───────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #0A0B12;
+    color: #E8E4D9;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* Grain / noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.045;
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: overlay;
+  }
+
+  ::selection {
+    background: rgba(201, 168, 76, 0.18);
+    color: #E8E4D9;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+  input, textarea { font: inherit; }
+}
+
+/* ─────────────────────────────────
+   Typography utilities
+───────────────────────────────── */
+
+.font-display {
+  font-family: 'Cormorant', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+}
+.font-body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-weight: 400;
+}
+.font-ui {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/* ─────────────────────────────────
+   Keyframes
+───────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(201,168,76,0.55); }
+  50%       { box-shadow: 0 0 0 6px rgba(201,168,76,0);   }
+}
+
+/* ─────────────────────────────────
+   Animation helpers
+───────────────────────────────── */
+
+.animate-fade-in   { animation: fadeIn 0.4s ease-out both; }
+.animate-fade-up   { animation: fadeUp 0.7s ease-out both; }
+.animate-fade-up-1 { animation: fadeUp 0.7s 0.12s ease-out both; }
+.animate-fade-up-2 { animation: fadeUp 0.7s 0.26s ease-out both; }
+.animate-fade-up-3 { animation: fadeUp 0.7s 0.40s ease-out both; }
+
+/* Scroll reveal — .revealed added by JS IntersectionObserver */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+[data-reveal].revealed              { opacity: 1; transform: translateY(0); }
+[data-reveal][data-delay="100"]     { transition-delay: 0.10s; }
+[data-reveal][data-delay="200"]     { transition-delay: 0.20s; }
+[data-reveal][data-delay="300"]     { transition-delay: 0.30s; }
+[data-reveal][data-delay="400"]     { transition-delay: 0.40s; }
+[data-reveal][data-delay="500"]     { transition-delay: 0.50s; }
+
+/* ─────────────────────────────────
+   Gold button — fill sweeps left → right
+───────────────────────────────── */
+
+.btn-gold {
+  font-family: 'Josefin Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 11px;
+  font-weight: 300;
+  color: #C9A84C;
+  border: 1px solid #C9A84C;
+  border-radius: 4px;
+  padding: 14px 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(to right, #C9A84C 50%, transparent 50%);
+  background-size: 201% 100%;
+  background-position: 100% 50%;
+  transition: background-position 0.35s ease, color 0.35s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-gold:hover {
+  background-position: 0% 50%;
+  color: #0A0B12;
+}
+
+.btn-ghost-gold {
+  font-family: 'Josefin Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 11px;
+  font-weight: 300;
+  color: #6B6F85;
+  padding: 8px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+.btn-ghost-gold:hover { color: #E8E4D9; }
+
+/* ─────────────────────────────────
+   Dream feed card
+───────────────────────────────── */
+
+.dream-card {
+  background: #12141F;
+  border: 1px solid #1E2235;
+  padding: 26px 30px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.dream-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 16px 48px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(201,168,76,0.28),
+    0 0 24px rgba(201,168,76,0.07);
+  border-color: rgba(201,168,76,0.28);
+}
+
+/* ─────────────────────────────────
+   Sidebar
+───────────────────────────────── */
+
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: #0D0E18;
+  border-right: 1px solid #1E2235;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 40;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 22px;
+  font-family: 'Josefin Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 300;
+  color: #6B6F85;
+  transition: color 0.2s ease, background 0.2s ease;
+  position: relative;
+  text-decoration: none;
+}
+.sidebar-link:hover {
+  color: #E8E4D9;
+  background: rgba(255,255,255,0.025);
+}
+.sidebar-link.active { color: #C9A84C; }
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 2px; height: 55%;
+  background: #C9A84C;
+}
+
+/* ─────────────────────────────────
+   Floating new-entry button
+───────────────────────────────── */
+
+.float-btn {
+  position: fixed;
+  bottom: 36px; right: 36px;
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: #C9A84C;
+  color: #0A0B12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(201,168,76,0.38);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 50;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+.float-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 36px rgba(201,168,76,0.55);
+}
+
+/* ─────────────────────────────────
+   Auto-save pulsing dot
+───────────────────────────────── */
+
+.autosave-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #C9A84C;
+  display: inline-block;
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────
+   Dream editor
+───────────────────────────────── */
+
+.editor-title {
+  font-family: 'Cormorant', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(30px, 4.5vw, 46px);
+  color: #E8E4D9;
+  background: transparent;
+  border: none; outline: none;
+  width: 100%;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.editor-title::placeholder { color: #2e3148; }
+
+.editor-body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.85;
+  color: #E8E4D9;
+  background: transparent;
+  border: none; outline: none;
+  width: 100%;
+  resize: none;
+  min-height: 55vh;
+}
+.editor-body::placeholder { color: #2e3148; }
+
+/* ─────────────────────────────────
+   Pills / badges
+───────────────────────────────── */
+
+.tag-pill {
+  font-family: 'Josefin Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+  font-weight: 300;
+  color: #6B6F85;
+  border: 1px solid #1E2235;
+  padding: 3px 10px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mood-pill {
+  font-family: 'Josefin Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  font-size: 10px;
+  font-weight: 300;
+  color: #7B6EAB;
+  border: 1px solid rgba(123,110,171,0.3);
+  padding: 3px 10px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gold-pill {
+  font-family: 'Josefin Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+  font-weight: 300;
+  color: #C9A84C;
+  border: 1px solid rgba(201,168,76,0.35);
+  padding: 3px 10px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ─────────────────────────────────
+   Dividers
+───────────────────────────────── */
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: #1E2235;
+}
+
+.divider-gold {
+  width: 48px;
+  height: 1px;
+  background: #C9A84C;
+  opacity: 0.7;
+}
+
+/* ─────────────────────────────────
+   Scrollbar
+───────────────────────────────── */
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2235; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #2e3250; }
