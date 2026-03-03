@@ -89,7 +89,7 @@ export default function LandingPage() {
               letterSpacing: '-0.01em',
             }}
           >
-            DreamLog
+            Somnia
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
@@ -221,7 +221,7 @@ export default function LandingPage() {
             marginBottom: '60px',
           }}
         >
-          What DreamLog offers
+          What Somnia offers
         </p>
 
         <div
@@ -338,7 +338,7 @@ export default function LandingPage() {
             color: '#6B6F85',
           }}
         >
-          © 2026 DreamLog
+          © 2026 Somnia
         </span>
         <div style={{ display: 'flex', gap: '28px' }}>
           {['Privacy', 'Terms', 'Export Data'].map((l) => (

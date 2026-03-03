@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Logo */}
       <a href="/" className="mb-8 flex items-center gap-2 text-foreground hover:opacity-80">
         <span className="text-2xl" aria-hidden="true">🌙</span>
-        <span className="text-xl font-bold tracking-tight">DreamLog</span>
+        <span className="text-xl font-bold tracking-tight">Somnia</span>
       </a>
 
       {/* Auth card */}

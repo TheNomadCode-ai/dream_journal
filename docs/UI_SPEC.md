@@ -1,4 +1,4 @@
-# DreamLog — UI Component Specification (DE-01)
+# Somnia — UI Component Specification (DE-01)
 
 **Design language:** Calm · Dark-mode-first · Minimal · Indigo/Purple accent palette
 **Framework:** Next.js 14 App Router + Tailwind CSS + shadcn/ui
@@ -12,7 +12,7 @@
 ```
 <LandingLayout>
   <NavBar>
-    <Logo />                        # DreamLog wordmark + moon icon
+    <Logo />                        # Somnia wordmark + moon icon
     <NavLinks>                      # "Features" "Pricing" "Blog"
     <AuthButtons>                   # "Sign in" (ghost) + "Get started" (primary)
   </NavBar>
@@ -83,7 +83,7 @@
 <OnboardingLayout>                  # Full-screen, centered, no nav
   <ProgressDots step={1} of={3} />
   <WelcomeIllustration />           # Moon + stars SVG, subtle float animation
-  <Heading>Welcome to DreamLog</Heading>
+  <Heading>Welcome to Somnia</Heading>
   <Subtext>Your private space for dream journaling.</Subtext>
   <ContinueButton>Get started →</ContinueButton>
 ```

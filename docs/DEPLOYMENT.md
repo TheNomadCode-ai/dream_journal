@@ -1,4 +1,4 @@
-# DreamLog — Production Deployment Runbook (DP-01)
+# Somnia — Production Deployment Runbook (DP-01)
 
 **Infrastructure:** Vercel · Supabase · Resend · Stripe
 **Audience:** Solo founder with basic CLI familiarity

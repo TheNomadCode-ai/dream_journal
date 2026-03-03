@@ -86,7 +86,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 letterSpacing: '-0.01em',
               }}
             >
-              DreamLog
+              Somnia
             </span>
           </div>
         </div>

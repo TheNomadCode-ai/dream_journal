@@ -1,4 +1,4 @@
-# DreamLog — 90-Day Go-To-Market Plan (SP-04)
+# Somnia — 90-Day Go-To-Market Plan (SP-04)
 
 **Founder context:** Solo, no marketing budget, technical background
 **Goal:** 500 free users, 50 paying customers by Day 90
@@ -14,8 +14,8 @@ Build an audience before launch. Validate messaging. Collect 200+ waitlist email
 |---|---|---|---|---|
 | Week 1 | 1–2 | Deploy landing page (hero → features → pricing → waitlist CTA) | Founder | 4 |
 | Week 1 | 3 | Set up Resend for waitlist confirmation + drip sequence | Founder | 2 |
-| Week 1 | 4 | Create Twitter/X account (@DreamLogApp) — post founding story thread | Founder | 2 |
-| Week 1 | 5–7 | Seed Reddit: post genuine, value-add comments in r/LucidDreaming, r/Journaling (no spam — answer questions, mention DreamLog only in context) | Founder | 3 |
+| Week 1 | 4 | Create Twitter/X account (@SomniaApp) — post founding story thread | Founder | 2 |
+| Week 1 | 5–7 | Seed Reddit: post genuine, value-add comments in r/LucidDreaming, r/Journaling (no spam — answer questions, mention Somnia only in context) | Founder | 3 |
 | Week 2 | 8–9 | Post "I'm building a privacy-first dream journal" on r/SideProject and Indie Hackers | Founder | 2 |
 | Week 2 | 10 | Create TikTok/Reels: "How I log dreams before they fade" (personal, not an ad) | Founder | 3 |
 | Week 2 | 11–12 | Reach out to 10 dream journaling bloggers/YouTubers for beta access | Founder | 3 |
@@ -83,7 +83,7 @@ Sustainable organic growth. SEO traction. First partnership.
 ## 3 Viral / Shareability Mechanics Built Into the Product
 
 ### Mechanic 1 · "Monthly Dream Report" Share Card
-At the end of each month, Pro users receive an auto-generated visual summary: top symbols, emotion breakdown, streak. Styled like a Spotify Wrapped card. One-click share to Twitter/X or Instagram Stories. The card includes a subtle "Made with DreamLog" watermark (removable for Lifetime tier).
+At the end of each month, Pro users receive an auto-generated visual summary: top symbols, emotion breakdown, streak. Styled like a Spotify Wrapped card. One-click share to Twitter/X or Instagram Stories. The card includes a subtle "Made with Somnia" watermark (removable for Lifetime tier).
 
 ### Mechanic 2 · Public Dream (Opt-In)
 Users can optionally publish individual dreams as public, shareable links (e.g., dreamlog.app/d/abc123). The reading experience is beautiful and minimal — just text, date, mood. Each public dream is a backlink. Niche communities (writers, Jungian groups) will share. No personal data exposed beyond what the user chooses to write.

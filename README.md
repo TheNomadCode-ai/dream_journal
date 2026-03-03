@@ -1,4 +1,4 @@
-# DreamLog
+# Somnia
 
 > A privacy-first dream journal. Log, search, and discover patterns in your dreams — built for the 60-second window after waking.
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-DreamLog is a full-stack web application built with Next.js 14 (App Router) and Supabase. Users log dreams in a distraction-free editor, organise entries with tags and notebooks, search their full archive using Postgres full-text search, and discover recurring patterns over time.
+Somnia is a full-stack web application built with Next.js 14 (App Router) and Supabase. Users log dreams in a distraction-free editor, organise entries with tags and notebooks, search their full archive using Postgres full-text search, and discover recurring patterns over time.
 
 **Design language:** Nocturnal Luxury — deep navy/slate backgrounds, Cormorant Italic display type, Josefin Sans UI labels, and gold (`#C9A84C`) accents on a grain-textured dark canvas.
 

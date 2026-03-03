@@ -88,7 +88,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "✅ *DreamLog deployed to production*",
+              "text": "✅ *Somnia deployed to production*",
               "attachments": [{
                 "color": "good",
                 "fields": [
@@ -108,7 +108,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "❌ *DreamLog production deploy FAILED*",
+              "text": "❌ *Somnia production deploy FAILED*",
               "attachments": [{
                 "color": "danger",
                 "fields": [

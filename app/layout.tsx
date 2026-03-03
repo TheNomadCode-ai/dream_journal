@@ -6,7 +6,7 @@ import '../styles/globals.css'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'DreamLog — Privacy-first AI Dream Journal',
+  title: 'Somnia — Privacy-first AI Dream Journal',
   description:
     'Understand your dreams. Own your data. A private dream journal with AI pattern recognition.',
   manifest: '/manifest.json',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'DreamLog',
+    title: 'Somnia',
   },
   icons: {
     icon: [

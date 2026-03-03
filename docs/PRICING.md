@@ -1,4 +1,4 @@
-# DreamLog — Pricing Strategy (SP-03)
+# Somnia — Pricing Strategy (SP-03)
 
 ---
 
@@ -56,7 +56,7 @@ When the user attempts to create their 31st dream entry, show the upgrade modal.
 | User clicks Search with 10+ entries | "Search across all your dreams — Pro feature. Start free trial." |
 | User clicks AI Insights tab | "Uncover recurring symbols and emotion trends — upgrade to Pro." |
 | User tries to add 4th tag | "Unlimited tags with Pro. You've used 3 of 3." |
-| 30-day anniversary email | "You've been dreaming with DreamLog for a month. See what the AI found." |
+| 30-day anniversary email | "You've been dreaming with Somnia for a month. See what the AI found." |
 
 **Rule:** Never show more than one paywall prompt per session. Never show one within the first 3 entries.
 

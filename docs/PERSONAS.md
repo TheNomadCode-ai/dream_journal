@@ -1,4 +1,4 @@
-# DreamLog — User Personas (SP-02)
+# Somnia — User Personas (SP-02)
 
 ---
 

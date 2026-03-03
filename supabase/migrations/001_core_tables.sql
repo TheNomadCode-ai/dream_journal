@@ -1,5 +1,5 @@
 -- Migration 001: Core Tables (UP)
--- Creates the foundational tables for DreamLog MVP
+-- Creates the foundational tables for Somnia MVP
 
 -- ─── User Profiles ────────────────────────────────────────────────────────────
 -- Extends auth.users with public profile data

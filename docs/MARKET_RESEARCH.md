@@ -1,4 +1,4 @@
-# DreamLog — Market Research (SP-01)
+# Somnia — Market Research (SP-01)
 
 ## Executive Summary
 
@@ -42,13 +42,13 @@ No current app surfaces recurring symbols, people, emotions, or themes across a 
 The #1 reason dream journals fail is the capture window — dreams fade within minutes of waking. Existing apps require opening the app, navigating to new entry, then typing. A wake-screen widget or voice capture flow optimised for <60 seconds would directly address the highest-friction moment.
 
 ### 3.3 Private, Exportable, User-Owned Data
-Journaling apps broadly, and dream apps specifically, ask users to store deeply personal content on third-party servers with opaque privacy policies. No major competitor makes "your data is yours, always exportable, never sold" a primary value proposition. This is the DreamLog positioning opportunity.
+Journaling apps broadly, and dream apps specifically, ask users to store deeply personal content on third-party servers with opaque privacy policies. No major competitor makes "your data is yours, always exportable, never sold" a primary value proposition. This is the Somnia positioning opportunity.
 
 ---
 
 ## 4. Recommended Positioning Statement
 
-> **DreamLog is the private dream journal that learns your subconscious — your entries stay on your terms, and AI helps you understand them.**
+> **Somnia is the private dream journal that learns your subconscious — your entries stay on your terms, and AI helps you understand them.**
 
 Supporting pillars:
 - **Privacy as default**: no ads, no data resale, full data export at any time
@@ -60,10 +60,10 @@ Supporting pillars:
 ## 5. B2B Adjacencies
 
 ### 5.1 Therapy Platforms (e.g., BetterHelp, Alma, TherapyNotes)
-Dream content is clinically relevant in psychodynamic, Jungian, and EMDR modalities. A white-label or API integration allowing therapists to co-view (with explicit patient consent) anonymised dream entries could position DreamLog as a clinical tool. Revenue model: per-seat B2B licensing or API call pricing.
+Dream content is clinically relevant in psychodynamic, Jungian, and EMDR modalities. A white-label or API integration allowing therapists to co-view (with explicit patient consent) anonymised dream entries could position Somnia as a clinical tool. Revenue model: per-seat B2B licensing or API call pricing.
 
 ### 5.2 Sleep Clinics & CBT-I Programs
-Cognitive Behavioural Therapy for Insomnia (CBT-I) programmes routinely use dream and sleep diaries. Sleep clinics currently use paper forms. DreamLog could offer a HIPAA-compliant export format and integration with sleep tracking hardware (Oura, Garmin, WHOOP) to become the digital sleep diary of record for clinical use. Revenue model: institutional licensing ($500–$2,000/clinic/year).
+Cognitive Behavioural Therapy for Insomnia (CBT-I) programmes routinely use dream and sleep diaries. Sleep clinics currently use paper forms. Somnia could offer a HIPAA-compliant export format and integration with sleep tracking hardware (Oura, Garmin, WHOOP) to become the digital sleep diary of record for clinical use. Revenue model: institutional licensing ($500–$2,000/clinic/year).
 
 ---
 
