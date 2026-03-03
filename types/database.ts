@@ -27,6 +27,7 @@ export interface Database {
           avatar_url?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       dreams: {
         Row: {
@@ -65,6 +66,7 @@ export interface Database {
           deleted_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       tags: {
         Row: {
@@ -82,6 +84,7 @@ export interface Database {
         Update: {
           name?: string
         }
+        Relationships: []
       }
       dream_tags: {
         Row: {
@@ -95,6 +98,7 @@ export interface Database {
           created_at?: string
         }
         Update: Record<string, never>
+        Relationships: []
       }
       notebooks: {
         Row: {
@@ -118,6 +122,7 @@ export interface Database {
           description?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       dream_notebooks: {
         Row: {
@@ -131,6 +136,7 @@ export interface Database {
           created_at?: string
         }
         Update: Record<string, never>
+        Relationships: []
       }
     }
     Views: Record<string, never>
