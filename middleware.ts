@@ -5,11 +5,12 @@ import { updateSession } from '@/lib/supabase/middleware'
 // Routes that do NOT require authentication
 const PUBLIC_ROUTES = [
   '/',
+  '/privacy',
+  '/terms',
   '/login',
   '/signup',
   '/auth/callback',
   '/auth/confirm',
-  '/api/stripe/webhook', // Stripe webhooks are verified by signature, not session
 ]
 
 const AUTH_ROUTES = ['/login', '/signup']

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/client'
+import { getAppUrl } from '@/lib/app-url'
 
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState('')
@@ -36,6 +37,8 @@ export default function SignupPage() {
     }
 
     setLoading(true)
+    const appUrl = getAppUrl()
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : appUrl
 
     const { error: signupError } = await supabase.auth.signUp({
       email,
@@ -46,7 +49,7 @@ export default function SignupPage() {
           wake_time: wakeTime,
           wake_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${origin}/auth/callback`,
       },
     })
 

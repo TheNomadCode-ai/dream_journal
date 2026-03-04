@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
+import { getAppUrl } from '@/lib/app-url'
 
 function LoginContent() {
   const router = useRouter()
@@ -42,11 +43,13 @@ function LoginContent() {
     e.preventDefault()
     setError(null)
     setLoading(true)
+    const appUrl = getAppUrl()
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : appUrl
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${redirectedFrom}`,
+        emailRedirectTo: `${origin}/auth/callback?next=${redirectedFrom}`,
       },
     })
 
@@ -144,12 +147,13 @@ function LoginContent() {
                 <label htmlFor="password" className="block text-sm font-medium text-foreground">
                   Password
                 </label>
-                <Link
-                  href="/forgot-password"
+                <button
+                  type="button"
+                  onClick={() => setMode('magic-link')}
                   className="text-xs text-primary hover:text-primary/80"
                 >
-                  Forgot password?
-                </Link>
+                  Use magic link instead
+                </button>
               </div>
               <input
                 id="password"

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ScrollReveal from '@/components/ScrollReveal'
+import { createClient } from '@/lib/supabase/server'
 
 const FEATURES = [
   {
@@ -28,7 +29,13 @@ const FEATURES = [
   },
 ]
 
-export default function LandingPage() {
+const GUMROAD_URL = 'https://sushankhanal.gumroad.com/l/jhdln'
+
+export default async function LandingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const journalHref = user ? '/dreams/new' : '/login'
+
   return (
     <div style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
       <ScrollReveal />
@@ -93,11 +100,15 @@ export default function LandingPage() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
-          {['Journal', 'Privacy', 'Pricing'].map((label) => (
-            <span key={label} className="btn-ghost-gold" style={{ fontSize: '11px' }}>
-              {label}
-            </span>
-          ))}
+          <Link href={journalHref} className="btn-ghost-gold" style={{ fontSize: '11px' }}>
+            Journal
+          </Link>
+          <Link href="/privacy" className="btn-ghost-gold" style={{ fontSize: '11px' }}>
+            Privacy
+          </Link>
+          <a href={GUMROAD_URL} target="_blank" rel="noopener noreferrer" className="btn-ghost-gold" style={{ fontSize: '11px' }}>
+            Pricing
+          </a>
           <Link href="/login" className="btn-ghost-gold" style={{ fontSize: '11px' }}>
             Sign in
           </Link>
@@ -180,8 +191,8 @@ export default function LandingPage() {
 
         {/* CTA */}
         <div className="animate-fade-up-3">
-          <Link href="/signup" className="btn-gold">
-            Begin your journal
+          <Link href={journalHref} className="btn-gold">
+            Start Journaling
           </Link>
         </div>
       </section>
@@ -368,8 +379,8 @@ export default function LandingPage() {
         >
           Free to start. No credit card. Your data, always yours.
         </p>
-        <Link href="/signup" className="btn-gold">
-          Create your journal
+        <Link href={journalHref} className="btn-gold">
+          Start Journaling
         </Link>
       </section>
 
