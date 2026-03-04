@@ -30,7 +30,16 @@ function formatDate(dateStr: string) {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+  const userId = user?.id
+
+  const { data: profile } = userId
+    ? await supabase
+        .from('user_profiles')
+        .select('current_streak')
+        .eq('id', userId)
+        .single()
+    : { data: null }
 
   const { data } = await supabase
     .from('dreams')
@@ -40,9 +49,42 @@ export default async function DashboardPage() {
     .limit(30)
 
   const dreams = (data ?? []) as DreamRow[]
+  const currentStreak = profile?.current_streak ?? 0
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 40px 120px' }}>
+
+      <section
+        style={{
+          border: '1px solid #1E2235',
+          background: '#12141F',
+          padding: '20px 24px',
+          marginBottom: '34px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+            stroke="#C9A84C"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <p
+          style={{
+            fontFamily: "'Crimson Pro', Georgia, serif",
+            fontSize: '20px',
+            color: '#E8E4D9',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {currentStreak} mornings captured
+        </p>
+      </section>
 
       {/* ── Page header ──────────────────────────────────────── */}
       <header style={{ marginBottom: '56px' }}>

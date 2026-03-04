@@ -11,6 +11,11 @@ export interface Database {
           id: string
           display_name: string | null
           avatar_url: string | null
+          plan: 'free' | 'pro' | 'lifetime'
+          stripe_customer_id: string | null
+          onboarded_at: string | null
+          last_logged_date: string | null
+          current_streak: number
           created_at: string
           updated_at: string
         }
@@ -18,6 +23,11 @@ export interface Database {
           id: string
           display_name?: string | null
           avatar_url?: string | null
+          plan?: 'free' | 'pro' | 'lifetime'
+          stripe_customer_id?: string | null
+          onboarded_at?: string | null
+          last_logged_date?: string | null
+          current_streak?: number
           created_at?: string
           updated_at?: string
         }
@@ -25,6 +35,11 @@ export interface Database {
           id?: string
           display_name?: string | null
           avatar_url?: string | null
+          plan?: 'free' | 'pro' | 'lifetime'
+          stripe_customer_id?: string | null
+          onboarded_at?: string | null
+          last_logged_date?: string | null
+          current_streak?: number
           updated_at?: string
         }
         Relationships: []
