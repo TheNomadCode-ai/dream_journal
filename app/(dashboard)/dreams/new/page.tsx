@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { EditorContent, useEditor } from '@tiptap/react'
+import Document from '@tiptap/extension-document'
+import Paragraph from '@tiptap/extension-paragraph'
+import Text from '@tiptap/extension-text'
+import Placeholder from '@tiptap/extension-placeholder'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -35,9 +40,32 @@ export default function NewDreamPage() {
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [panelOpen, setPanelOpen] = useState(false)
   const [tags, setTags]           = useState('')
+  const [isRecording, setIsRecording] = useState(false)
+  const [liveTranscript, setLiveTranscript] = useState('')
   const savedIdRef                = useRef<string | null>(null)
   const autoSaveTimerRef          = useRef<ReturnType<typeof setTimeout> | null>(null)
   const titleRef                  = useRef<HTMLTextAreaElement>(null)
+  const recognitionRef            = useRef<any>(null)
+
+  const editor = useEditor({
+    extensions: [
+      Document,
+      Paragraph,
+      Text,
+      Placeholder.configure({
+        placeholder: 'I was standing at the edge of something vast…',
+      }),
+    ],
+    content: '<p></p>',
+    editorProps: {
+      attributes: {
+        class: 'editor-body',
+      },
+    },
+    onUpdate({ editor: tiptapEditor }) {
+      setBody(tiptapEditor.getText())
+    },
+  })
 
   const triggerAutoSave = useCallback(async () => {
     if (!body.trim()) return
@@ -50,7 +78,7 @@ export default function NewDreamPage() {
       const payload = {
         user_id: user.id,
         title: title.trim() || null,
-        body_json: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: body }] }] },
+        body_json: editor?.getJSON() ?? { type: 'doc', content: [] },
         body_text: body,
         mood_score: moodScore,
         lucid,
@@ -68,7 +96,70 @@ export default function NewDreamPage() {
     } catch {
       setSaveState('error')
     }
-  }, [title, body, moodScore, lucid, date])
+  }, [title, body, moodScore, lucid, date, editor])
+
+  useEffect(() => {
+    if (!editor) return
+    editor.chain().focus('end').run()
+  }, [editor])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const SpeechRecognitionCtor = (window as Window & { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition
+      ?? (window as Window & { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition
+
+    if (!SpeechRecognitionCtor) return
+
+    const recognition = new SpeechRecognitionCtor()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+
+    recognition.onresult = (event: any) => {
+      let interim = ''
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = event.results[i][0]?.transcript ?? ''
+        if (event.results[i].isFinal) {
+          editor?.commands.insertContent(`${transcript.trim()} `)
+        } else {
+          interim += transcript
+        }
+      }
+
+      setLiveTranscript(interim.trim())
+    }
+
+    recognition.onend = () => {
+      setIsRecording(false)
+      setLiveTranscript('')
+    }
+
+    recognition.onerror = () => {
+      setIsRecording(false)
+    }
+
+    recognitionRef.current = recognition
+
+    return () => {
+      recognition.stop()
+    }
+  }, [editor])
+
+  function toggleVoiceCapture() {
+    if (!recognitionRef.current) return
+
+    if (isRecording) {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+      return
+    }
+
+    recognitionRef.current.start()
+    setIsRecording(true)
+    editor?.chain().focus('end').run()
+  }
 
   useEffect(() => {
     if (!body.trim()) return
@@ -136,6 +227,39 @@ export default function NewDreamPage() {
         <div style={{ flex: 1, maxWidth: '680px', margin: '0 auto', width: '100%', padding: '60px 40px 80px' }}>
 
           {/* Title */}
+          <div style={{ marginBottom: '18px' }}>
+            <button
+              onClick={toggleVoiceCapture}
+              className="btn-gold"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 20px',
+                opacity: isRecording ? 0.9 : 1,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 1 0 6 0V5a3 3 0 0 0-3-3Z" />
+                <path d="M19 10v1a7 7 0 1 1-14 0v-1" />
+                <path d="M12 19v3" />
+              </svg>
+              {isRecording ? 'Listening… tap to stop' : 'Speak your dream now'}
+            </button>
+            {liveTranscript && (
+              <p
+                style={{
+                  marginTop: '10px',
+                  fontFamily: "'Crimson Pro', Georgia, serif",
+                  fontSize: '15px',
+                  color: '#6B6F85',
+                }}
+              >
+                {liveTranscript}
+              </p>
+            )}
+          </div>
+
           <textarea
             ref={titleRef}
             className="editor-title"
@@ -178,13 +302,9 @@ export default function NewDreamPage() {
           </div>
 
           {/* Body */}
-          <textarea
-            className="editor-body"
-            autoFocus
-            placeholder="I was standing at the edge of something vast…"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-          />
+          <div className="dream-editor">
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 

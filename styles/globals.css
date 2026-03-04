@@ -305,6 +305,34 @@
 }
 .editor-body::placeholder { color: #2e3148; }
 
+.dream-editor .ProseMirror {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.85;
+  color: #E8E4D9;
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  min-height: 55vh;
+}
+
+.dream-editor .ProseMirror p {
+  margin: 0 0 0.95em;
+}
+
+.dream-editor .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+.dream-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: #2e3148;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 /* ─────────────────────────────────
    Pills / badges
 ───────────────────────────────── */
