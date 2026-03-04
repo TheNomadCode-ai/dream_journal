@@ -341,7 +341,10 @@ export default function LandingPage() {
           © 2026 Somnia
         </span>
         <div style={{ display: 'flex', gap: '28px' }}>
-          {['Privacy', 'Terms', 'Export Data'].map((l) => (
+          <Link href="/privacy" className="btn-ghost-gold" style={{ fontSize: '10px' }}>
+            Privacy Policy
+          </Link>
+          {['Terms', 'Export Data'].map((l) => (
             <span key={l} className="btn-ghost-gold" style={{ fontSize: '10px' }}>
               {l}
             </span>
