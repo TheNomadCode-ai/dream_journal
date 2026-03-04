@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { EditorContent, useEditor } from '@tiptap/react'
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -32,6 +32,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function NewDreamPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [title, setTitle]         = useState('')
   const [body, setBody]           = useState('')
   const [moodScore, setMoodScore] = useState<number | null>(null)
@@ -42,10 +43,13 @@ export default function NewDreamPage() {
   const [tags, setTags]           = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [liveTranscript, setLiveTranscript] = useState('')
+  const [showFadeTimer, setShowFadeTimer] = useState(false)
+  const [fadeProgress, setFadeProgress] = useState(100)
   const savedIdRef                = useRef<string | null>(null)
   const autoSaveTimerRef          = useRef<ReturnType<typeof setTimeout> | null>(null)
   const titleRef                  = useRef<HTMLTextAreaElement>(null)
   const recognitionRef            = useRef<any>(null)
+  const fadeIntervalRef           = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const editor = useEditor({
     extensions: [
@@ -97,6 +101,38 @@ export default function NewDreamPage() {
       setSaveState('error')
     }
   }, [title, body, moodScore, lucid, date, editor])
+
+  useEffect(() => {
+    const fromNotification = searchParams.get('from') === 'notification'
+    if (!fromNotification) return
+
+    setShowFadeTimer(true)
+    setFadeProgress(100)
+
+    const startedAt = Date.now()
+    const durationMs = 60000
+
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current)
+    fadeIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startedAt
+      const remainingPercent = Math.max(0, 100 - (elapsed / durationMs) * 100)
+      setFadeProgress(remainingPercent)
+
+      if (remainingPercent <= 0) {
+        setShowFadeTimer(false)
+        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current)
+      }
+    }, 120)
+
+    return () => {
+      if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current)
+    }
+  }, [searchParams])
+
+  function dismissFadeTimer() {
+    setShowFadeTimer(false)
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current)
+  }
 
   useEffect(() => {
     if (!editor) return
@@ -176,6 +212,57 @@ export default function NewDreamPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0A0B12', display: 'flex' }}>
+
+      {showFadeTimer && (
+        <div
+          onClick={dismissFadeTimer}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              dismissFadeTimer()
+            }
+          }}
+          aria-label="Dismiss dream fading timer"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 70,
+            background: '#0A0B12',
+            cursor: 'pointer',
+            borderBottom: '1px solid #1E2235',
+          }}
+        >
+          <div style={{ height: '2px', background: '#1E2235' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${fadeProgress}%`,
+                marginLeft: 'auto',
+                background: '#C9A84C',
+                transition: 'width 120ms linear',
+              }}
+            />
+          </div>
+          <p
+            style={{
+              fontFamily: "'Josefin Sans', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.16em',
+              fontSize: '9px',
+              fontWeight: 300,
+              color: '#C9A84C',
+              textAlign: 'center',
+              padding: '8px 16px 9px',
+            }}
+          >
+            your dream is fading
+          </p>
+        </div>
+      )}
 
       {/* ── Editor column ────────────────────────────────────── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

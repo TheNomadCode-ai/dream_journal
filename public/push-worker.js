@@ -1,8 +1,8 @@
 self.addEventListener('push', (event) => {
   let payload = {
     title: 'Somnia',
-    body: 'Your dreams are fading. Open Somnia now.',
-    url: '/dashboard',
+    body: 'Your dreams are fading. You have 60 seconds.',
+    url: '/dreams/new?from=notification',
   }
 
   try {
@@ -17,14 +17,14 @@ self.addEventListener('push', (event) => {
       body: payload.body,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
-      data: { url: payload.url || '/dashboard' },
+      data: { url: payload.url || '/dreams/new?from=notification' },
     })
   )
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const targetUrl = event.notification.data?.url || '/dashboard'
+  const targetUrl = event.notification.data?.url || '/dreams/new?from=notification'
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {

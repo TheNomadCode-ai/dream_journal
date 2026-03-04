@@ -94,6 +94,19 @@
   0%, 100% { box-shadow: 0 0 0 0   rgba(201,168,76,0.55); }
   50%       { box-shadow: 0 0 0 6px rgba(201,168,76,0);   }
 }
+@keyframes grainDrift {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(-1.4%, 1.2%); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes sixtyDrainLoop {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
 
 /* ─────────────────────────────────
    Animation helpers
@@ -117,6 +130,24 @@
 [data-reveal][data-delay="300"]     { transition-delay: 0.30s; }
 [data-reveal][data-delay="400"]     { transition-delay: 0.40s; }
 [data-reveal][data-delay="500"]     { transition-delay: 0.50s; }
+
+.landing-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.055;
+  mix-blend-mode: soft-light;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 0.45px, transparent 0.45px);
+  background-size: 3px 3px;
+  animation: grainDrift 24s ease-in-out infinite;
+}
+
+.sixty-loop-bar {
+  width: 100%;
+  transform-origin: right center;
+  animation: sixtyDrainLoop 60s linear infinite;
+}
 
 /* ─────────────────────────────────
    Gold button — fill sweeps left → right

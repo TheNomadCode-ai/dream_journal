@@ -40,15 +40,17 @@ export default async function LandingPage() {
     <div style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
       <ScrollReveal />
 
+      <div aria-hidden="true" className="landing-grain" />
+
       {/* ── Watermark SVG ────────────────────────────────────── */}
       <div
         aria-hidden="true"
         style={{
           position: 'fixed',
-          top: '50%',
-          right: '-8%',
+          top: '46%',
+          right: '-6%',
           transform: 'translateY(-50%)',
-          opacity: 0.055,
+          opacity: 0.06,
           pointerEvents: 'none',
           zIndex: 0,
         }}
@@ -122,35 +124,37 @@ export default async function LandingPage() {
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
-          padding: '100px 40px 80px',
+          padding: '64px 40px 86px',
           position: 'relative',
           zIndex: 1,
         }}
       >
-        {/* Eyebrow */}
-        <p
-          className="animate-fade-in"
-          style={{
-            fontFamily: "'Josefin Sans', sans-serif",
-            textTransform: 'uppercase',
-            letterSpacing: '0.22em',
-            fontSize: '10px',
-            fontWeight: 300,
-            color: '#6B6F85',
-            marginBottom: '36px',
-          }}
-        >
-          Dream Journal · Est. 2026
-        </p>
+        <div className="animate-fade-in" style={{ width: 'min(920px, 100%)', marginBottom: '46px' }}>
+          <p
+            style={{
+              fontFamily: "'Josefin Sans', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.24em',
+              fontSize: '10px',
+              fontWeight: 300,
+              color: '#6B6F85',
+              marginBottom: '10px',
+            }}
+          >
+            YOUR DREAM IS ALREADY FADING
+          </p>
+          <div style={{ height: '1px', background: '#1E2235', width: '100%' }}>
+            <div className="sixty-loop-bar" style={{ height: '100%', background: '#C9A84C' }} />
+          </div>
+        </div>
 
-        {/* Headline */}
         <h1
           className="animate-fade-up"
           style={{
             fontFamily: "'Cormorant', Georgia, serif",
             fontStyle: 'italic',
             fontWeight: 300,
-            fontSize: 'clamp(54px, 8vw, 88px)',
+            fontSize: 'clamp(58px, 9vw, 112px)',
             lineHeight: 1.05,
             letterSpacing: '-0.025em',
             color: '#E8E4D9',
@@ -158,42 +162,91 @@ export default async function LandingPage() {
             marginBottom: '20px',
           }}
         >
-          Your dreams,<br />remembered.
+          You have 60 seconds.
         </h1>
 
-        {/* Gold underline */}
-        <div
+        <p
           className="animate-fade-up-1"
           style={{
-            width: '80px',
-            height: '1px',
-            background: '#C9A84C',
-            opacity: 0.8,
-            marginBottom: '36px',
-          }}
-        />
-
-        {/* Subhead */}
-        <p
-          className="animate-fade-up-2"
-          style={{
             fontFamily: "'Crimson Pro', Georgia, serif",
-            fontSize: '19px',
+            fontSize: '23px',
             color: '#6B6F85',
-            maxWidth: '460px',
+            maxWidth: '620px',
             lineHeight: 1.65,
-            marginBottom: '52px',
+            marginBottom: '62px',
           }}
         >
-          A private dream journal that learns the language of your subconscious.
-          Your entries remain yours — always.
+          Most journal apps waste them. Somnia doesn't.
         </p>
 
-        {/* CTA */}
-        <div className="animate-fade-up-3">
+        <div
+          className="animate-fade-up-2"
+          style={{
+            width: 'min(980px, 100%)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gap: '1px',
+            background: '#1E2235',
+            marginBottom: '44px',
+          }}
+        >
+          {[
+            {
+              title: '0–60 seconds',
+              body: 'Wake up. Open Somnia. Start writing. Dark mode, instant load, zero friction.',
+            },
+            {
+              title: 'After 7 days',
+              body: 'Patterns start emerging. Recurring places, familiar faces, emotions your waking mind never noticed.',
+            },
+            {
+              title: 'After 30 days',
+              body: 'Your journal becomes a mirror. Your subconscious has been trying to tell you something. Now you can hear it.',
+            },
+          ].map((column) => (
+            <div key={column.title} style={{ background: '#0A0B12', padding: '28px 24px 32px', textAlign: 'left' }}>
+              <p
+                style={{
+                  fontFamily: "'Josefin Sans', sans-serif",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.16em',
+                  fontSize: '10px',
+                  color: '#C9A84C',
+                  marginBottom: '12px',
+                }}
+              >
+                {column.title}
+              </p>
+              <p
+                style={{
+                  fontFamily: "'Crimson Pro', Georgia, serif",
+                  fontSize: '17px',
+                  color: '#6B6F85',
+                  lineHeight: 1.7,
+                }}
+              >
+                {column.body}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="animate-fade-up-3" style={{ display: 'grid', placeItems: 'center' }}>
           <Link href={journalHref} className="btn-gold">
-            Start Journaling
+            Start capturing — it&apos;s free
           </Link>
+          <p
+            style={{
+              marginTop: '14px',
+              fontFamily: "'Josefin Sans', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              fontSize: '9px',
+              color: '#6B6F85',
+            }}
+          >
+            No ads. No data selling. Your dreams stay yours.
+          </p>
         </div>
       </section>
 

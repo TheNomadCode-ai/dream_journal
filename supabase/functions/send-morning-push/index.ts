@@ -78,8 +78,8 @@ Deno.serve(async () => {
 
       const payload = JSON.stringify({
         title: 'Somnia',
-        body: 'Your dreams are fading. Open Somnia now.',
-        url: '/dashboard',
+        body: 'Your dreams are fading. You have 60 seconds.',
+        url: '/dreams/new?from=notification',
       })
 
       try {
