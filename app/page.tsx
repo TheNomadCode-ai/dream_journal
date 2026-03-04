@@ -279,6 +279,61 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section
+        data-reveal
+        style={{
+          maxWidth: '960px',
+          margin: '0 auto',
+          padding: '0 60px 90px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "'Josefin Sans', sans-serif",
+            textTransform: 'uppercase',
+            letterSpacing: '0.22em',
+            fontSize: '10px',
+            fontWeight: 300,
+            color: '#6B6F85',
+            textAlign: 'center',
+            marginBottom: '34px',
+          }}
+        >
+          How we protect your data
+        </p>
+
+        <div style={{ display: 'grid', gap: '14px' }}>
+          {[
+            '60 seconds before a dream fades — every feature built around that moment',
+            'A journal that shows you something back — pattern recognition turns writing into a mirror',
+            'Your dreams are the most intimate data you have — no ads, no tracking, no data selling. Ever.',
+          ].map((line) => (
+            <div
+              key={line}
+              style={{
+                border: '1px solid #1E2235',
+                background: '#12141F',
+                padding: '22px 24px',
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "'Crimson Pro', Georgia, serif",
+                  fontSize: '18px',
+                  color: '#E8E4D9',
+                  lineHeight: 1.7,
+                  letterSpacing: '-0.005em',
+                }}
+              >
+                {line}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Final CTA ────────────────────────────────────────── */}
       <section
         data-reveal
