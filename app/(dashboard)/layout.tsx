@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
+import PushOnboarding from '@/components/push/PushOnboarding'
 
 // Moon phase glyphs cycling by week
 const MOON_PHASES = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘']
@@ -56,6 +57,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('wake_time, wake_timezone, push_enabled')
+    .eq('id', user.id)
+    .single()
 
   const initials = (user.email ?? 'D').slice(0, 2).toUpperCase()
   const moon = getMoonPhase()
@@ -199,6 +206,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* ── Main content ─────────────────────────────────────── */}
       <main style={{ flex: 1, marginLeft: '220px', minHeight: '100vh' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 40px' }}>
+          <PushOnboarding
+            wakeTime={profile?.wake_time ?? null}
+            wakeTimezone={profile?.wake_timezone ?? 'UTC'}
+            pushEnabled={profile?.push_enabled ?? false}
+          />
+        </div>
         {children}
       </main>
     </div>

@@ -18,6 +18,11 @@ export interface Database {
           current_streak: number
           auto_pattern_insight: string | null
           auto_pattern_generated_at: string | null
+          wake_time: string | null
+          wake_timezone: string
+          push_enabled: boolean
+          push_subscription: Json | null
+          last_push_sent_at: string | null
           created_at: string
           updated_at: string
         }
@@ -32,6 +37,11 @@ export interface Database {
           current_streak?: number
           auto_pattern_insight?: string | null
           auto_pattern_generated_at?: string | null
+          wake_time?: string | null
+          wake_timezone?: string
+          push_enabled?: boolean
+          push_subscription?: Json | null
+          last_push_sent_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -46,6 +56,11 @@ export interface Database {
           current_streak?: number
           auto_pattern_insight?: string | null
           auto_pattern_generated_at?: string | null
+          wake_time?: string | null
+          wake_timezone?: string
+          push_enabled?: boolean
+          push_subscription?: Json | null
+          last_push_sent_at?: string | null
           updated_at?: string
         }
         Relationships: []

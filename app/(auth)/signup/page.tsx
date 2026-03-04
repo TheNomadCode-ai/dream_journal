@@ -10,6 +10,7 @@ export default function SignupPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [wakeTime, setWakeTime] = useState('07:00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmationSent, setConfirmationSent] = useState(false)
@@ -40,7 +41,11 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName.trim() },
+        data: {
+          display_name: displayName.trim(),
+          wake_time: wakeTime,
+          wake_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -139,6 +144,20 @@ export default function SignupPage() {
             </p>
           </div>
 
+          <div>
+            <label htmlFor="wake-time" className="mb-1.5 block text-sm font-medium text-foreground">
+              What time do you wake up?
+            </label>
+            <input
+              id="wake-time"
+              type="time"
+              required
+              value={wakeTime}
+              onChange={(e) => setWakeTime(e.target.value)}
+              className="form-input"
+            />
+          </div>
+
           {error && (
             <p
               id="signup-error"
@@ -151,7 +170,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={loading || !email || !password || !displayName}
+            disabled={loading || !email || !password || !displayName || !wakeTime}
             className="btn-primary w-full"
             aria-busy={loading}
           >
