@@ -36,10 +36,18 @@ export default async function DashboardPage() {
   const { data: profile } = userId
     ? await supabase
         .from('user_profiles')
-        .select('current_streak')
+        .select('current_streak, auto_pattern_insight')
         .eq('id', userId)
         .single()
     : { data: null }
+
+  const { count: dreamCount } = userId
+    ? await supabase
+        .from('dreams')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .is('deleted_at', null)
+    : { count: 0 }
 
   const { data } = await supabase
     .from('dreams')
@@ -50,6 +58,8 @@ export default async function DashboardPage() {
 
   const dreams = (data ?? []) as DreamRow[]
   const currentStreak = profile?.current_streak ?? 0
+  const autoPatternInsight = profile?.auto_pattern_insight
+  const showInsightCard = (dreamCount ?? 0) >= 5 && !!autoPatternInsight
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 40px 120px' }}>
@@ -85,6 +95,42 @@ export default async function DashboardPage() {
           {currentStreak} mornings captured
         </p>
       </section>
+
+      {showInsightCard && (
+        <section
+          style={{
+            border: '1px solid #1E2235',
+            background: '#12141F',
+            padding: '24px',
+            marginBottom: '40px',
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "'Josefin Sans', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.14em',
+              fontSize: '10px',
+              fontWeight: 300,
+              color: '#C9A84C',
+              marginBottom: '10px',
+            }}
+          >
+            Pattern insight
+          </p>
+          <p
+            style={{
+              fontFamily: "'Crimson Pro', Georgia, serif",
+              fontSize: '19px',
+              lineHeight: 1.7,
+              color: '#E8E4D9',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {autoPatternInsight}
+          </p>
+        </section>
+      )}
 
       {/* ── Page header ──────────────────────────────────────── */}
       <header style={{ marginBottom: '56px' }}>

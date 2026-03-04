@@ -16,6 +16,8 @@ export interface Database {
           onboarded_at: string | null
           last_logged_date: string | null
           current_streak: number
+          auto_pattern_insight: string | null
+          auto_pattern_generated_at: string | null
           created_at: string
           updated_at: string
         }
@@ -28,6 +30,8 @@ export interface Database {
           onboarded_at?: string | null
           last_logged_date?: string | null
           current_streak?: number
+          auto_pattern_insight?: string | null
+          auto_pattern_generated_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -40,6 +44,8 @@ export interface Database {
           onboarded_at?: string | null
           last_logged_date?: string | null
           current_streak?: number
+          auto_pattern_insight?: string | null
+          auto_pattern_generated_at?: string | null
           updated_at?: string
         }
         Relationships: []
