@@ -1,4 +1,1 @@
-{
-  // Cron jobs are disabled for Vercel Hobby plan compatibility.
-  // Re-enable /api/cron/fire-alarms after upgrading to Vercel Pro.
-}
+{}

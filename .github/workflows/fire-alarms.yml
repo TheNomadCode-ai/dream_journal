@@ -1,0 +1,27 @@
+name: Fire Alarms
+
+on:
+  # GitHub Actions scheduled workflows run at most every 5 minutes.
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  fire-alarms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger alarm cron endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET is not set in repository secrets"
+            exit 1
+          fi
+
+          curl --fail-with-body --show-error --silent \
+            --request POST \
+            --url "https://dream-journal-b8wl.vercel.app/api/cron/fire-alarms" \
+            --header "CRON_SECRET: $CRON_SECRET" \
+            --header "Content-Type: application/json" \
+            --data '{}'
