@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { createClient } from '@/lib/supabase/server'
+import type { Json } from '@/types/database'
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),
@@ -34,14 +35,52 @@ export async function POST(request: Request) {
   }
 
   const { subscription, wakeTime, wakeTimezone } = parsed.data
+  const endpoint = subscription.endpoint
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('push_subscriptions')
+    .select('id, subscription')
+    .eq('user_id', user.id)
+
+  if (existingError) {
+    return NextResponse.json({ error: existingError.message }, { status: 500 })
+  }
+
+  const matching = (existingRows ?? []).find((row) => {
+    const current = row.subscription as { endpoint?: string }
+    return current.endpoint === endpoint
+  })
+
+  if (matching) {
+    const { error: updateSubError } = await supabase
+      .from('push_subscriptions')
+      .update({ subscription: subscription as Json })
+      .eq('id', matching.id)
+
+    if (updateSubError) {
+      return NextResponse.json({ error: updateSubError.message }, { status: 500 })
+    }
+  } else {
+    const { error: insertSubError } = await supabase
+      .from('push_subscriptions')
+      .insert({
+        user_id: user.id,
+        subscription: subscription as Json,
+      })
+
+    if (insertSubError) {
+      return NextResponse.json({ error: insertSubError.message }, { status: 500 })
+    }
+  }
 
   const { error } = await supabase
     .from('user_profiles')
     .update({
       push_enabled: true,
-      push_subscription: subscription,
+      push_subscription: subscription as Json,
       wake_time: wakeTime,
       wake_timezone: wakeTimezone,
+      timezone: wakeTimezone,
       updated_at: new Date().toISOString(),
     })
     .eq('id', user.id)

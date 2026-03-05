@@ -28,7 +28,12 @@ function formatDate(dateStr: string) {
   })
 }
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{ banner?: string }>
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const userId = user?.id
@@ -60,6 +65,7 @@ export default async function DashboardPage() {
   const currentStreak = profile?.current_streak ?? 0
   const autoPatternInsight = profile?.auto_pattern_insight
   const showInsightCard = (dreamCount ?? 0) >= 5 && !!autoPatternInsight
+  const showCaptureBanner = params.banner === 'set-alarm'
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 40px 120px' }}>
@@ -128,6 +134,24 @@ export default async function DashboardPage() {
             }}
           >
             {autoPatternInsight}
+          </p>
+        </section>
+      )}
+
+      {showCaptureBanner && (
+        <section
+          style={{
+            border: '1px solid rgba(201,168,76,0.34)',
+            background: 'rgba(201,168,76,0.08)',
+            padding: '16px 18px',
+            marginBottom: '26px',
+          }}
+        >
+          <p style={{ color: '#E8E4D9', fontSize: '15px', lineHeight: 1.5 }}>
+            Set a wake-up alarm to unlock timed capture.{' '}
+            <Link href="/settings/alarm" className="btn-ghost-gold" style={{ fontSize: '10px', marginLeft: '8px' }}>
+              Configure alarm →
+            </Link>
           </p>
         </section>
       )}

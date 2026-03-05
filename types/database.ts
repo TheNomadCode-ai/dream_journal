@@ -20,6 +20,7 @@ export interface Database {
           auto_pattern_generated_at: string | null
           wake_time: string | null
           wake_timezone: string
+          timezone: string
           push_enabled: boolean
           push_subscription: Json | null
           last_push_sent_at: string | null
@@ -39,6 +40,7 @@ export interface Database {
           auto_pattern_generated_at?: string | null
           wake_time?: string | null
           wake_timezone?: string
+          timezone?: string
           push_enabled?: boolean
           push_subscription?: Json | null
           last_push_sent_at?: string | null
@@ -58,10 +60,89 @@ export interface Database {
           auto_pattern_generated_at?: string | null
           wake_time?: string | null
           wake_timezone?: string
+          timezone?: string
           push_enabled?: boolean
           push_subscription?: Json | null
           last_push_sent_at?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      alarms: {
+        Row: {
+          id: string
+          user_id: string
+          alarm_time: string
+          enabled: boolean
+          days_of_week: number[]
+          snooze_seconds: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          alarm_time: string
+          enabled?: boolean
+          days_of_week?: number[]
+          snooze_seconds?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          alarm_time?: string
+          enabled?: boolean
+          days_of_week?: number[]
+          snooze_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entry_windows: {
+        Row: {
+          id: string
+          user_id: string
+          window_date: string
+          window_opened_at: string
+          window_expires_at: string
+          entry_started: boolean
+          entry_id: string | null
+          locked: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          window_date: string
+          window_opened_at: string
+          window_expires_at: string
+          entry_started?: boolean
+          entry_id?: string | null
+          locked?: boolean
+          created_at?: string
+        }
+        Update: {
+          entry_started?: boolean
+          entry_id?: string | null
+          locked?: boolean
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          subscription: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          subscription: Json
+          created_at?: string
+        }
+        Update: {
+          subscription?: Json
         }
         Relationships: []
       }

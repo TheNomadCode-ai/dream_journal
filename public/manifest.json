@@ -2,7 +2,7 @@
   "name": "Somnia",
   "short_name": "Somnia",
   "description": "A privacy-first dream journal. Record, search, and understand your dreams.",
-  "start_url": "/dashboard",
+  "start_url": "/capture",
   "display": "standalone",
   "background_color": "#0A0B12",
   "theme_color": "#C9A84C",

@@ -53,7 +53,7 @@ export default function PushOnboarding({ wakeTime, wakeTimezone, pushEnabled }: 
         return
       }
 
-      const registration = await navigator.serviceWorker.register('/push-worker.js')
+      const registration = await navigator.serviceWorker.register('/sw.js')
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: base64UrlToUint8Array(vapidKey),

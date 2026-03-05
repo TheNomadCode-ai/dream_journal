@@ -39,6 +39,7 @@ export default function SignupPage() {
     setLoading(true)
     const appUrl = getAppUrl()
     const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : appUrl
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
     const { error: signupError } = await supabase.auth.signUp({
       email,
@@ -47,7 +48,8 @@ export default function SignupPage() {
         data: {
           display_name: displayName.trim(),
           wake_time: wakeTime,
-          wake_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          wake_timezone: timezone,
+          timezone,
         },
         emailRedirectTo: `${origin}/auth/callback`,
       },
