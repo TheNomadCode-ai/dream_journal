@@ -42,12 +42,12 @@ const TIMELINE = [
   {
     label: 'THE MOMENT YOU WAKE',
     heading: 'Notification fires. Clock starts.',
-    body: 'Tap the notification. You land directly in the capture screen. The 2-minute countdown already began when the alarm fired.',
+    body: 'Tap the notification. You land directly in the capture screen. The 2-minute countdown has already begun — it started the moment the alarm fired, not when you tapped.',
   },
   {
     label: 'TWO MINUTES LATER',
     heading: 'Write, or lose it forever.',
-    body: 'Type the first word and the timer disappears. If 2 minutes pass without writing, that day closes with no override.',
+    body: "Once you type the first word, the timer disappears and you have all the time you need to finish. But if 2 minutes pass with nothing written — that day's window closes. No override. No second chance.",
   },
   {
     label: 'OVER TIME',
@@ -67,13 +67,13 @@ const HOW_IT_WORKS = [
     step: '02',
     icon: '✏️',
     title: 'You write',
-    body: 'Tap the notification. One screen, no detours. Type the first word and the timer stops.',
+    body: 'Tap the notification. One screen, no navigation. Type the first word and the timer stops — you have as long as you need from there.',
   },
   {
     step: '03',
     icon: '🔒',
     title: 'Window closes',
-    body: 'Two minutes after the alarm, the window locks for the day. Urgency is what protects recall.',
+    body: "Two minutes after the alarm, the window locks for the day. This isn't a bug. It's the point. Urgency is what makes you remember.",
   },
 ]
 
@@ -224,9 +224,9 @@ export default async function LandingPage() {
           className="animate-fade-up-1 landing-hero-subtext"
           style={{
             fontFamily: "'Crimson Pro', Georgia, serif",
-            fontSize: '23px',
-            color: '#6B6F85',
-            maxWidth: '620px',
+            fontSize: '16px',
+            color: 'rgba(255,255,255,0.55)',
+            maxWidth: '520px',
             lineHeight: 1.65,
             marginBottom: '62px',
           }}
@@ -245,7 +245,7 @@ export default async function LandingPage() {
               fontFamily: "'Josefin Sans', sans-serif",
               textTransform: 'uppercase',
               letterSpacing: '0.12em',
-              fontSize: '9px',
+              fontSize: '13px',
               color: '#6B6F85',
             }}
           >
@@ -296,7 +296,7 @@ export default async function LandingPage() {
           style={{
             width: 'min(980px, 100%)',
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
             gap: '1px',
             background: '#1E2235',
           }}
@@ -495,7 +495,7 @@ export default async function LandingPage() {
         <div className="landing-social-inner">
           <p className="landing-social-mark" aria-hidden="true">&quot;</p>
           <p className="landing-social-copy">
-            Most people have never successfully written down a dream. Not because they do not want to, because by the time they open an app, it is gone. Somnia is built around that biological fact.
+            Most people have never successfully written down a dream. Not because they don't want to — because by the time they find an app and open it, it's gone. Somnia is built around that one biological fact.
           </p>
           <p className="landing-social-attribution">— Somnia, on why the window exists</p>
 
@@ -607,7 +607,7 @@ export default async function LandingPage() {
             lineHeight: 1.7,
           }}
         >
-          Set your alarm now. Tomorrow morning, the window opens. Everything after that depends on whether you are ready.
+          Set your alarm now. Tomorrow morning, the window opens. Everything after that depends on whether you're ready.
         </p>
         <Link href="/login" className="btn-gold">
           Set My First Alarm — it&apos;s free
