@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import ScrollReveal from '@/components/ScrollReveal'
+import AlarmDemoTicker from '@/components/landing/AlarmDemoTicker'
 import MobileNav from '@/components/landing/MobileNav'
 import { createClient } from '@/lib/supabase/server'
 
 const FEATURES = [
   {
-    label: 'Total Recall',
-    desc: 'Optimised for the 60-second window after waking. Open, speak or type before the images dissolve.',
+    label: 'Alarm-Gated Capture',
+    desc: 'Set a wake-up alarm. Get a 2-minute window. Miss it and the day is gone. This is the only journal that takes your dreams as seriously as you do.',
   },
   {
     label: 'Pattern Sight',
@@ -31,6 +32,50 @@ const FEATURES = [
 ]
 
 const GUMROAD_URL = 'https://sushankhanal.gumroad.com/l/jhdln'
+
+const TIMELINE = [
+  {
+    label: 'NIGHT BEFORE',
+    heading: 'Set your alarm in Somnia.',
+    body: 'Pick your wake-up time. Somnia schedules the window. Your phone does the rest.',
+  },
+  {
+    label: 'THE MOMENT YOU WAKE',
+    heading: 'Notification fires. Clock starts.',
+    body: 'Tap the notification. You land directly in the capture screen. The 2-minute countdown already began when the alarm fired.',
+  },
+  {
+    label: 'TWO MINUTES LATER',
+    heading: 'Write, or lose it forever.',
+    body: 'Type the first word and the timer disappears. If 2 minutes pass without writing, that day closes with no override.',
+  },
+  {
+    label: 'OVER TIME',
+    heading: 'Your subconscious builds a pattern.',
+    body: 'Every captured dream is indexed, tagged, and analysed. After 30 entries, Somnia shows themes your waking mind missed.',
+  },
+]
+
+const HOW_IT_WORKS = [
+  {
+    step: '01',
+    icon: '🔔',
+    title: 'Alarm fires',
+    body: 'At your chosen time, Somnia sends a notification. Your 2-minute window opens at that exact moment.',
+  },
+  {
+    step: '02',
+    icon: '✏️',
+    title: 'You write',
+    body: 'Tap the notification. One screen, no detours. Type the first word and the timer stops.',
+  },
+  {
+    step: '03',
+    icon: '🔒',
+    title: 'Window closes',
+    body: 'Two minutes after the alarm, the window locks for the day. Urgency is what protects recall.',
+  },
+]
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -147,7 +192,7 @@ export default async function LandingPage() {
               marginBottom: '10px',
             }}
           >
-            YOUR DREAM IS ALREADY FADING
+            THE ONLY JOURNAL WITH A CLOSING WINDOW
           </p>
           <div style={{ height: '1px', background: '#1E2235', width: '100%' }}>
             <div className="sixty-loop-bar" style={{ height: '100%', background: '#C9A84C' }} />
@@ -168,7 +213,11 @@ export default async function LandingPage() {
             marginBottom: '20px',
           }}
         >
-          You have 60 seconds.
+          Your alarm fires.
+          <br />
+          The window opens.
+          <br />
+          Two minutes. Then it&apos;s gone.
         </h1>
 
         <p
@@ -182,35 +231,78 @@ export default async function LandingPage() {
             marginBottom: '62px',
           }}
         >
-          Most journal apps waste them. Somnia doesn't.
+          Somnia sets a wake-up alarm. The moment it fires, your capture window opens. Write within 2 minutes, or that dream is lost forever. No exceptions. No extensions.
         </p>
 
+        <div className="animate-fade-up-3 landing-hero-cta-wrap" style={{ display: 'grid', placeItems: 'center' }}>
+          <Link href={journalHref} className="btn-gold landing-hero-cta">
+            Set Your First Alarm — it&apos;s free
+          </Link>
+          <p
+            className="landing-hero-note"
+            style={{
+              marginTop: '14px',
+              fontFamily: "'Josefin Sans', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              fontSize: '9px',
+              color: '#6B6F85',
+            }}
+          >
+            No ads. No data selling. Your window. Your dreams.
+          </p>
+        </div>
+      </section>
+
+      <section
+        data-reveal
+        className="landing-demo-section"
+        style={{
+          maxWidth: '960px',
+          margin: '0 auto',
+          padding: '0 60px 64px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "'Josefin Sans', sans-serif",
+            textTransform: 'uppercase',
+            letterSpacing: '0.18em',
+            fontSize: '10px',
+            color: '#6B6F85',
+            textAlign: 'center',
+            marginBottom: '20px',
+          }}
+        >
+          WHAT HAPPENS WHEN YOUR ALARM FIRES
+        </p>
+        <AlarmDemoTicker />
+      </section>
+
+      <section
+        className="landing-timeline-section"
+        style={{
+          maxWidth: '960px',
+          margin: '0 auto',
+          padding: '0 60px 80px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <div
-          className="animate-fade-up-2 landing-timeline"
+          className="landing-timeline"
           style={{
             width: 'min(980px, 100%)',
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
             gap: '1px',
             background: '#1E2235',
-            marginBottom: '44px',
           }}
         >
-          {[
-            {
-              title: '0–60 seconds',
-              body: 'Wake up. Open Somnia. Start writing. Dark mode, instant load, zero friction.',
-            },
-            {
-              title: 'After 7 days',
-              body: 'Patterns start emerging. Recurring places, familiar faces, emotions your waking mind never noticed.',
-            },
-            {
-              title: 'After 30 days',
-              body: 'Your journal becomes a mirror. Your subconscious has been trying to tell you something. Now you can hear it.',
-            },
-          ].map((column) => (
-            <div key={column.title} className="landing-timeline-card" style={{ background: '#0A0B12', padding: '28px 24px 32px', textAlign: 'left' }}>
+          {TIMELINE.map((column) => (
+            <div key={column.label} className="landing-timeline-card" style={{ background: '#0A0B12', padding: '28px 24px 32px', textAlign: 'left' }}>
               <p
                 className="landing-timeline-label"
                 style={{
@@ -222,8 +314,22 @@ export default async function LandingPage() {
                   marginBottom: '12px',
                 }}
               >
-                {column.title}
+                {column.label}
               </p>
+              <h3
+                style={{
+                  fontFamily: "'Cormorant', Georgia, serif",
+                  fontStyle: 'italic',
+                  fontWeight: 300,
+                  fontSize: '29px',
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.015em',
+                  color: '#E8E4D9',
+                  marginBottom: '12px',
+                }}
+              >
+                {column.heading}
+              </h3>
               <p
                 className="landing-timeline-body"
                 style={{
@@ -238,28 +344,47 @@ export default async function LandingPage() {
             </div>
           ))}
         </div>
+      </section>
 
-        <div className="animate-fade-up-3 landing-hero-cta-wrap" style={{ display: 'grid', placeItems: 'center' }}>
-          <Link href={journalHref} className="btn-gold landing-hero-cta">
-            Start capturing — it&apos;s free
-          </Link>
-          <p
-            className="landing-hero-note"
-            style={{
-              marginTop: '14px',
-              fontFamily: "'Josefin Sans', sans-serif",
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              fontSize: '9px',
-              color: '#6B6F85',
-            }}
-          >
-            No ads. No data selling. Your dreams stay yours.
-          </p>
+      <section
+        data-reveal
+        className="landing-how-section"
+        style={{
+          maxWidth: '980px',
+          margin: '0 auto',
+          padding: '0 60px 92px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "'Josefin Sans', sans-serif",
+            textTransform: 'uppercase',
+            letterSpacing: '0.22em',
+            fontSize: '10px',
+            fontWeight: 300,
+            color: '#6B6F85',
+            textAlign: 'center',
+            marginBottom: '34px',
+          }}
+        >
+          How the window works
+        </p>
+
+        <div className="landing-how-grid">
+          <div className="landing-how-line" aria-hidden="true" />
+          {HOW_IT_WORKS.map((item) => (
+            <article key={item.step} className="landing-how-card">
+              <span className="landing-how-step-number" aria-hidden="true">{item.step}</span>
+              <p className="landing-how-icon" aria-hidden="true">{item.icon}</p>
+              <h3 className="landing-how-title">{item.title}</h3>
+              <p className="landing-how-body">{item.body}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* ── Thin divider ─────────────────────────────────────── */}
       <div
         data-reveal
         style={{
@@ -270,7 +395,6 @@ export default async function LandingPage() {
         }}
       />
 
-      {/* ── Feature grid ─────────────────────────────────────── */}
       <section
         className="landing-features-section"
         style={{
@@ -281,7 +405,6 @@ export default async function LandingPage() {
           zIndex: 1,
         }}
       >
-        {/* Section label */}
         <p
           data-reveal
           style={{
@@ -360,6 +483,39 @@ export default async function LandingPage() {
 
       <section
         data-reveal
+        className="landing-social-proof"
+        style={{
+          maxWidth: '960px',
+          margin: '0 auto',
+          padding: '0 60px 88px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <div className="landing-social-inner">
+          <p className="landing-social-mark" aria-hidden="true">&quot;</p>
+          <p className="landing-social-copy">
+            Most people have never successfully written down a dream. Not because they do not want to, because by the time they open an app, it is gone. Somnia is built around that biological fact.
+          </p>
+          <p className="landing-social-attribution">— Somnia, on why the window exists</p>
+
+          <div className="landing-social-stats">
+            {[
+              { value: '60s', label: 'avg dream fade time' },
+              { value: '2 min', label: 'your capture window' },
+              { value: 'Day 30', label: 'patterns emerge' },
+            ].map((stat) => (
+              <div key={stat.value} className="landing-social-stat">
+                <p className="landing-social-stat-value">{stat.value}</p>
+                <p className="landing-social-stat-label">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        data-reveal
         className="landing-values-section"
         style={{
           maxWidth: '960px',
@@ -386,9 +542,9 @@ export default async function LandingPage() {
 
         <div style={{ display: 'grid', gap: '14px' }}>
           {[
-            '60 seconds before a dream fades — every feature built around that moment',
-            'A journal that shows you something back — pattern recognition turns writing into a mirror',
-            'Your dreams are the most intimate data you have — no ads, no tracking, no data selling. Ever.',
+            'Timed capture is strict by design, because urgency improves recall in sleep science studies.',
+            'A journal that reflects your patterns over time, not just isolated entries.',
+            'Your dreams are private data. No ads, no tracking, and no data selling.',
           ].map((line) => (
             <div
               key={line}
@@ -414,7 +570,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Final CTA ────────────────────────────────────────── */}
       <section
         data-reveal
         className="landing-final-cta"
@@ -438,7 +593,7 @@ export default async function LandingPage() {
             marginBottom: '20px',
           }}
         >
-          The night is waiting.
+          Tonight you will dream.
         </h2>
         <p
           className="landing-final-desc"
@@ -446,17 +601,31 @@ export default async function LandingPage() {
             fontFamily: "'Crimson Pro', Georgia, serif",
             fontSize: '17px',
             color: '#6B6F85',
-            marginBottom: '44px',
+            marginBottom: '34px',
+            maxWidth: '620px',
+            marginInline: 'auto',
+            lineHeight: 1.7,
           }}
         >
-          Free to start. No credit card. Your data, always yours.
+          Set your alarm now. Tomorrow morning, the window opens. Everything after that depends on whether you are ready.
         </p>
-        <Link href={journalHref} className="btn-gold">
-          Start Journaling
+        <Link href="/login" className="btn-gold">
+          Set My First Alarm — it&apos;s free
         </Link>
+        <p
+          style={{
+            marginTop: '14px',
+            fontFamily: "'Josefin Sans', sans-serif",
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.40)',
+          }}
+        >
+          No ads. No data selling. No credit card. Cancel any time.
+        </p>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────── */}
       <footer
         className="landing-footer"
         style={{
