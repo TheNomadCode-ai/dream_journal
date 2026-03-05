@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ScrollReveal from '@/components/ScrollReveal'
+import MobileNav from '@/components/landing/MobileNav'
 import { createClient } from '@/lib/supabase/server'
 
 const FEATURES = [
@@ -37,7 +38,7 @@ export default async function LandingPage() {
   const journalHref = user ? '/dreams/new' : '/login'
 
   return (
-    <div style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
+    <div className="landing-page" style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
       <ScrollReveal />
 
       <div aria-hidden="true" className="landing-grain" />
@@ -67,8 +68,11 @@ export default async function LandingPage() {
         </svg>
       </div>
 
+      <MobileNav journalHref={journalHref} pricingHref={GUMROAD_URL} />
+
       {/* ── Nav ──────────────────────────────────────────────── */}
       <nav
+        className="landing-desktop-nav"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -119,6 +123,7 @@ export default async function LandingPage() {
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section
+        className="landing-hero"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -129,8 +134,9 @@ export default async function LandingPage() {
           zIndex: 1,
         }}
       >
-        <div className="animate-fade-in" style={{ width: 'min(920px, 100%)', marginBottom: '46px' }}>
+        <div className="animate-fade-in landing-hero-top" style={{ width: 'min(920px, 100%)', marginBottom: '46px' }}>
           <p
+            className="landing-hero-eyebrow"
             style={{
               fontFamily: "'Josefin Sans', sans-serif",
               textTransform: 'uppercase',
@@ -149,7 +155,7 @@ export default async function LandingPage() {
         </div>
 
         <h1
-          className="animate-fade-up"
+          className="animate-fade-up landing-hero-title"
           style={{
             fontFamily: "'Cormorant', Georgia, serif",
             fontStyle: 'italic',
@@ -166,7 +172,7 @@ export default async function LandingPage() {
         </h1>
 
         <p
-          className="animate-fade-up-1"
+          className="animate-fade-up-1 landing-hero-subtext"
           style={{
             fontFamily: "'Crimson Pro', Georgia, serif",
             fontSize: '23px',
@@ -180,7 +186,7 @@ export default async function LandingPage() {
         </p>
 
         <div
-          className="animate-fade-up-2"
+          className="animate-fade-up-2 landing-timeline"
           style={{
             width: 'min(980px, 100%)',
             display: 'grid',
@@ -204,8 +210,9 @@ export default async function LandingPage() {
               body: 'Your journal becomes a mirror. Your subconscious has been trying to tell you something. Now you can hear it.',
             },
           ].map((column) => (
-            <div key={column.title} style={{ background: '#0A0B12', padding: '28px 24px 32px', textAlign: 'left' }}>
+            <div key={column.title} className="landing-timeline-card" style={{ background: '#0A0B12', padding: '28px 24px 32px', textAlign: 'left' }}>
               <p
+                className="landing-timeline-label"
                 style={{
                   fontFamily: "'Josefin Sans', sans-serif",
                   textTransform: 'uppercase',
@@ -218,6 +225,7 @@ export default async function LandingPage() {
                 {column.title}
               </p>
               <p
+                className="landing-timeline-body"
                 style={{
                   fontFamily: "'Crimson Pro', Georgia, serif",
                   fontSize: '17px',
@@ -231,11 +239,12 @@ export default async function LandingPage() {
           ))}
         </div>
 
-        <div className="animate-fade-up-3" style={{ display: 'grid', placeItems: 'center' }}>
-          <Link href={journalHref} className="btn-gold">
+        <div className="animate-fade-up-3 landing-hero-cta-wrap" style={{ display: 'grid', placeItems: 'center' }}>
+          <Link href={journalHref} className="btn-gold landing-hero-cta">
             Start capturing — it&apos;s free
           </Link>
           <p
+            className="landing-hero-note"
             style={{
               marginTop: '14px',
               fontFamily: "'Josefin Sans', sans-serif",
@@ -263,6 +272,7 @@ export default async function LandingPage() {
 
       {/* ── Feature grid ─────────────────────────────────────── */}
       <section
+        className="landing-features-section"
         style={{
           maxWidth: '960px',
           margin: '80px auto',
@@ -289,6 +299,7 @@ export default async function LandingPage() {
         </p>
 
         <div
+          className="landing-features-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
@@ -299,6 +310,7 @@ export default async function LandingPage() {
           {FEATURES.map((f, i) => (
             <div
               key={f.label}
+              className="landing-feature-card"
               data-reveal
               data-delay={String(i * 100)}
               style={{
@@ -307,6 +319,7 @@ export default async function LandingPage() {
               }}
             >
               <div
+                className="landing-feature-icon"
                 style={{
                   width: '28px',
                   height: '1px',
@@ -316,6 +329,7 @@ export default async function LandingPage() {
                 }}
               />
               <h3
+                className="landing-feature-title"
                 style={{
                   fontFamily: "'Josefin Sans', sans-serif",
                   textTransform: 'uppercase',
@@ -329,6 +343,7 @@ export default async function LandingPage() {
                 {f.label}
               </h3>
               <p
+                className="landing-feature-desc"
                 style={{
                   fontFamily: "'Crimson Pro', Georgia, serif",
                   fontSize: '16px',
@@ -345,6 +360,7 @@ export default async function LandingPage() {
 
       <section
         data-reveal
+        className="landing-values-section"
         style={{
           maxWidth: '960px',
           margin: '0 auto',
@@ -401,6 +417,7 @@ export default async function LandingPage() {
       {/* ── Final CTA ────────────────────────────────────────── */}
       <section
         data-reveal
+        className="landing-final-cta"
         style={{
           textAlign: 'center',
           padding: '80px 40px 120px',
@@ -410,6 +427,7 @@ export default async function LandingPage() {
         }}
       >
         <h2
+          className="landing-final-title"
           style={{
             fontFamily: "'Cormorant', Georgia, serif",
             fontStyle: 'italic',
@@ -423,6 +441,7 @@ export default async function LandingPage() {
           The night is waiting.
         </h2>
         <p
+          className="landing-final-desc"
           style={{
             fontFamily: "'Crimson Pro', Georgia, serif",
             fontSize: '17px',
@@ -439,6 +458,7 @@ export default async function LandingPage() {
 
       {/* ── Footer ───────────────────────────────────────────── */}
       <footer
+        className="landing-footer"
         style={{
           borderTop: '1px solid #1E2235',
           padding: '32px 60px',
@@ -448,6 +468,7 @@ export default async function LandingPage() {
         }}
       >
         <span
+          className="landing-footer-copyright"
           style={{
             fontFamily: "'Josefin Sans', sans-serif",
             textTransform: 'uppercase',
@@ -459,7 +480,7 @@ export default async function LandingPage() {
         >
           © 2026 Somnia
         </span>
-        <div style={{ display: 'flex', gap: '28px' }}>
+        <div className="landing-footer-links" style={{ display: 'flex', gap: '28px' }}>
           <Link href="/privacy" className="btn-ghost-gold" style={{ fontSize: '10px' }}>
             Privacy Policy
           </Link>

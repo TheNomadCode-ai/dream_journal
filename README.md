@@ -186,6 +186,10 @@ npm run dev
 | `AUTH_SECRET` | ✓ | Random secret for auth |
 | `RESEND_API_KEY` | prod | Resend email API key |
 | `RESEND_FROM_EMAIL` | prod | Verified sender email |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | push | Browser-side VAPID public key for push subscription |
+| `VAPID_PUBLIC_KEY` | push | Edge function key for sending web push |
+| `VAPID_PRIVATE_KEY` | push | Edge function private key for sending web push |
+| `VAPID_SUBJECT` | push | Contact URI for VAPID metadata (e.g. mailto:hello@yourdomain.com) |
 | `NEXT_PUBLIC_SENTRY_DSN` | prod | Sentry DSN |
 | `SENTRY_AUTH_TOKEN` | prod | Sentry auth token for source maps |
 
@@ -218,6 +222,21 @@ Quick summary:
 3. Run Supabase migrations against the production database
 4. Configure Stripe webhooks → `https://yourdomain.com/api/stripe/webhook`
 5. Add your production URL to Supabase Auth → Redirect URLs
+
+### Push + Weekly Recap setup (required for reminders and digest emails)
+
+1. Deploy Supabase edge functions:
+	- `send-morning-push`
+	- `weekly-dream-recap`
+2. In Supabase project secrets, set:
+	- `RESEND_API_KEY`
+	- `RESEND_FROM_EMAIL`
+	- `VAPID_PUBLIC_KEY`
+	- `VAPID_PRIVATE_KEY`
+	- `VAPID_SUBJECT`
+3. Ensure migration `007_weekly_recap_email_schedule.sql` is applied (weekly cron).
+4. Ensure migration `009_morning_push_schedule.sql` is applied (minute-level wake-time matcher).
+5. In app env vars (Vercel/local), set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` so browser subscription can be created.
 
 ---
 
