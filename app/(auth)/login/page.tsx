@@ -86,18 +86,18 @@ function LoginContent() {
   return (
     <>
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to your Somnia account</p>
+        <h1 className="auth-heading text-2xl font-bold text-foreground">Welcome back</h1>
+        <p className="auth-subheading mt-1 text-sm text-muted-foreground">Sign in to your Somnia account</p>
       </div>
 
       {/* Mode toggle */}
-      <div className="mb-6 flex rounded-lg border border-surface-border bg-surface p-1">
+      <div className="auth-toggle mb-6 flex rounded-lg border border-surface-border bg-surface p-1">
         <button
           type="button"
           onClick={() => setMode('password')}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+          className={`auth-toggle-button flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
             mode === 'password'
-              ? 'bg-primary text-primary-foreground shadow-sm'
+              ? 'auth-toggle-active bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
           aria-pressed={mode === 'password'}
@@ -107,9 +107,9 @@ function LoginContent() {
         <button
           type="button"
           onClick={() => setMode('magic-link')}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+          className={`auth-toggle-button flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
             mode === 'magic-link'
-              ? 'bg-primary text-primary-foreground shadow-sm'
+              ? 'auth-toggle-active bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
           aria-pressed={mode === 'magic-link'}
@@ -125,7 +125,7 @@ function LoginContent() {
       >
         <div className="space-y-4">
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
+            <label htmlFor="email" className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               Email address
             </label>
             <input
@@ -144,13 +144,13 @@ function LoginContent() {
           {mode === 'password' && (
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-foreground">
+                <label htmlFor="password" className="auth-label block text-sm font-medium text-foreground">
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => setMode('magic-link')}
-                  className="text-xs text-primary hover:text-primary/80"
+                  className="auth-alt-link text-xs text-primary hover:text-primary/80"
                 >
                   Use magic link instead
                 </button>
@@ -182,7 +182,7 @@ function LoginContent() {
           <button
             type="submit"
             disabled={loading || !email}
-            className="btn-primary w-full"
+            className="btn-primary auth-submit w-full"
             aria-busy={loading}
           >
             {loading ? (
@@ -204,7 +204,7 @@ function LoginContent() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
+        <Link href="/signup" className="auth-text-link font-medium text-primary hover:text-primary/80">
           Sign up free
         </Link>
       </p>

@@ -81,8 +81,8 @@ export default function SignupPage() {
   return (
     <>
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-foreground">Start dreaming</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="auth-heading text-2xl font-bold text-foreground">Start dreaming</h1>
+        <p className="auth-subheading mt-1 text-sm text-muted-foreground">
           Create your free Somnia account
         </p>
       </div>
@@ -92,7 +92,7 @@ export default function SignupPage() {
           <div>
             <label
               htmlFor="display-name"
-              className="mb-1.5 block text-sm font-medium text-foreground"
+              className="auth-label mb-1.5 block text-sm font-medium text-foreground"
             >
               Your name
             </label>
@@ -111,7 +111,7 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
+            <label htmlFor="email" className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               Email address
             </label>
             <input
@@ -128,7 +128,7 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
+            <label htmlFor="password" className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               Password
             </label>
             <input
@@ -142,13 +142,13 @@ export default function SignupPage() {
               placeholder="Min. 8 chars, 1 uppercase, 1 number, 1 symbol"
               aria-describedby="password-hint"
             />
-            <p id="password-hint" className="mt-1 text-xs text-muted-foreground">
+            <p id="password-hint" className="auth-help mt-1 text-xs text-muted-foreground">
               At least 8 characters with uppercase, number, and special character
             </p>
           </div>
 
           <div>
-            <label htmlFor="wake-time" className="mb-1.5 block text-sm font-medium text-foreground">
+            <label htmlFor="wake-time" className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               What time do you wake up?
             </label>
             <input
@@ -174,7 +174,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading || !email || !password || !displayName || !wakeTime}
-            className="btn-primary w-full"
+            className="btn-primary auth-submit w-full"
             aria-busy={loading}
           >
             {loading ? (
@@ -194,11 +194,11 @@ export default function SignupPage() {
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
         By signing up you agree to our{' '}
-        <Link href="/terms" className="underline hover:text-foreground">
+        <Link href="/terms" className="auth-text-link underline hover:text-foreground">
           Terms
         </Link>{' '}
         and{' '}
-        <Link href="/privacy" className="underline hover:text-foreground">
+        <Link href="/privacy" className="auth-text-link underline hover:text-foreground">
           Privacy Policy
         </Link>
         .
@@ -206,7 +206,7 @@ export default function SignupPage() {
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+        <Link href="/login" className="auth-text-link font-medium text-primary hover:text-primary/80">
           Sign in
         </Link>
       </p>
