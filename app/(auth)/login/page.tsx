@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-import { getAppUrl } from '@/lib/app-url'
 
 function LoginContent() {
   const router = useRouter()
@@ -18,6 +17,7 @@ function LoginContent() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [missingAccountError, setMissingAccountError] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
 
   const supabase = createClient()
@@ -25,6 +25,7 @@ function LoginContent() {
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setMissingAccountError(false)
     setLoading(true)
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -42,19 +43,24 @@ function LoginContent() {
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setMissingAccountError(false)
     setLoading(true)
-    const appUrl = getAppUrl()
-    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : appUrl
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${origin}/auth/callback?next=${redirectedFrom}`,
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     })
 
     if (error) {
-      setError(error.message)
+      const normalisedError = error.message.toLowerCase()
+      if (normalisedError.includes('not found') || normalisedError.includes('no user')) {
+        setMissingAccountError(true)
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
       return
     }
@@ -124,6 +130,12 @@ function LoginContent() {
         aria-label={mode === 'password' ? 'Password login form' : 'Magic link login form'}
       >
         <div className="space-y-4">
+          {mode === 'magic-link' && (
+            <p className="text-sm text-muted-foreground">
+              Returning user? Sign in without a password
+            </p>
+          )}
+
           <div>
             <label htmlFor="email" className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               Email address
@@ -137,8 +149,16 @@ function LoginContent() {
               onChange={(e) => setEmail(e.target.value)}
               className="form-input"
               placeholder="you@example.com"
-              aria-describedby={error ? 'login-error' : undefined}
+              aria-describedby={missingAccountError ? 'login-missing-account' : error ? 'login-error' : undefined}
             />
+            {missingAccountError && (
+              <p id="login-missing-account" role="alert" className="mt-2 text-sm text-destructive">
+                No account found with that email. Sign up first to get started.{' '}
+                <Link href="/signup" className="font-medium underline hover:no-underline">
+                  Sign up
+                </Link>
+              </p>
+            )}
           </div>
 
           {mode === 'password' && (
@@ -199,6 +219,12 @@ function LoginContent() {
               'Send magic link'
             )}
           </button>
+
+          {mode === 'magic-link' && (
+            <p className="text-center text-xs text-muted-foreground">
+              We&apos;ll only send a link to registered emails.
+            </p>
+          )}
         </div>
       </form>
 

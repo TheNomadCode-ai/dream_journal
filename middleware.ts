@@ -5,12 +5,11 @@ import { updateSession } from '@/lib/supabase/middleware'
 // Routes that do NOT require authentication
 const PUBLIC_ROUTES = [
   '/',
-  '/privacy',
-  '/terms',
   '/login',
   '/signup',
+  '/privacy',
+  '/terms',
   '/auth/callback',
-  '/auth/confirm',
 ]
 
 const AUTH_ROUTES = ['/login', '/signup']
@@ -42,6 +41,11 @@ export async function middleware(request: NextRequest) {
 
   // User is authenticated and tries to access login/signup — redirect to dashboard
   if (user && isAuthRoute(pathname)) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // User is authenticated and visits the landing page — redirect to dashboard
+  if (user && pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
