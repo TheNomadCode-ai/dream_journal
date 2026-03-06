@@ -21,6 +21,7 @@ export interface NotebookDream {
 
 export interface NotebookListResponse {
   notebooks: Notebook[]
+  tier?: 'free' | 'pro' | 'lifetime'
 }
 
 export interface NotebookDetailResponse {
@@ -30,4 +31,6 @@ export interface NotebookDetailResponse {
 
 export interface NotebookErrorResponse {
   error: string
+  message?: string
+  upgradeUrl?: string
 }

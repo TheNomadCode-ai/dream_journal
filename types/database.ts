@@ -12,6 +12,7 @@ export interface Database {
           display_name: string | null
           avatar_url: string | null
           plan: 'free' | 'pro' | 'lifetime'
+          tier: 'free' | 'pro' | 'lifetime'
           stripe_customer_id: string | null
           onboarded_at: string | null
           last_logged_date: string | null
@@ -32,6 +33,7 @@ export interface Database {
           display_name?: string | null
           avatar_url?: string | null
           plan?: 'free' | 'pro' | 'lifetime'
+          tier?: 'free' | 'pro' | 'lifetime'
           stripe_customer_id?: string | null
           onboarded_at?: string | null
           last_logged_date?: string | null
@@ -52,6 +54,7 @@ export interface Database {
           display_name?: string | null
           avatar_url?: string | null
           plan?: 'free' | 'pro' | 'lifetime'
+          tier?: 'free' | 'pro' | 'lifetime'
           stripe_customer_id?: string | null
           onboarded_at?: string | null
           last_logged_date?: string | null
@@ -261,6 +264,10 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      get_user_tier: {
+        Args: { user_id: string }
+        Returns: string
+      }
       search_dreams: {
         Args: { p_user_id: string; p_query: string; p_limit: number; p_offset: number }
         Returns: Array<{

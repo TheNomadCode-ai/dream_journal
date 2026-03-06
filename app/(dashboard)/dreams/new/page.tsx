@@ -8,7 +8,10 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
 import Placeholder from '@tiptap/extension-placeholder'
 
+import UpgradePrompt from '@/components/UpgradePrompt'
 import { createClient } from '@/lib/supabase/client'
+import { type Tier } from '@/lib/tier-config'
+import { canShowUpgradePrompt, markUpgradePromptSeen } from '@/lib/upgrade-prompt-session'
 
 const MOODS = [
   { score: 1, emoji: '😴', label: 'Restless'   },
@@ -76,6 +79,10 @@ export default function NewDreamPage() {
   const [tags, setTags]           = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [liveTranscript, setLiveTranscript] = useState('')
+  const [tier, setTier] = useState<Tier>('free')
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradeFeature, setUpgradeFeature] = useState<{ featureName: string; description: string } | null>(null)
+  const [entryLimitReached, setEntryLimitReached] = useState(false)
   const [showFadeTimer, setShowFadeTimer] = useState(false)
   const [fadeProgress, setFadeProgress] = useState(100)
   const savedIdRef                = useRef<string | null>(null)
@@ -105,6 +112,7 @@ export default function NewDreamPage() {
   })
 
   const triggerAutoSave = useCallback(async () => {
+    if (entryLimitReached) return
     if (!body.trim()) return
     setSaveState('saving')
     try {
@@ -113,27 +121,110 @@ export default function NewDreamPage() {
       if (!user) return
 
       const payload = {
-        user_id: user.id,
         title: title.trim() || null,
         body_json: editor?.getJSON() ?? { type: 'doc', content: [] },
-        body_text: body,
         mood_score: moodScore,
         lucid,
         date_of_dream: date,
+        tag_ids: [],
       }
 
       if (savedIdRef.current) {
-        await supabase.from('dreams').update(payload).eq('id', savedIdRef.current)
+        await supabase
+          .from('dreams')
+          .update({
+            title: payload.title,
+            body_json: payload.body_json,
+            body_text: body,
+            mood_score: payload.mood_score,
+            lucid: payload.lucid,
+            date_of_dream: payload.date_of_dream,
+          })
+          .eq('id', savedIdRef.current)
       } else {
-        const { data } = await supabase.from('dreams').insert(payload).select('id').single()
-        if (data) savedIdRef.current = data.id
+        const response = await fetch('/api/dreams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        if (!response.ok) {
+          const errorPayload = (await response.json().catch(() => null)) as { error?: string; message?: string } | null
+
+          if (response.status === 403 && errorPayload?.error === 'entry_limit_reached') {
+            setEntryLimitReached(true)
+            setSaveState('error')
+            openUpgradeModal(
+              'entry-limit',
+              'Unlimited Dreams',
+              "You've captured 30 dreams on the free tier. Upgrade to Pro to keep going."
+            )
+            return
+          }
+
+          throw new Error(errorPayload?.message ?? 'Could not save dream')
+        }
+
+        const created = (await response.json()) as { id?: string }
+        if (created.id) {
+          savedIdRef.current = created.id
+        }
       }
       setSaveState('saved')
       setTimeout(() => setSaveState('idle'), 2500)
     } catch {
       setSaveState('error')
     }
-  }, [title, body, moodScore, lucid, date, editor])
+  }, [title, body, moodScore, lucid, date, editor, entryLimitReached])
+
+  function openUpgradeModal(featureKey: string, featureName: string, description: string) {
+    if (!canShowUpgradePrompt(featureKey)) return
+
+    setUpgradeFeature({ featureName, description })
+    setShowUpgradeModal(true)
+    markUpgradePromptSeen(featureKey)
+  }
+
+  function closeUpgradeModal() {
+    setShowUpgradeModal(false)
+    setUpgradeFeature(null)
+  }
+
+  useEffect(() => {
+    let active = true
+
+    async function loadTier() {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user || !active) return
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('tier, plan')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!active) return
+
+      if (profile?.tier === 'pro' || profile?.tier === 'lifetime' || profile?.tier === 'free') {
+        setTier(profile.tier)
+        return
+      }
+
+      if (profile?.plan === 'pro' || profile?.plan === 'lifetime' || profile?.plan === 'free') {
+        setTier(profile.plan)
+      }
+    }
+
+    void loadTier()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     const fromNotification = searchParams.get('from') === 'notification'
@@ -217,6 +308,15 @@ export default function NewDreamPage() {
   }, [editor])
 
   function toggleVoiceCapture() {
+    if (tier === 'free') {
+      openUpgradeModal(
+        'voice-capture',
+        'Voice Capture',
+        'Speak your dream instead of typing. Faster capture in the critical 2-minute window.'
+      )
+      return
+    }
+
     if (!recognitionRef.current) return
 
     if (isRecording) {
@@ -366,6 +466,20 @@ export default function NewDreamPage() {
               </svg>
               {isRecording ? 'Listening… tap to stop' : 'Speak your dream now'}
             </button>
+            {tier === 'free' ? (
+              <p
+                style={{
+                  marginTop: '8px',
+                  fontFamily: "'Josefin Sans', sans-serif",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  fontSize: '9px',
+                  color: '#8B8FA6',
+                }}
+              >
+                Voice capture is a Pro feature
+              </p>
+            ) : null}
             {liveTranscript && (
               <p
                 style={{
@@ -485,6 +599,15 @@ export default function NewDreamPage() {
           </div>
         </div>
       </div>
+
+      {showUpgradeModal && upgradeFeature ? (
+        <UpgradePrompt
+          variant="modal"
+          featureName={upgradeFeature.featureName}
+          description={upgradeFeature.description}
+          onClose={closeUpgradeModal}
+        />
+      ) : null}
     </div>
   )
 }

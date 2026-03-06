@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
+import FreeTierLimitBanner from '@/components/dashboard/FreeTierLimitBanner'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeTier } from '@/lib/tier-config'
 
 interface DreamRow {
   id: string
@@ -41,7 +43,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: profile } = userId
     ? await supabase
         .from('user_profiles')
-        .select('current_streak, auto_pattern_insight')
+        .select('current_streak, auto_pattern_insight, tier, plan')
         .eq('id', userId)
         .single()
     : { data: null }
@@ -63,12 +65,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const dreams = (data ?? []) as DreamRow[]
   const currentStreak = profile?.current_streak ?? 0
+  const tier = normalizeTier(profile?.tier ?? profile?.plan)
+  const isFreeTier = tier === 'free'
   const autoPatternInsight = profile?.auto_pattern_insight
   const showInsightCard = (dreamCount ?? 0) >= 5 && !!autoPatternInsight
   const showCaptureBanner = params.banner === 'set-alarm'
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 40px 120px' }}>
+      {isFreeTier ? <FreeTierLimitBanner totalEntries={dreamCount ?? 0} /> : null}
+
 
       <section
         style={{

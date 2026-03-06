@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { createNotebookSchema } from '@/lib/validations/notebooks'
 import { createClient } from '@/lib/supabase/server'
+import { LIMITS, PRO_UPGRADE_URL, normalizeTier } from '@/lib/tier-config'
 import type { Notebook, NotebookErrorResponse, NotebookListResponse } from '@/types/notebook'
 
 type NotebookRow = {
@@ -15,12 +16,20 @@ type NotebookRow = {
 }
 
 export async function GET() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as any
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return NextResponse.json<NotebookErrorResponse>({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('tier, plan')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const tier = normalizeTier(profile?.tier ?? profile?.plan)
 
   const { data: notebooks, error } = await supabase
     .from('notebooks')
@@ -50,6 +59,7 @@ export async function GET() {
   }
 
   const payload: NotebookListResponse = {
+    tier,
     notebooks: rows.map((row) => ({
       ...row,
       cover_color: (row.cover_color ?? '4F46E5').toUpperCase(),
@@ -61,11 +71,41 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as any
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return NextResponse.json<NotebookErrorResponse>({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('tier, plan')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const tier = normalizeTier(profile?.tier ?? profile?.plan)
+
+  if (tier === 'free') {
+    const { count, error: countError } = await supabase
+      .from('notebooks')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if (countError) {
+      return NextResponse.json<NotebookErrorResponse>({ error: 'Could not validate notebook limits.' }, { status: 500 })
+    }
+
+    if ((count ?? 0) >= LIMITS.free.maxNotebooks) {
+      return NextResponse.json<NotebookErrorResponse>(
+        {
+          error: 'notebook_limit_reached',
+          message: 'Free accounts can create one notebook. Upgrade to Pro for unlimited notebooks.',
+          upgradeUrl: PRO_UPGRADE_URL,
+        },
+        { status: 403 }
+      )
+    }
   }
 
   try {

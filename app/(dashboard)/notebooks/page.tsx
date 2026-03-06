@@ -3,12 +3,16 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
+import UpgradePrompt from '@/components/UpgradePrompt'
+import { LIMITS, type Tier } from '@/lib/tier-config'
+import { canShowUpgradePrompt, markUpgradePromptSeen } from '@/lib/upgrade-prompt-session'
 import type { Notebook, NotebookListResponse } from '@/types/notebook'
 
 const COLOR_OPTIONS = ['4F46E5', '7C3AED', '0891B2', '16A34A', 'D97706', 'BE123C']
 
 export default function NotebooksPage() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([])
+  const [tier, setTier] = useState<Tier>('free')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -18,6 +22,7 @@ export default function NotebooksPage() {
   const [color, setColor] = useState(COLOR_OPTIONS[0])
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -34,6 +39,9 @@ export default function NotebooksPage() {
         const payload = (await response.json()) as NotebookListResponse
         if (!active) return
         setNotebooks(payload.notebooks)
+        if (payload.tier) {
+          setTier(payload.tier)
+        }
       } catch {
         if (!active) return
         setError('Could not load notebooks right now. Please refresh and try again.')
@@ -52,6 +60,27 @@ export default function NotebooksPage() {
   }, [])
 
   const canCreate = useMemo(() => name.trim().length > 0 && !creating, [creating, name])
+  const freeNotebookLimitReached = tier === 'free' && notebooks.length >= LIMITS.free.maxNotebooks
+
+  function openUpgradeModal(featureKey: string) {
+    if (!canShowUpgradePrompt(featureKey)) return
+
+    setShowUpgradeModal(true)
+    markUpgradePromptSeen(featureKey)
+  }
+
+  function closeUpgradeModal() {
+    setShowUpgradeModal(false)
+  }
+
+  function onNewNotebookClick() {
+    if (freeNotebookLimitReached) {
+      openUpgradeModal('notebook-limit')
+      return
+    }
+
+    setModalOpen(true)
+  }
 
   async function createNotebook() {
     if (!name.trim()) return
@@ -70,7 +99,14 @@ export default function NotebooksPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Could not create notebook')
+        const payload = (await response.json().catch(() => null)) as { error?: string; message?: string } | null
+        if (response.status === 403 && payload?.error === 'notebook_limit_reached') {
+          setModalOpen(false)
+          openUpgradeModal('notebook-limit')
+          return
+        }
+
+        throw new Error(payload?.message || 'Could not create notebook')
       }
 
       const created = (await response.json()) as Notebook
@@ -79,8 +115,8 @@ export default function NotebooksPage() {
       setName('')
       setDescription('')
       setColor(COLOR_OPTIONS[0])
-    } catch {
-      setCreateError('Could not create notebook right now. Please try again.')
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Could not create notebook right now. Please try again.')
     } finally {
       setCreating(false)
     }
@@ -97,7 +133,7 @@ export default function NotebooksPage() {
             Organise your dream worlds.
           </h1>
         </div>
-        <button type="button" className="btn-gold" onClick={() => setModalOpen(true)}>
+        <button type="button" className="btn-gold" onClick={onNewNotebookClick}>
           New Notebook
         </button>
       </header>
@@ -125,7 +161,7 @@ export default function NotebooksPage() {
             <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>
               Group your dreams by theme, period, or recurring place.
             </p>
-            <button type="button" className="btn-gold" onClick={() => setModalOpen(true)}>
+            <button type="button" className="btn-gold" onClick={onNewNotebookClick}>
               Create your first notebook
             </button>
           </div>
@@ -195,6 +231,15 @@ export default function NotebooksPage() {
             </button>
           </div>
         </div>
+      ) : null}
+
+      {showUpgradeModal ? (
+        <UpgradePrompt
+          variant="modal"
+          featureName="Unlimited Notebooks"
+          description="Organise your dreams into as many collections as you need with Pro."
+          onClose={closeUpgradeModal}
+        />
       ) : null}
     </div>
   )

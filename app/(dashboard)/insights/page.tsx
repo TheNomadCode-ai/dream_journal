@@ -1,19 +1,7 @@
 import InsightsDashboardClient from '@/components/insights/InsightsDashboardClient'
-import { createClient } from '@/lib/supabase/server'
+import { getUserTier, isPro } from '@/lib/tier'
 
 export default async function InsightsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = user
-    ? await supabase
-        .from('user_profiles')
-        .select('plan')
-        .eq('id', user.id)
-        .maybeSingle()
-    : { data: null }
-
-  const isPro = profile?.plan === 'pro' || profile?.plan === 'lifetime'
-
-  return <InsightsDashboardClient isPro={isPro} />
+  const tier = await getUserTier()
+  return <InsightsDashboardClient tier={tier} isPro={isPro(tier)} />
 }

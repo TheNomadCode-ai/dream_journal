@@ -12,9 +12,12 @@ import {
   YAxis,
 } from 'recharts'
 
+import UpgradePrompt from '@/components/UpgradePrompt'
+import type { Tier } from '@/lib/tier-config'
 import type { Dream, DreamListResponse } from '@/types/dream'
 
 type InsightsDashboardClientProps = {
+  tier: Tier
   isPro: boolean
 }
 
@@ -139,7 +142,7 @@ function SectionSkeleton({ height = 220 }: { height?: number }) {
   )
 }
 
-export default function InsightsDashboardClient({ isPro }: InsightsDashboardClientProps) {
+export default function InsightsDashboardClient({ tier, isPro }: InsightsDashboardClientProps) {
   const [dreams, setDreams] = useState<ApiDream[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -301,6 +304,21 @@ export default function InsightsDashboardClient({ isPro }: InsightsDashboardClie
     return '#FFFFFF'
   }, [analytics.avgMood])
 
+  const moodChartPoints = useMemo(() => {
+    if (isPro) return analytics.moodPoints
+
+    return analytics.moodPoints.map((point, index) => {
+      if (index < analytics.moodPoints.length - 7) {
+        return {
+          ...point,
+          mood: null,
+        }
+      }
+
+      return point
+    })
+  }, [analytics.moodPoints, isPro])
+
   if (loading) {
     return (
       <div style={{ maxWidth: 980, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
@@ -377,7 +395,7 @@ export default function InsightsDashboardClient({ isPro }: InsightsDashboardClie
         />
         <StatCard
           value={analytics.avgMood !== null ? `${analytics.avgMood.toFixed(1)}/5` : '0.0/5'}
-          label="avg mood / 30 days"
+          label={isPro ? 'avg mood / 30 days' : 'avg mood / 7 days'}
           color={avgMoodColor}
           icon={<span>◔</span>}
         />
@@ -412,7 +430,7 @@ export default function InsightsDashboardClient({ isPro }: InsightsDashboardClie
         ) : (
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
-              <LineChart data={analytics.moodPoints}>
+              <LineChart data={moodChartPoints}>
                 <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -456,26 +474,52 @@ export default function InsightsDashboardClient({ isPro }: InsightsDashboardClie
           <div
             style={{
               position: 'absolute',
-              inset: 0,
+              left: 0,
+              top: 56,
+              bottom: 24,
+              width: '76%',
               backdropFilter: 'blur(5px)',
-              background: 'rgba(5,5,16,0.38)',
-              display: 'grid',
-              placeItems: 'center',
-              textAlign: 'center',
-              padding: 20,
+              background: 'rgba(5,5,16,0.30)',
+              pointerEvents: 'none',
+              borderRight: '1px solid rgba(255,255,255,0.10)',
             }}
-          >
-            <div>
-              <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 34, color: '#E8E4D9' }}>
-                Unlock full insights with Somnia Pro
-              </p>
-              <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: 6, marginBottom: 18 }}>$4.99 / month</p>
-              <a href="https://sushankhanal.gumroad.com/l/jhdln" target="_blank" rel="noopener noreferrer" className="btn-gold">
-                Upgrade
-              </a>
-            </div>
-          </div>
+          />
         ) : null}
+      </section>
+
+      {!isPro ? (
+        <div style={{ marginBottom: 18 }}>
+          <UpgradePrompt
+            featureName="30-Day Mood Timeline"
+            description="Free includes the latest 7 days. Upgrade to Pro to unlock the full 30-day mood timeline and deeper trend context."
+            variant="inline"
+          />
+        </div>
+      ) : null}
+
+      <section
+        style={{
+          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.04)',
+          borderRadius: 16,
+          padding: 24,
+          marginBottom: 18,
+        }}
+      >
+        <p style={{ fontFamily: "'Josefin Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 16 }}>
+          AI pattern recognition
+        </p>
+        {tier === 'free' ? (
+          <UpgradePrompt
+            featureName="AI Pattern Recognition"
+            description="After 7 entries, Somnia surfaces recurring symbols, emotional threads, and figures across all your dreams."
+            variant="inline"
+          />
+        ) : (
+          <p style={{ color: 'rgba(255,255,255,0.68)', margin: 0 }}>
+            AI pattern recognition is unlocked for your plan. Weekly digest and full analysis are enabled.
+          </p>
+        )}
       </section>
 
       <section
@@ -493,7 +537,11 @@ export default function InsightsDashboardClient({ isPro }: InsightsDashboardClie
           Most used tags
         </p>
 
-        {analytics.topTags.length === 0 ? (
+        {!isPro ? (
+          <p style={{ color: 'rgba(255,255,255,0.62)' }}>
+            Tag breakdown is available on Pro to protect this section for upgraded users.
+          </p>
+        ) : analytics.topTags.length === 0 ? (
           <p style={{ color: 'rgba(255,255,255,0.5)' }}>No tags yet. Add tags to your entries to see patterns.</p>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
@@ -511,32 +559,17 @@ export default function InsightsDashboardClient({ isPro }: InsightsDashboardClie
             })}
           </div>
         )}
-
-        {!isPro ? (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backdropFilter: 'blur(5px)',
-              background: 'rgba(5,5,16,0.38)',
-              display: 'grid',
-              placeItems: 'center',
-              textAlign: 'center',
-              padding: 20,
-            }}
-          >
-            <div>
-              <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 34, color: '#E8E4D9' }}>
-                Unlock full insights with Somnia Pro
-              </p>
-              <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: 6, marginBottom: 18 }}>$4.99 / month</p>
-              <a href="https://sushankhanal.gumroad.com/l/jhdln" target="_blank" rel="noopener noreferrer" className="btn-gold">
-                Upgrade
-              </a>
-            </div>
-          </div>
-        ) : null}
       </section>
+
+      {!isPro ? (
+        <div style={{ marginBottom: 18 }}>
+          <UpgradePrompt
+            featureName="Tag Breakdown"
+            description="Compare recurring symbols and themes across your full archive with unlimited tag breakdown insights on Pro."
+            variant="inline"
+          />
+        </div>
+      ) : null}
 
       <section
         style={{

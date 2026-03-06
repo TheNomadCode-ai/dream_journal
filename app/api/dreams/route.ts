@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { createClient } from '@/lib/supabase/server'
+import { LIMITS, PRO_UPGRADE_URL, normalizeTier } from '@/lib/tier-config'
 import type { ApiError, CreateDreamInput } from '@/types/dream'
 
 const createDreamSchema = z.object({
@@ -66,6 +67,37 @@ export async function POST(request: Request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('tier, plan')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const tier = normalizeTier(profile?.tier ?? profile?.plan)
+
+  if (tier === 'free') {
+    const { count, error: countError } = await supabase
+      .from('dreams')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+
+    if (countError) {
+      return NextResponse.json<ApiError>({ error: 'Could not validate dream entry limits.' }, { status: 500 })
+    }
+
+    if ((count ?? 0) >= LIMITS.free.maxEntries) {
+      return NextResponse.json(
+        {
+          error: 'entry_limit_reached',
+          message: 'Free accounts are limited to 30 dreams. Upgrade to Pro for unlimited entries.',
+          upgradeUrl: PRO_UPGRADE_URL,
+        },
+        { status: 403 }
+      )
+    }
   }
 
   let body: unknown
