@@ -82,8 +82,39 @@ export async function GET(request: Request) {
 
   const total = results[0]?.total_count ?? 0
 
+  const dreamIds = results.map((result) => result.id)
+  const tagsByDream = new Map<string, Array<{ id: string; name: string }>>()
+
+  if (dreamIds.length > 0) {
+    const { data: tagRows } = await supabase
+      .from('dream_tags')
+      .select('dream_id, tags(id, name)')
+      .in('dream_id', dreamIds)
+
+    ;(tagRows ?? []).forEach((row) => {
+      const dreamId = row.dream_id as string
+      const tagValue = row.tags as { id: string; name: string } | { id: string; name: string }[] | null
+      const tags = Array.isArray(tagValue) ? tagValue : tagValue ? [tagValue] : []
+
+      if (!tagsByDream.has(dreamId)) {
+        tagsByDream.set(dreamId, [])
+      }
+
+      const current = tagsByDream.get(dreamId) ?? []
+      tags.forEach((tag) => {
+        if (!current.some((existing) => existing.id === tag.id)) {
+          current.push({ id: tag.id, name: tag.name })
+        }
+      })
+      tagsByDream.set(dreamId, current)
+    })
+  }
+
   return NextResponse.json<DreamSearchResponse>({
-    results: results.map(({ total_count: _tc, ...r }) => r),
+    results: results.map(({ total_count: _tc, ...r }) => ({
+      ...r,
+      tags: tagsByDream.get(r.id) ?? [],
+    })),
     query: rawQuery,
     total,
     page,

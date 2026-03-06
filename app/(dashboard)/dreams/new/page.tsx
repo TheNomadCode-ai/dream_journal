@@ -30,6 +30,39 @@ function formatDisplayDate(iso: string) {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
+type SpeechRecognitionAlternativeLike = {
+  transcript: string
+}
+
+type SpeechRecognitionResultLike = {
+  isFinal: boolean
+  length: number
+  [index: number]: SpeechRecognitionAlternativeLike
+}
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number
+  results: ArrayLike<SpeechRecognitionResultLike>
+}
+
+type BrowserSpeechRecognition = {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null
+  onend: (() => void) | null
+  onerror: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition
+
+type WindowWithSpeechRecognition = Window & {
+  SpeechRecognition?: BrowserSpeechRecognitionConstructor
+  webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor
+}
+
 export default function NewDreamPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -48,7 +81,7 @@ export default function NewDreamPage() {
   const savedIdRef                = useRef<string | null>(null)
   const autoSaveTimerRef          = useRef<ReturnType<typeof setTimeout> | null>(null)
   const titleRef                  = useRef<HTMLTextAreaElement>(null)
-  const recognitionRef            = useRef<any>(null)
+  const recognitionRef            = useRef<BrowserSpeechRecognition | null>(null)
   const fadeIntervalRef           = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const editor = useEditor({
@@ -142,8 +175,8 @@ export default function NewDreamPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const SpeechRecognitionCtor = (window as Window & { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition
-      ?? (window as Window & { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition
+    const browserWindow = window as WindowWithSpeechRecognition
+    const SpeechRecognitionCtor = browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition
 
     if (!SpeechRecognitionCtor) return
 
@@ -152,7 +185,7 @@ export default function NewDreamPage() {
     recognition.interimResults = true
     recognition.lang = 'en-US'
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
       let interim = ''
 
       for (let i = event.resultIndex; i < event.results.length; i += 1) {

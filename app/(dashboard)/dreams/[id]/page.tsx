@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import DreamShareCardDialog from '@/components/dreams/DreamShareCardDialog'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function DreamDetailPage({ params }: { params: { id: string } }) {
@@ -25,14 +26,22 @@ export default async function DreamDetailPage({ params }: { params: { id: string
         <Link href="/dashboard" className="btn-ghost btn text-sm">
           ← Back
         </Link>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {dream.lucid && <span className="badge-lucid">Lucid</span>}
-          {dream.mood_score && <span>{moods[dream.mood_score - 1]}</span>}
-          <span>
-            {new Date(dream.date_of_dream).toLocaleDateString('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            })}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {dream.lucid && <span className="badge-lucid">Lucid</span>}
+            {dream.mood_score && <span>{moods[dream.mood_score - 1]}</span>}
+            <span>
+              {new Date(dream.date_of_dream).toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+              })}
+            </span>
+          </div>
+          <DreamShareCardDialog
+            bodyText={dream.body_text}
+            dateOfDream={dream.date_of_dream}
+            moodScore={dream.mood_score}
+            lucid={dream.lucid}
+          />
         </div>
       </div>
 
