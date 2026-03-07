@@ -70,6 +70,9 @@ export const metadata: Metadata = {
     canonical: 'https://somniavault.me',
   },
   manifest: '/manifest.json',
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (
+    pathname.includes('.') ||
     pathname.startsWith('/blog') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||

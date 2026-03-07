@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 const alarmSchema = z.object({
   alarm_time: z.string().regex(/^\d{2}:\d{2}$/),
@@ -46,6 +46,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
+    const db = process.env.SUPABASE_SERVICE_ROLE_KEY
+      ? (createServiceClient() as any)
+      : supabase
+
     const body = await request.json()
     console.log('Alarm save body:', body)
 
@@ -61,7 +65,7 @@ export async function POST(request: Request) {
     const timeValue = `${alarm.alarm_time}:00`
 
     // Check whether an alarm row already exists for this user
-    const { data: existing, error: selectError } = await supabase
+    const { data: existing, error: selectError } = await db
       .from('alarms')
       .select('id')
       .eq('user_id', user.id)
@@ -74,7 +78,7 @@ export async function POST(request: Request) {
 
     let writeError
     if (existing) {
-      const { error } = await supabase
+      const { error } = await db
         .from('alarms')
         .update({
           alarm_time: timeValue,
@@ -85,7 +89,7 @@ export async function POST(request: Request) {
         .eq('user_id', user.id)
       writeError = error
     } else {
-      const { error } = await supabase
+      const { error } = await db
         .from('alarms')
         .insert({
           user_id: user.id,
@@ -103,7 +107,7 @@ export async function POST(request: Request) {
     }
 
     // Read back the saved alarm
-    const { data: saved } = await supabase
+    const { data: saved } = await db
       .from('alarms')
       .select('*')
       .eq('user_id', user.id)
@@ -112,7 +116,7 @@ export async function POST(request: Request) {
     // Update profile with wake time (best-effort, don't block on failure)
     const timezone = alarm.timezone ?? 'UTC'
 
-    await supabase
+    await db
       .from('user_profiles')
       .update({
         wake_time: timeValue,

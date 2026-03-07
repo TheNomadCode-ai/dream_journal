@@ -20,7 +20,6 @@ export default function InstallPrompt() {
     }
 
     const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault()
       setDeferredPrompt(event as BeforeInstallPromptEvent)
     }
 
