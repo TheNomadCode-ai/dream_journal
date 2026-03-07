@@ -225,7 +225,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           >
             No dreams recorded yet.<br />The night is waiting.
           </p>
-          <Link href="/dreams/new" className="btn-gold">
+          <Link href="/capture" className="btn-gold">
             Begin your first entry
           </Link>
         </div>
@@ -304,7 +304,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       )}
 
       {/* ── Floating new-entry button ─────────────────────────── */}
-      <Link href="/dreams/new" className="float-btn" aria-label="New dream entry">
+      <Link href="/capture" className="float-btn" aria-label="Start timed capture">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M12 5v14M5 12h14" />
         </svg>

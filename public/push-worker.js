@@ -2,7 +2,7 @@ self.addEventListener('push', (event) => {
   let payload = {
     title: 'Somnia',
     body: 'Your dreams are fading. You have 60 seconds.',
-    url: '/dreams/new?from=notification',
+    url: '/capture?from=notification',
   }
 
   try {
@@ -17,14 +17,14 @@ self.addEventListener('push', (event) => {
       body: payload.body,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
-      data: { url: payload.url || '/dreams/new?from=notification' },
+      data: { url: payload.url || '/capture?from=notification' },
     })
   )
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const targetUrl = event.notification.data?.url || '/dreams/new?from=notification'
+  const targetUrl = event.notification.data?.url || '/capture?from=notification'
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {

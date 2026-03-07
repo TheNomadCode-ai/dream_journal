@@ -5,7 +5,7 @@ import type { Database } from '@/types/database'
 
 export async function updateSession(
   request: NextRequest
-): Promise<{ response: NextResponse; user: { id: string; email?: string } | null }> {
+): Promise<{ response: NextResponse; user: { id: string; email?: string } | null; hasEnabledAlarm: boolean }> {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
@@ -37,5 +37,19 @@ export async function updateSession(
     data: { user },
   } = await supabase.auth.getUser()
 
-  return { response: supabaseResponse, user }
+  let hasEnabledAlarm = false
+
+  if (user) {
+    const { data: alarmRow } = await supabase
+      .from('alarms')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('enabled', true)
+      .limit(1)
+      .maybeSingle()
+
+    hasEnabledAlarm = !!alarmRow
+  }
+
+  return { response: supabaseResponse, user, hasEnabledAlarm }
 }

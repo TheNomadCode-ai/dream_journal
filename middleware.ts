@@ -27,9 +27,10 @@ function isAuthRoute(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   // Refresh the session and get updated response + user
-  const { response, user } = await updateSession(request)
+  const { response, user, hasEnabledAlarm } = await updateSession(request)
 
   const { pathname } = request.nextUrl
+  const isApiRoute = pathname.startsWith('/api')
 
   // Static assets and Next.js internals — skip
   if (
@@ -43,6 +44,21 @@ export async function middleware(request: NextRequest) {
   // Blog is fully public, including /blog/[slug]
   if (pathname.startsWith('/blog')) {
     return response
+  }
+
+  // Force onboarding until a wake-up alarm is configured.
+  if (
+    user
+    && !hasEnabledAlarm
+    && pathname !== '/onboarding'
+    && !pathname.startsWith('/auth/callback')
+    && !isApiRoute
+  ) {
+    return NextResponse.redirect(new URL('/onboarding', request.url))
+  }
+
+  if (user && hasEnabledAlarm && pathname === '/onboarding') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // User is authenticated and tries to access login/signup — redirect to dashboard

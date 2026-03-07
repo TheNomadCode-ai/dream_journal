@@ -69,6 +69,13 @@ export async function POST(request: Request) {
     return NextResponse.json<ApiError>({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  return NextResponse.json<ApiError>(
+    { error: 'Manual dream creation is disabled. Use the timed capture window.' },
+    { status: 403 }
+  )
+
+  // Legacy path retained below for future migration reference.
+
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('tier, plan')

@@ -112,7 +112,7 @@ const jsonLd = {
 export default async function LandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const journalHref = user ? '/dreams/new' : '/login'
+  const journalHref = user ? '/capture' : '/login'
 
   return (
     <div className="landing-page" style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
