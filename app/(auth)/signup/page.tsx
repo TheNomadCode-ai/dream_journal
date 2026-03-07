@@ -3,10 +3,12 @@
 import { useState } from 'react'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,11 +20,16 @@ export default function SignupPage() {
   const supabase = createClient()
 
   function validatePassword(pw: string): string | null {
-    if (pw.length < 8) return 'Password must be at least 8 characters.'
-    if (!/[A-Z]/.test(pw)) return 'Password must contain at least one uppercase letter.'
-    if (!/[0-9]/.test(pw)) return 'Password must contain at least one number.'
-    if (!/[^A-Za-z0-9]/.test(pw)) return 'Password must contain at least one special character.'
+    if (pw.length < 8 || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
+      return 'Password must be at least 8 characters and include an uppercase letter, a number, and a symbol.'
+    }
     return null
+  }
+
+  function isConfirmationEmailFailure(message: string) {
+    const normalized = message.toLowerCase()
+    return normalized.includes('error sending confirmation email')
+      || (normalized.includes('confirmation email') && normalized.includes('error sending email'))
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -53,6 +60,11 @@ export default function SignupPage() {
     })
 
     if (signupError) {
+      if (isConfirmationEmailFailure(signupError.message)) {
+        router.replace('/login?message=account_created')
+        return
+      }
+
       setError(signupError.message)
       setLoading(false)
       return
@@ -138,12 +150,9 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="form-input"
-              placeholder="Min. 8 chars, 1 uppercase, 1 number, 1 symbol"
-              aria-describedby="password-hint"
+              placeholder="Create a password"
+              aria-describedby={error ? 'signup-error' : undefined}
             />
-            <p id="password-hint" className="auth-help mt-1 text-xs text-muted-foreground">
-              At least 8 characters with uppercase, number, and special character
-            </p>
           </div>
 
           <div>

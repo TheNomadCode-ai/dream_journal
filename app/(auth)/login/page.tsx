@@ -12,6 +12,7 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const redirectedFrom = searchParams.get('redirectedFrom') ?? '/dashboard'
   const alreadyConfirmed = searchParams.get('message') === 'already_confirmed'
+  const accountCreated = searchParams.get('message') === 'account_created'
 
   const [mode, setMode] = useState<'password' | 'magic-link'>('password')
   const [email, setEmail] = useState('')
@@ -103,6 +104,15 @@ function LoginContent() {
           className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground"
         >
           Your account is already confirmed. Sign in below.
+        </p>
+      )}
+
+      {accountCreated && (
+        <p
+          role="status"
+          className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground"
+        >
+          Account created! You can sign in now.
         </p>
       )}
 
