@@ -58,54 +58,72 @@ export async function POST(request: Request) {
     }
 
     const alarm = parsed.data
+    const timeValue = `${alarm.alarm_time}:00`
 
-    const alarmRow = {
-      user_id: user.id,
-      alarm_time: `${alarm.alarm_time}:00`,
-      enabled: alarm.enabled,
-      days_of_week: alarm.days_of_week,
-      snooze_seconds: alarm.snooze_seconds,
-    }
-
-    const { data, error } = await supabase
+    // Check whether an alarm row already exists for this user
+    const { data: existing, error: selectError } = await supabase
       .from('alarms')
-      .upsert(alarmRow, { onConflict: 'user_id' })
-      .select('*')
-      .single()
-
-    if (error) {
-      console.error('Alarm insert error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    const { data: profile, error: profileFetchError } = await supabase
-      .from('user_profiles')
-      .select('timezone, wake_timezone')
-      .eq('id', user.id)
+      .select('id')
+      .eq('user_id', user.id)
       .maybeSingle()
 
-    if (profileFetchError) {
-      console.error('Profile read error during alarm save:', profileFetchError)
+    if (selectError) {
+      console.error('Alarm select error:', selectError)
+      return NextResponse.json({ error: selectError.message }, { status: 500 })
     }
 
-    const timezone = alarm.timezone ?? profile?.timezone ?? profile?.wake_timezone ?? 'UTC'
+    let writeError
+    if (existing) {
+      const { error } = await supabase
+        .from('alarms')
+        .update({
+          alarm_time: timeValue,
+          enabled: alarm.enabled,
+          days_of_week: alarm.days_of_week,
+          snooze_seconds: alarm.snooze_seconds,
+        })
+        .eq('user_id', user.id)
+      writeError = error
+    } else {
+      const { error } = await supabase
+        .from('alarms')
+        .insert({
+          user_id: user.id,
+          alarm_time: timeValue,
+          enabled: alarm.enabled,
+          days_of_week: alarm.days_of_week,
+          snooze_seconds: alarm.snooze_seconds,
+        })
+      writeError = error
+    }
 
-    const { error: profileUpdateError } = await supabase
+    if (writeError) {
+      console.error('Alarm write error:', writeError)
+      return NextResponse.json({ error: writeError.message }, { status: 500 })
+    }
+
+    // Read back the saved alarm
+    const { data: saved } = await supabase
+      .from('alarms')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // Update profile with wake time (best-effort, don't block on failure)
+    const timezone = alarm.timezone ?? 'UTC'
+
+    await supabase
       .from('user_profiles')
       .update({
-        wake_time: `${alarm.alarm_time}:00`,
+        wake_time: timeValue,
         wake_timezone: timezone,
         timezone,
-        push_enabled: alarm.enabled,
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id)
+      .then(({ error: e }: { error: unknown }) => e && console.error('Profile update error:', e))
 
-    if (profileUpdateError) {
-      console.error('Profile update error during alarm save:', profileUpdateError)
-    }
-
-    return NextResponse.json({ alarm: data })
+    return NextResponse.json({ alarm: saved })
   } catch (err) {
     console.error('Alarm API crashed:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
