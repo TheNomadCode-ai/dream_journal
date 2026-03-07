@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import FreeTierLimitBanner from '@/components/dashboard/FreeTierLimitBanner'
 import { createClient } from '@/lib/supabase/server'
@@ -43,10 +44,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: profile } = userId
     ? await supabase
         .from('user_profiles')
-        .select('current_streak, auto_pattern_insight, tier, plan')
+        .select('current_streak, auto_pattern_insight, tier, plan, wake_time')
         .eq('id', userId)
         .single()
     : { data: null }
+
+  if (userId && !profile?.wake_time) {
+    redirect('/onboarding')
+  }
 
   const { count: dreamCount } = userId
     ? await supabase

@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client'
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectedFrom = searchParams.get('redirectedFrom') ?? '/dashboard'
   const alreadyConfirmed = searchParams.get('message') === 'already_confirmed'
   const accountCreated = searchParams.get('message') === 'account_created'
 
@@ -30,16 +29,29 @@ function LoginContent() {
     setMissingAccountError(false)
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      setError(error.message)
+    const loginTimeout = window.setTimeout(() => {
       setLoading(false)
-      return
-    }
+      setError('Login is taking too long. Please try again.')
+    }, 10000)
 
-    router.push(redirectedFrom)
-    router.refresh()
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+      window.clearTimeout(loginTimeout)
+
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      router.push('/dashboard')
+      router.refresh()
+    } catch {
+      window.clearTimeout(loginTimeout)
+      setError('Could not sign in right now. Please try again.')
+      setLoading(false)
+    }
   }
 
   async function handleMagicLink(e: React.FormEvent) {
