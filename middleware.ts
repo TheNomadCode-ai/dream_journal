@@ -19,7 +19,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/sitemap') ||
-    pathname.startsWith('/robots')
+    pathname.startsWith('/robots') ||
+    PUBLIC_PATHS.includes(pathname)
   ) {
     return NextResponse.next()
   }
@@ -45,20 +46,14 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if ((pathname === '/login' || pathname === '/signup') && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  if (PUBLIC_PATHS.includes(pathname)) {
-    return response
-  }
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (pathname === '/login' || pathname === '/signup') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response

@@ -29,29 +29,24 @@ function LoginContent() {
     setMissingAccountError(false)
     setLoading(true)
 
-    const loginTimeout = window.setTimeout(() => {
+    const timeout = setTimeout(() => {
       setLoading(false)
-      setError('Login is taking too long. Please try again.')
+      setError('Taking too long. Please try again.')
     }, 10000)
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-      window.clearTimeout(loginTimeout)
+    clearTimeout(timeout)
 
-      if (error) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-
-      router.push('/dashboard')
-      router.refresh()
-    } catch {
-      window.clearTimeout(loginTimeout)
-      setError('Could not sign in right now. Please try again.')
+    if (error) {
       setLoading(false)
+      setError('Invalid email or password.')
+      return
     }
+
+    void data
+    router.push('/dashboard')
+    router.refresh()
   }
 
   async function handleMagicLink(e: React.FormEvent) {
