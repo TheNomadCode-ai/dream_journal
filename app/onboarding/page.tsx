@@ -11,11 +11,20 @@ export default async function OnboardingPage() {
     redirect('/login?redirectedFrom=%2Fonboarding')
   }
 
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('onboarding_complete')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profile?.onboarding_complete) {
+    redirect('/dashboard')
+  }
+
   const { data: alarm } = await supabase
     .from('alarms')
     .select('id')
     .eq('user_id', user.id)
-    .eq('enabled', true)
     .limit(1)
     .maybeSingle()
 

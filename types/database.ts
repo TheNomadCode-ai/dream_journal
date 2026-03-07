@@ -23,6 +23,7 @@ export interface Database {
           wake_timezone: string
           timezone: string
           push_enabled: boolean
+          onboarding_complete: boolean
           push_subscription: Json | null
           last_push_sent_at: string | null
           created_at: string
@@ -44,6 +45,7 @@ export interface Database {
           wake_timezone?: string
           timezone?: string
           push_enabled?: boolean
+          onboarding_complete?: boolean
           push_subscription?: Json | null
           last_push_sent_at?: string | null
           created_at?: string
@@ -65,6 +67,7 @@ export interface Database {
           wake_timezone?: string
           timezone?: string
           push_enabled?: boolean
+          onboarding_complete?: boolean
           push_subscription?: Json | null
           last_push_sent_at?: string | null
           updated_at?: string

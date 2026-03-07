@@ -44,21 +44,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: profile } = userId
     ? await supabase
         .from('user_profiles')
-        .select('current_streak, auto_pattern_insight, tier, plan')
+        .select('current_streak, auto_pattern_insight, tier, plan, onboarding_complete')
         .eq('id', userId)
         .single()
     : { data: null }
 
-  const { count: enabledAlarmCount } = userId
-    ? await supabase
-        .from('alarms')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('enabled', true)
-    : { count: 0 }
+  if (userId && !profile?.onboarding_complete) {
+    const { data: alarms, error: alarmsError } = await supabase
+      .from('alarms')
+      .select('id, enabled')
+      .eq('user_id', userId)
+      .limit(1)
 
-  if (userId && (enabledAlarmCount ?? 0) === 0) {
-    redirect('/onboarding')
+    // Do not redirect on query errors; only redirect when no alarm exists at all.
+    if (!alarmsError && (!alarms || alarms.length === 0)) {
+      redirect('/onboarding')
+    }
   }
 
   const { count: dreamCount } = userId

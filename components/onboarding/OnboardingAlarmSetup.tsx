@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { createClient } from '@/lib/supabase/client'
+
 function localTimeDefault() {
   const now = new Date()
   const hour = String(now.getHours()).padStart(2, '0')
@@ -53,6 +55,18 @@ export default function OnboardingAlarmSetup() {
     if (!response.ok) {
       setError('Could not save your alarm. Please try again.')
       return
+    }
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      const supabaseAny = supabase as any
+
+      await supabaseAny
+        .from('user_profiles')
+        .update({ onboarding_complete: true })
+        .eq('id', user.id)
     }
 
     router.replace('/dashboard')
