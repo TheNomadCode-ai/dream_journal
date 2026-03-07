@@ -155,6 +155,9 @@ export default async function LandingPage() {
           <Link href={journalHref} className="btn-ghost-gold" style={{ fontSize: '11px' }}>
             Journal
           </Link>
+          <Link href="/blog" className="btn-ghost-gold" style={{ fontSize: '11px' }}>
+            Blog
+          </Link>
           <Link href="/privacy" className="btn-ghost-gold" style={{ fontSize: '11px' }}>
             Privacy
           </Link>
@@ -731,6 +734,9 @@ export default async function LandingPage() {
           </p>
         </div>
         <div className="landing-footer-links" style={{ display: 'flex', gap: '28px' }}>
+          <Link href="/blog" className="btn-ghost-gold" style={{ fontSize: '10px' }}>
+            Blog
+          </Link>
           <Link href="/privacy" className="btn-ghost-gold" style={{ fontSize: '10px' }}>
             Privacy Policy
           </Link>

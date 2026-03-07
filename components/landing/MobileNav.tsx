@@ -71,6 +71,9 @@ export default function MobileNav({ journalHref, pricingHref }: MobileNavProps) 
             <Link href={journalHref} className="landing-mobile-link" onClick={() => setOpen(false)}>
               Journal
             </Link>
+            <Link href="/blog" className="landing-mobile-link" onClick={() => setOpen(false)}>
+              Blog
+            </Link>
             <Link href="/privacy" className="landing-mobile-link" onClick={() => setOpen(false)}>
               Privacy
             </Link>
