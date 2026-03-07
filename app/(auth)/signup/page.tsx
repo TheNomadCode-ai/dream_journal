@@ -15,7 +15,6 @@ export default function SignupPage() {
   const [wakeTime, setWakeTime] = useState('07:00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [confirmationSent, setConfirmationSent] = useState(false)
 
   const supabase = createClient()
 
@@ -24,12 +23,6 @@ export default function SignupPage() {
       return 'Password must be at least 8 characters and include an uppercase letter, a number, and a symbol.'
     }
     return null
-  }
-
-  function isConfirmationEmailFailure(message: string) {
-    const normalized = message.toLowerCase()
-    return normalized.includes('error sending confirmation email')
-      || (normalized.includes('confirmation email') && normalized.includes('error sending email'))
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -55,38 +48,17 @@ export default function SignupPage() {
           wake_timezone: timezone,
           timezone,
         },
-        emailRedirectTo: 'https://www.somniavault.me/auth/callback?next=/dashboard',
       },
     })
 
     if (signupError) {
-      if (isConfirmationEmailFailure(signupError.message)) {
-        router.replace('/login?message=account_created')
-        return
-      }
-
       setError(signupError.message)
       setLoading(false)
       return
     }
 
-    setConfirmationSent(true)
-    setLoading(false)
-  }
-
-  if (confirmationSent) {
-    return (
-      <div className="text-center" role="status" aria-live="polite">
-        <div className="mb-4 text-4xl">🌙</div>
-        <h2 className="mb-2 text-xl font-semibold text-foreground">Check your email</h2>
-        <p className="text-muted-foreground">
-          We sent a confirmation link to{' '}
-          <strong className="text-foreground">{email}</strong>.
-          <br />
-          Click the link to activate your account and start your first dream journal.
-        </p>
-      </div>
-    )
+    router.replace('/onboarding')
+    router.refresh()
   }
 
   return (
