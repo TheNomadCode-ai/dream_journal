@@ -10,6 +10,7 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/terms',
   '/auth/callback',
+  '/blog',
 ]
 
 const AUTH_ROUTES = ['/login', '/signup']
@@ -36,6 +37,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/favicon') ||
     pathname.includes('.')
   ) {
+    return response
+  }
+
+  // Blog is fully public, including /blog/[slug]
+  if (pathname.startsWith('/blog')) {
     return response
   }
 
