@@ -1,27 +1,24 @@
 name: Fire Alarms
 
 on:
-  # GitHub Actions scheduled workflows run at most every 5 minutes.
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '* * * * *'
   workflow_dispatch:
 
 jobs:
   fire-alarms:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger alarm cron endpoint
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      - name: Fire alarms
         run: |
-          if [ -z "$CRON_SECRET" ]; then
-            echo "CRON_SECRET is not set in repository secrets"
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -L \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            https://www.somniavault.me/api/cron/fire-alarms)
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then
+            echo "Error: API returned $response"
             exit 1
           fi
-
-          curl --fail-with-body --show-error --silent \
-            --request POST \
-            --url "https://dream-journal-b8wl.vercel.app/api/cron/fire-alarms" \
-            --header "CRON_SECRET: $CRON_SECRET" \
-            --header "Content-Type: application/json" \
-            --data '{}'
