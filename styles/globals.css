@@ -2007,6 +2007,17 @@
     padding-bottom: 48px !important;
   }
 
+  .landing-founder-section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .landing-founder-card {
+    max-width: none !important;
+    width: 100%;
+    padding: 24px !important;
+  }
+
   .landing-values-section > div {
     gap: 16px !important;
   }
@@ -2062,7 +2073,18 @@
   .landing-footer-copyright {
     font-size: 11px !important;
     color: rgba(255, 255, 255, 0.36) !important;
+  }
+
+  .landing-footer-meta {
     order: 2;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .landing-footer-founder {
+    max-width: 320px;
+    margin: 0 auto !important;
+    text-align: center;
   }
 
   .landing-footer-links {

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import ScrollReveal from '@/components/ScrollReveal'
 import AlarmDemoTicker from '@/components/landing/AlarmDemoTicker'
+import FounderDmLink from '@/components/landing/FounderDmLink'
 import MobileNav from '@/components/landing/MobileNav'
 import { createClient } from '@/lib/supabase/server'
 
@@ -31,7 +32,7 @@ const FEATURES = [
   },
 ]
 
-const GUMROAD_URL = 'https://sushankhanal.gumroad.com/l/jhdln'
+const GUMROAD_URL = 'https://sushankhanal.gumroad.com/l/somniavault'
 
 const TIMELINE = [
   {
@@ -572,6 +573,58 @@ export default async function LandingPage() {
 
       <section
         data-reveal
+        className="landing-founder-section"
+        style={{
+          maxWidth: '960px',
+          margin: '0 auto',
+          padding: '0 60px 90px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <div
+          className="landing-founder-card"
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '16px',
+            padding: '32px 36px',
+            maxWidth: '560px',
+            margin: '0 auto',
+          }}
+        >
+          <p
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              letterSpacing: '0.3em',
+              color: 'rgba(255,255,255,0.25)',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}
+          >
+            From the founder
+          </p>
+          <p
+            style={{
+              fontStyle: 'italic',
+              fontSize: '17px',
+              lineHeight: 1.7,
+              color: 'rgba(255,255,255,0.55)',
+              marginBottom: '20px',
+            }}
+          >
+            &quot;Built by a solo founder who kept forgetting his dreams.
+            <br />
+            <br />
+            If you have questions, feedback, or just want to talk about dreams — my DMs are open.&quot;
+          </p>
+          <FounderDmLink showIcon />
+        </div>
+      </section>
+
+      <section
+        data-reveal
         className="landing-final-cta"
         style={{
           textAlign: 'center',
@@ -636,19 +689,47 @@ export default async function LandingPage() {
           justifyContent: 'space-between',
         }}
       >
-        <span
-          className="landing-footer-copyright"
+        <div
+          className="landing-footer-meta"
           style={{
-            fontFamily: "'Josefin Sans', sans-serif",
-            textTransform: 'uppercase',
-            letterSpacing: '0.18em',
-            fontSize: '10px',
-            fontWeight: 300,
-            color: '#6B6F85',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '10px',
           }}
         >
-          © 2026 Somnia
-        </span>
+          <span
+            className="landing-footer-copyright"
+            style={{
+              fontFamily: "'Josefin Sans', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.18em',
+              fontSize: '10px',
+              fontWeight: 300,
+              color: '#6B6F85',
+            }}
+          >
+            © 2026 Somnia
+          </span>
+          <p
+            className="landing-footer-founder"
+            style={{
+              fontFamily: "'Crimson Pro', Georgia, serif",
+              fontSize: '13px',
+              lineHeight: 1.6,
+              color: 'rgba(255,255,255,0.30)',
+              textAlign: 'left',
+            }}
+          >
+            Built by a solo founder who kept forgetting his dreams — DM{' '}
+            <FounderDmLink
+              color="rgba(255,255,255,0.30)"
+              hoverColor="rgba(255,255,255,0.70)"
+              fontSize="13px"
+            />{' '}
+            on X
+          </p>
+        </div>
         <div className="landing-footer-links" style={{ display: 'flex', gap: '28px' }}>
           <Link href="/privacy" className="btn-ghost-gold" style={{ fontSize: '10px' }}>
             Privacy Policy
