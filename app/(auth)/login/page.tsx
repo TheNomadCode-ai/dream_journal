@@ -50,7 +50,7 @@ function LoginContent() {
       email,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: 'https://www.somniavault.me/auth/callback?next=/dashboard',
       },
     })
 

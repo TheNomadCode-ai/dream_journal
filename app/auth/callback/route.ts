@@ -14,7 +14,16 @@ import { createClient } from '@/lib/supabase/server'
  * then redirect to the intended destination (or /dashboard).
  */
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const url = new URL(request.url)
+  const { searchParams, origin, pathname } = url
+
+  // Always complete auth on the canonical host so session cookies are scoped correctly.
+  if (url.hostname === 'somniavault.me') {
+    const canonicalUrl = new URL(`https://www.somniavault.me${pathname}`)
+    canonicalUrl.search = searchParams.toString()
+    return NextResponse.redirect(canonicalUrl.toString())
+  }
+
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
   const safeNext = next.startsWith('/') ? next : '/dashboard'

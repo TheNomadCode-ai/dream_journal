@@ -5,7 +5,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { createClient } from '@/lib/supabase/client'
-import { getAppUrl } from '@/lib/app-url'
 
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState('')
@@ -37,8 +36,6 @@ export default function SignupPage() {
     }
 
     setLoading(true)
-    const appUrl = getAppUrl()
-    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : appUrl
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
     const { error: signupError } = await supabase.auth.signUp({
@@ -51,7 +48,7 @@ export default function SignupPage() {
           wake_timezone: timezone,
           timezone,
         },
-        emailRedirectTo: `${origin}/auth/callback`,
+        emailRedirectTo: 'https://www.somniavault.me/auth/callback?next=/dashboard',
       },
     })
 
