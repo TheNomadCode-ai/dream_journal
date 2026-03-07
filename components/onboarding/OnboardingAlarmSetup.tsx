@@ -21,16 +21,31 @@ export default function OnboardingAlarmSetup() {
     setSaving(true)
     setError(null)
 
+    const requestBody = {
+      alarm_time: alarmTime,
+      enabled: true,
+      days_of_week: [1, 2, 3, 4, 5, 6, 7],
+      snooze_seconds: 0,
+      timezone,
+    }
+
+    console.log('Onboarding alarm save request', {
+      url: '/api/alarms',
+      method: 'POST',
+      body: requestBody,
+    })
+
     const response = await fetch('/api/alarms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        alarm_time: alarmTime,
-        enabled: true,
-        days_of_week: [1, 2, 3, 4, 5, 6, 7],
-        snooze_seconds: 0,
-        timezone,
-      }),
+      body: JSON.stringify(requestBody),
+    })
+
+    const responseText = await response.text()
+    console.log('Onboarding alarm save response', {
+      status: response.status,
+      ok: response.ok,
+      body: responseText,
     })
 
     setSaving(false)

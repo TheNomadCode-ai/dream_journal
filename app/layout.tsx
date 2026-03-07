@@ -70,7 +70,6 @@ export const metadata: Metadata = {
     canonical: 'https://somniavault.me',
   },
   manifest: '/manifest.json',
-  themeColor: '#C9A84C',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -83,6 +82,10 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
   },
+}
+
+export const viewport = {
+  themeColor: '#06040f',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
