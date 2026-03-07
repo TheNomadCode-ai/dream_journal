@@ -37,7 +37,7 @@ export const metadata: Metadata = {
       'The only dream journal built around the 2-minute window you have before your dreams fade.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/opengraph-image',
         width: 1200,
         height: 630,
         alt: 'Somnia Dream Journal',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     title: 'Somnia — Dream Journal That Locks After 2 Minutes',
     description:
       'The only dream journal built around the 2-minute window you have before your dreams fade.',
-    images: ['/og-image.png'],
+    images: ['/opengraph-image'],
     creator: '@sirberialo007',
   },
   robots: {
