@@ -40,7 +40,7 @@ export const metadata: Metadata = {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'Somnia Dream Journal',
+        alt: 'Somnia — Dream Journal That Locks After 2 Minutes',
       },
     ],
   },
