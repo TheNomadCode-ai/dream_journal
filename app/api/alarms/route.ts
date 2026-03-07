@@ -34,57 +34,80 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = (await createClient()) as any
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  try {
+    const supabase = (await createClient()) as any
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-  const payload = await request.json().catch(() => null)
-  console.log('POST /api/alarms called', payload)
-  const parsed = alarmSchema.safeParse(payload)
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 })
-  }
+    const body = await request.json()
+    console.log('Alarm save body:', body)
 
-  const alarm = parsed.data
+    const parsed = alarmSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid payload', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
 
-  const { data, error } = await supabase
-    .from('alarms')
-    .upsert({
+    const alarm = parsed.data
+
+    const alarmRow = {
       user_id: user.id,
       alarm_time: `${alarm.alarm_time}:00`,
       enabled: alarm.enabled,
       days_of_week: alarm.days_of_week,
       snooze_seconds: alarm.snooze_seconds,
-    }, { onConflict: 'user_id' })
-    .select('*')
-    .single()
+    }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const { data, error } = await supabase
+      .from('alarms')
+      .upsert(alarmRow, { onConflict: 'user_id' })
+      .select('*')
+      .single()
+
+    if (error) {
+      console.error('Alarm insert error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const { data: profile, error: profileFetchError } = await supabase
+      .from('user_profiles')
+      .select('timezone, wake_timezone')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profileFetchError) {
+      console.error('Profile read error during alarm save:', profileFetchError)
+    }
+
+    const timezone = alarm.timezone ?? profile?.timezone ?? profile?.wake_timezone ?? 'UTC'
+
+    const { error: profileUpdateError } = await supabase
+      .from('user_profiles')
+      .update({
+        wake_time: `${alarm.alarm_time}:00`,
+        wake_timezone: timezone,
+        timezone,
+        push_enabled: alarm.enabled,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id)
+
+    if (profileUpdateError) {
+      console.error('Profile update error during alarm save:', profileUpdateError)
+    }
+
+    return NextResponse.json({ alarm: data })
+  } catch (err) {
+    console.error('Alarm API crashed:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
-
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('timezone, wake_timezone')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const timezone = alarm.timezone ?? profile?.timezone ?? profile?.wake_timezone ?? 'UTC'
-
-  await supabase
-    .from('user_profiles')
-    .update({
-      wake_time: `${alarm.alarm_time}:00`,
-      wake_timezone: timezone,
-      timezone,
-      push_enabled: alarm.enabled,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', user.id)
-
-  return NextResponse.json({ alarm: data })
 }

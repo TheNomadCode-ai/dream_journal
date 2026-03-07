@@ -1,11 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
+
+const loadingMessages = [
+  'Unlocking your dreams...',
+  'Opening the vault...',
+  'Almost there...',
+]
 
 export default function SignupPage() {
   const router = useRouter()
@@ -15,8 +21,22 @@ export default function SignupPage() {
   const [wakeTime, setWakeTime] = useState('07:00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [msgIndex, setMsgIndex] = useState(0)
 
   const supabase = createClient()
+
+  useEffect(() => {
+    if (!loading) {
+      setMsgIndex(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % loadingMessages.length)
+    }, 1500)
+
+    return () => clearInterval(interval)
+  }, [loading])
 
   function validatePassword(pw: string): string | null {
     if (pw.length < 8 || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
@@ -152,24 +172,36 @@ export default function SignupPage() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || !email || !password || !displayName || !wakeTime}
-            className="btn-primary auth-submit w-full"
-            aria-busy={loading}
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <span
-                  className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground"
-                  aria-hidden="true"
-                />
-                Creating account…
-              </span>
-            ) : (
-              'Create free account'
-            )}
-          </button>
+          {loading ? (
+            <div className="auth-loading-shell" aria-live="polite" aria-busy="true">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 100 100"
+                style={{ animation: 'moonPulse 2s ease-in-out infinite' }}
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="somnia-signup-loader" cx="32%" cy="30%" r="65%">
+                    <stop offset="0%" stopColor="rgba(240,225,255,1)" />
+                    <stop offset="100%" stopColor="rgba(140,80,255,0.6)" />
+                  </radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="42" fill="url(#somnia-signup-loader)" />
+                <circle cx="66" cy="44" r="35" fill="#06040f" />
+              </svg>
+              <span className="auth-loading-message">{loadingMessages[msgIndex]}</span>
+            </div>
+          ) : (
+            <button
+              type="submit"
+              disabled={loading || !email || !password || !displayName || !wakeTime}
+              className="btn-primary auth-submit w-full"
+              aria-busy={loading}
+            >
+              Create free account
+            </button>
+          )}
         </div>
       </form>
 

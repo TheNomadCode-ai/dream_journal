@@ -114,6 +114,18 @@
   }
 }
 
+@keyframes moonPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgba(180,130,255,0.4));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(180,130,255,0.8));
+    transform: scale(1.08);
+  }
+}
+
 /* ─────────────────────────────────
    Animation helpers
 ───────────────────────────────── */
@@ -317,6 +329,28 @@
 
 .auth-submit:disabled {
   opacity: 0.72;
+}
+
+.auth-loading-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  min-height: 72px;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+.auth-loading-message {
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: rgba(180,130,255,0.7);
+  text-transform: uppercase;
+  transition: opacity 300ms ease;
+  text-align: center;
 }
 
 .auth-alt-link,
@@ -1228,6 +1262,36 @@
   z-index: 40;
 }
 
+.dashboard-mobile-menu-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 90;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #1E2235;
+  background: rgba(13, 14, 24, 0.96);
+  color: #E8E4D9;
+  display: none;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.dashboard-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 40;
+  display: none;
+  transition: opacity 220ms ease;
+  border: none;
+  padding: 0;
+}
+
+.dashboard-main {
+  margin-left: 220px;
+}
+
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -1255,6 +1319,42 @@
   transform: translateY(-50%);
   width: 2px; height: 55%;
   background: #C9A84C;
+}
+
+@media (max-width: 767px) {
+  .dashboard-shell {
+    overflow-x: hidden;
+  }
+
+  .dashboard-mobile-menu-btn {
+    display: grid;
+  }
+
+  .dashboard-mobile-overlay.open {
+    display: block;
+    opacity: 1;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 250ms ease;
+    z-index: 50;
+  }
+
+  .sidebar.sidebar-mobile-open {
+    transform: translateX(0);
+  }
+
+  .dashboard-main {
+    margin-left: 0;
+    width: 100%;
+    padding-top: 72px;
+  }
 }
 
 /* ─────────────────────────────────

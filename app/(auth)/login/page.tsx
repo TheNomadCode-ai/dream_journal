@@ -1,11 +1,17 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
+
+const loadingMessages = [
+  'Unlocking your dreams...',
+  'Opening the vault...',
+  'Almost there...',
+]
 
 function LoginContent() {
   const router = useRouter()
@@ -18,10 +24,24 @@ function LoginContent() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [msgIndex, setMsgIndex] = useState(0)
   const [missingAccountError, setMissingAccountError] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
 
   const supabase = createClient()
+
+  useEffect(() => {
+    if (!loading) {
+      setMsgIndex(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % loadingMessages.length)
+    }, 1500)
+
+    return () => clearInterval(interval)
+  }, [loading])
 
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -226,26 +246,36 @@ function LoginContent() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || !email}
-            className="btn-primary auth-submit w-full"
-            aria-busy={loading}
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <span
-                  className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground"
-                  aria-hidden="true"
-                />
-                {mode === 'password' ? 'Signing in…' : 'Sending link…'}
-              </span>
-            ) : mode === 'password' ? (
-              'Sign in'
-            ) : (
-              'Send magic link'
-            )}
-          </button>
+          {mode === 'password' && loading ? (
+            <div className="auth-loading-shell" aria-live="polite" aria-busy="true">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 100 100"
+                style={{ animation: 'moonPulse 2s ease-in-out infinite' }}
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="somnia-login-loader" cx="32%" cy="30%" r="65%">
+                    <stop offset="0%" stopColor="rgba(240,225,255,1)" />
+                    <stop offset="100%" stopColor="rgba(140,80,255,0.6)" />
+                  </radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="42" fill="url(#somnia-login-loader)" />
+                <circle cx="66" cy="44" r="35" fill="#06040f" />
+              </svg>
+              <span className="auth-loading-message">{loadingMessages[msgIndex]}</span>
+            </div>
+          ) : (
+            <button
+              type="submit"
+              disabled={loading || !email}
+              className="btn-primary auth-submit w-full"
+              aria-busy={loading}
+            >
+              {mode === 'password' ? 'Sign in' : loading ? 'Sending link...' : 'Send magic link'}
+            </button>
+          )}
 
           {mode === 'magic-link' && (
             <p className="text-center text-xs text-muted-foreground">
