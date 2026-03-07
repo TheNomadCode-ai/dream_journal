@@ -112,7 +112,7 @@ const jsonLd = {
 export default async function LandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const journalHref = user ? '/capture' : '/login'
+  const journalHref = user ? '/capture' : '/signup'
 
   return (
     <div className="landing-page" style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
@@ -700,7 +700,7 @@ export default async function LandingPage() {
         >
           Set your alarm now. Tomorrow morning, the window opens. Everything after that depends on whether you're ready.
         </p>
-        <Link href="/login" className="btn-gold">
+        <Link href="/signup" className="btn-gold">
           Set My First Alarm — it&apos;s free
         </Link>
         <p

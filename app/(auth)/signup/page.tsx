@@ -43,6 +43,7 @@ export default function SignupPage() {
       password,
       options: {
         data: {
+          full_name: displayName.trim(),
           display_name: displayName.trim(),
           wake_time: wakeTime,
           wake_timezone: timezone,
@@ -57,8 +58,8 @@ export default function SignupPage() {
       return
     }
 
-    router.replace('/onboarding')
-    router.refresh()
+    // Email confirmation is disabled, so session is created immediately.
+    router.push('/onboarding')
   }
 
   return (

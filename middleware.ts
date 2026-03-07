@@ -1,65 +1,64 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-import { updateSession } from '@/lib/supabase/middleware'
-
-// Routes that do NOT require authentication
-const PUBLIC_ROUTES = [
+const PUBLIC_PATHS = [
   '/',
   '/login',
   '/signup',
   '/privacy',
   '/terms',
-  '/auth/callback',
-  '/blog',
 ]
 
-const AUTH_ROUTES = ['/login', '/signup']
-
-function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((route) =>
-    route === '/' ? pathname === '/' : pathname.startsWith(route)
-  )
-}
-
-function isAuthRoute(pathname: string): boolean {
-  return AUTH_ROUTES.some((route) => pathname.startsWith(route))
-}
-
 export async function middleware(request: NextRequest) {
-  // Refresh the session and get updated response + user
-  const { response, user } = await updateSession(request)
-
   const { pathname } = request.nextUrl
 
-  // Static assets and Next.js internals — skip
   if (
+    pathname.startsWith('/blog') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.includes('.')
+    pathname.startsWith('/sitemap') ||
+    pathname.startsWith('/robots')
   ) {
-    return response
+    return NextResponse.next()
   }
 
-  // Blog is fully public, including /blog/[slug]
-  if (pathname.startsWith('/blog')) {
-    return response
-  }
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  })
 
-  // User is authenticated and tries to access login/signup — redirect to dashboard
-  if (user && isAuthRoute(pathname)) {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if ((pathname === '/login' || pathname === '/signup') && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // User is authenticated and visits the landing page — redirect to dashboard
-  if (user && pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return response
   }
 
-  // User is NOT authenticated and tries to access a protected route
-  if (!user && !isPublicRoute(pathname)) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirectedFrom', pathname)
-    return NextResponse.redirect(loginUrl)
+  if (!user) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return response
@@ -67,13 +66,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimisation)
-     * - favicon.ico
-     * - public folder files
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -44,12 +44,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: profile } = userId
     ? await supabase
         .from('user_profiles')
-        .select('current_streak, auto_pattern_insight, tier, plan, wake_time')
+        .select('current_streak, auto_pattern_insight, tier, plan')
         .eq('id', userId)
         .single()
     : { data: null }
 
-  if (userId && !profile?.wake_time) {
+  const { count: enabledAlarmCount } = userId
+    ? await supabase
+        .from('alarms')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('enabled', true)
+    : { count: 0 }
+
+  if (userId && (enabledAlarmCount ?? 0) === 0) {
     redirect('/onboarding')
   }
 
