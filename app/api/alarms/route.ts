@@ -1,23 +1,41 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { z } from 'zod'
 
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+type AlarmRequestBody = {
+  alarm_time?: string
+  enabled?: boolean
+  days_of_week?: number[]
+  snooze_seconds?: number
+  timezone?: string
+}
 
-const alarmSchema = z.object({
-  alarm_time: z.string().regex(/^\d{2}:\d{2}$/),
-  enabled: z.boolean(),
-  days_of_week: z.array(z.number().int().min(1).max(7)).min(1),
-  snooze_seconds: z.union([z.literal(0), z.literal(60), z.literal(120)]),
-  timezone: z.string().min(1).max(120).optional(),
-})
+function normalizeAlarmTime(value?: string): string | null {
+  if (!value || !/^\d{2}:\d{2}$/.test(value)) return null
+  return `${value}:00`
+}
+
+function normalizeDays(value?: number[]): number[] {
+  if (!Array.isArray(value) || value.length === 0) return [1, 2, 3, 4, 5, 6, 7]
+  return value
+    .filter((day) => Number.isInteger(day) && day >= 1 && day <= 7)
+    .filter((day, index, arr) => arr.indexOf(day) === index)
+}
+
+function normalizeSnooze(value?: number): 0 | 60 | 120 {
+  if (value === 60 || value === 120) return value
+  return 0
+}
 
 export async function GET() {
   const supabase = (await createClient()) as any
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (!user || authError) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
   const { data, error } = await supabase
@@ -27,10 +45,10 @@ export async function GET() {
     .maybeSingle()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
   }
 
-  return NextResponse.json({ alarm: data })
+  return NextResponse.json({ success: true, data })
 }
 
 export async function POST(request: Request) {
@@ -46,90 +64,64 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    const db = process.env.SUPABASE_SERVICE_ROLE_KEY
-      ? (createServiceClient() as any)
-      : supabase
+    const body = (await request.json()) as AlarmRequestBody
+    console.log('Alarm body received:', JSON.stringify(body))
 
-    const body = await request.json()
-    console.log('Alarm save body:', body)
-
-    const parsed = alarmSchema.safeParse(body)
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid payload', details: parsed.error.flatten() },
-        { status: 400 }
-      )
+    const alarmTime = normalizeAlarmTime(body.alarm_time)
+    if (!alarmTime) {
+      return NextResponse.json({ error: 'Invalid alarm_time. Expected HH:MM.' }, { status: 400 })
     }
 
-    const alarm = parsed.data
-    const timeValue = `${alarm.alarm_time}:00`
+    const days = normalizeDays(body.days_of_week)
+    if (days.length === 0) {
+      return NextResponse.json({ error: 'Invalid days_of_week.' }, { status: 400 })
+    }
 
-    // Check whether an alarm row already exists for this user
-    const { data: existing, error: selectError } = await db
+    const enabled = body.enabled ?? true
+    const snoozeSeconds = normalizeSnooze(body.snooze_seconds)
+
+    const alarmData = {
+      user_id: user.id,
+      alarm_time: alarmTime,
+      enabled,
+      days_of_week: days,
+      snooze_seconds: snoozeSeconds,
+    }
+
+    console.log('Inserting alarm:', JSON.stringify(alarmData))
+
+    const { data, error } = await supabase
       .from('alarms')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (selectError) {
-      console.error('Alarm select error:', selectError)
-      return NextResponse.json({ error: selectError.message }, { status: 500 })
-    }
-
-    let writeError
-    if (existing) {
-      const { error } = await db
-        .from('alarms')
-        .update({
-          alarm_time: timeValue,
-          enabled: alarm.enabled,
-          days_of_week: alarm.days_of_week,
-          snooze_seconds: alarm.snooze_seconds,
-        })
-        .eq('user_id', user.id)
-      writeError = error
-    } else {
-      const { error } = await db
-        .from('alarms')
-        .insert({
-          user_id: user.id,
-          alarm_time: timeValue,
-          enabled: alarm.enabled,
-          days_of_week: alarm.days_of_week,
-          snooze_seconds: alarm.snooze_seconds,
-        })
-      writeError = error
-    }
-
-    if (writeError) {
-      console.error('Alarm write error:', writeError)
-      return NextResponse.json({ error: writeError.message }, { status: 500 })
-    }
-
-    // Read back the saved alarm
-    const { data: saved } = await db
-      .from('alarms')
+      .upsert(alarmData, {
+        onConflict: 'user_id',
+        ignoreDuplicates: false,
+      })
       .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle()
+      .single()
 
-    // Update profile with wake time (best-effort, don't block on failure)
-    const timezone = alarm.timezone ?? 'UTC'
+    if (error) {
+      console.error('Supabase error:', JSON.stringify(error))
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
+    }
 
-    await db
+    const timezone = body.timezone ?? 'UTC'
+    const { error: profileError } = await supabase
       .from('user_profiles')
       .update({
-        wake_time: timeValue,
+        wake_time: alarmTime,
         wake_timezone: timezone,
         timezone,
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id)
-      .then(({ error: e }: { error: unknown }) => e && console.error('Profile update error:', e))
 
-    return NextResponse.json({ alarm: saved })
+    if (profileError) {
+      console.error('Profile update error:', JSON.stringify(profileError))
+    }
+
+    return NextResponse.json({ success: true, data })
   } catch (err) {
-    console.error('Alarm API crashed:', err)
+    console.error('Route crashed:', String(err))
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
