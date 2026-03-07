@@ -15,6 +15,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ['@node-rs/argon2'],
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -23,6 +24,7 @@ const nextConfig = {
       },
     ],
   },
+  compress: true,
   async headers() {
     return [
       {

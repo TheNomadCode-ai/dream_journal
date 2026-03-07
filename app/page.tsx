@@ -1,9 +1,19 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import ScrollReveal from '@/components/ScrollReveal'
 import AlarmDemoTicker from '@/components/landing/AlarmDemoTicker'
 import FounderDmLink from '@/components/landing/FounderDmLink'
 import MobileNav from '@/components/landing/MobileNav'
 import { createClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = {
+  title: 'Somnia — Dream Journal That Locks After 2 Minutes',
+  description:
+    'Set your alarm. When it fires, write your dream within 2 minutes or lose it forever. The only dream journal built around how dream memory actually works.',
+  alternates: {
+    canonical: 'https://somniavault.me',
+  },
+}
 
 const FEATURES = [
   {
@@ -78,6 +88,27 @@ const HOW_IT_WORKS = [
   },
 ]
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Somnia',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web, iOS, Android',
+  description:
+    'Dream journal with a 2-minute capture window. Set your alarm, write before it locks.',
+  url: 'https://somniavault.me',
+  author: {
+    '@type': 'Person',
+    name: 'Sushank Khanal',
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    description: 'Free tier available. Pro from $4.99/month.',
+  },
+}
+
 export default async function LandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -85,6 +116,10 @@ export default async function LandingPage() {
 
   return (
     <div className="landing-page" style={{ backgroundColor: '#0A0B12', minHeight: '100vh', color: '#E8E4D9' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ScrollReveal />
 
       <div aria-hidden="true" className="landing-grain" />

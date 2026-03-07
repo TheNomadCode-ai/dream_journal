@@ -4,8 +4,12 @@ import Link from 'next/link'
 import { getAllBlogPostsMeta, formatBlogDate } from '@/lib/blog'
 
 export const metadata: Metadata = {
-  title: 'The Somnia Journal | Somnia',
-  description: 'Sleep science, dream journaling, and the art of remembering.',
+  title: 'The Somnia Journal — Sleep Science & Dream Journaling',
+  description:
+    'Articles about dream journaling, sleep science, lucid dreaming, and the neuroscience of why we forget our dreams.',
+  alternates: {
+    canonical: 'https://somniavault.me/blog',
+  },
 }
 
 export default async function BlogIndexPage() {
