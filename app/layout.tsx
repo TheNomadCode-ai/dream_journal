@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: 'Somnia — Privacy-first AI Dream Journal',
   description:
     'Understand your dreams. Own your data. A private dream journal with AI pattern recognition.',
+  verification: {
+    google: 'ifyBULX_Roh68V0iMQLWZ_7IeiSyC-Yfk989XkKOyoQ',
+  },
   manifest: '/manifest.json',
   themeColor: '#C9A84C',
   appleWebApp: {
