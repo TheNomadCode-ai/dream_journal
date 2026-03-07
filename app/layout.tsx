@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 
 import InstallPrompt from '@/components/pwa/InstallPrompt'
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
+import TouchFeedback from '@/components/ui/TouchFeedback'
 import '../styles/globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         <ServiceWorkerRegistrar />
+        <TouchFeedback />
         {children}
         <InstallPrompt />
       </body>

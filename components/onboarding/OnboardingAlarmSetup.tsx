@@ -20,6 +20,8 @@ export default function OnboardingAlarmSetup() {
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', [])
 
   async function handleContinue() {
+    if (saving) return
+
     setSaving(true)
     setError(null)
 
@@ -37,40 +39,42 @@ export default function OnboardingAlarmSetup() {
       body: requestBody,
     })
 
-    const response = await fetch('/api/alarms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    })
+    try {
+      const response = await fetch('/api/alarms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })
 
-    const responseText = await response.text()
-    console.log('Onboarding alarm save response', {
-      status: response.status,
-      ok: response.ok,
-      body: responseText,
-    })
+      const responseText = await response.text()
+      console.log('Onboarding alarm save response', {
+        status: response.status,
+        ok: response.ok,
+        body: responseText,
+      })
 
-    setSaving(false)
+      if (!response.ok) {
+        setError('Could not save your alarm. Please try again.')
+        return
+      }
 
-    if (!response.ok) {
-      setError('Could not save your alarm. Please try again.')
-      return
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const supabaseAny = supabase as any
+
+        await supabaseAny
+          .from('user_profiles')
+          .update({ onboarding_complete: true })
+          .eq('id', user.id)
+      }
+
+      router.replace('/dashboard')
+      router.refresh()
+    } finally {
+      setSaving(false)
     }
-
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user) {
-      const supabaseAny = supabase as any
-
-      await supabaseAny
-        .from('user_profiles')
-        .update({ onboarding_complete: true })
-        .eq('id', user.id)
-    }
-
-    router.replace('/dashboard')
-    router.refresh()
   }
 
   return (
@@ -173,9 +177,25 @@ export default function OnboardingAlarmSetup() {
             onClick={handleContinue}
             disabled={saving}
             className="btn-gold"
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{ width: '100%', justifyContent: 'center', opacity: saving ? 0.7 : 1 }}
           >
-            {saving ? 'Saving alarm…' : 'Set Alarm and Continue'}
+            {saving ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 100 100" style={{ animation: 'moonPulse 1.5s ease-in-out infinite' }}>
+                  <defs>
+                    <radialGradient id="mg-onboarding-save" cx="32%" cy="30%" r="65%">
+                      <stop offset="0%" stopColor="rgba(240,225,255,1)" />
+                      <stop offset="100%" stopColor="rgba(140,80,255,0.6)" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="50" cy="50" r="42" fill="url(#mg-onboarding-save)" />
+                  <circle cx="66" cy="44" r="35" fill="#06040f" />
+                </svg>
+                <span>Saving...</span>
+              </span>
+            ) : (
+              'Set Alarm and Continue'
+            )}
           </button>
         </div>
       </div>

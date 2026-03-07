@@ -3,7 +3,11 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { createClient } from '@/lib/supabase/client'
+
 type AlarmRow = {
+  id?: string
+  user_id?: string
   alarm_time: string
   enabled: boolean
   days_of_week: number[]
@@ -164,6 +168,8 @@ function WheelColumn({
 }
 
 export default function AlarmSettingsClient({ initialAlarm, initialTimezone, initialPushEnabled }: Props) {
+  const supabase = useMemo(() => createClient(), [])
+  const [alarm, setAlarm] = useState<AlarmRow>(initialAlarm)
   const initialTime = useMemo(() => to12Hour(initialAlarm?.alarm_time), [initialAlarm?.alarm_time])
   const [hourIndex, setHourIndex] = useState(initialTime.hourIndex)
   const [minuteIndex, setMinuteIndex] = useState(initialTime.minuteIndex)
@@ -172,8 +178,9 @@ export default function AlarmSettingsClient({ initialAlarm, initialTimezone, ini
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported')
-  const [pushEnabled, setPushEnabled] = useState(initialPushEnabled)
+  const [pushEnabled, setPushEnabled] = useState(Boolean(initialPushEnabled || alarm?.enabled))
   const [timezone, setTimezone] = useState(initialTimezone)
 
   const deviceTimezone = useMemo(() => {
@@ -224,33 +231,43 @@ export default function AlarmSettingsClient({ initialAlarm, initialTimezone, ini
   }
 
   async function handleNotificationToggle() {
+    if (notificationsLoading) return
+
     setError(null)
 
     if (permission === 'unsupported') return
 
-    if (permission === 'default') {
-      const result = await Notification.requestPermission()
-      setPermission(result)
+    setNotificationsLoading(true)
 
-      if (result === 'granted') {
-        const ok = await subscribeToPush()
-        if (ok) {
-          setPushEnabled(true)
+    try {
+      if (permission === 'default') {
+        const result = await Notification.requestPermission()
+        setPermission(result)
+
+        if (result === 'granted') {
+          const ok = await subscribeToPush()
+          if (ok) {
+            setPushEnabled(true)
+          } else {
+            setError('Could not save push subscription right now.')
+          }
         } else {
-          setError('Could not save push subscription right now.')
+          setPushEnabled(false)
         }
+
+        if (result === 'denied') {
+          setError('Enable notifications in your phone settings to receive the alarm.')
+        }
+        return
       }
 
-      if (result === 'denied') {
-        setError('Enable notifications in your phone settings to receive the alarm.')
+      if (permission === 'granted') {
+        const ok = await subscribeToPush()
+        if (ok) setPushEnabled(true)
+        if (!ok) setError('Could not refresh push subscription.')
       }
-      return
-    }
-
-    if (permission === 'granted') {
-      const ok = await subscribeToPush()
-      if (ok) setPushEnabled(true)
-      if (!ok) setError('Could not refresh push subscription.')
+    } finally {
+      setNotificationsLoading(false)
     }
   }
 
@@ -265,32 +282,51 @@ export default function AlarmSettingsClient({ initialAlarm, initialTimezone, ini
 
     const alarmTime = to24Hour(hourIndex, minuteIndex, periodIndex)
 
-    const response = await fetch('/api/alarms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        alarm_time: alarmTime,
-        enabled: pushEnabled,
-        days_of_week: selectedDays,
-        snooze_seconds: 0,
-        timezone,
-      }),
-    })
+    try {
+      const response = await fetch('/api/alarms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alarm_time: alarmTime,
+          enabled: true,
+          days_of_week: selectedDays,
+          snooze_seconds: 0,
+          timezone,
+        }),
+      })
 
-    setSaving(false)
+      if (!response.ok) {
+        setError('Could not save alarm settings.')
+        return
+      }
 
-    if (!response.ok) {
-      setError('Could not save alarm settings.')
-      return
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData.user
+
+      if (user) {
+        const { data: updatedAlarm } = await (supabase as any)
+          .from('alarms')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (updatedAlarm) {
+          setAlarm(updatedAlarm as AlarmRow)
+          setPushEnabled(Boolean(updatedAlarm.enabled))
+          setSelectedDays(Array.isArray(updatedAlarm.days_of_week) ? updatedAlarm.days_of_week : selectedDays)
+        }
+      }
+
+      const display = new Date(`1970-01-01T${alarmTime}:00`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+
+      setToast(`Alarm set for ${display}`)
+      window.setTimeout(() => setToast(null), 2600)
+    } finally {
+      setSaving(false)
     }
-
-    const display = new Date(`1970-01-01T${alarmTime}:00`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    })
-
-    setToast(`Alarm set for ${display}`)
-    window.setTimeout(() => setToast(null), 2600)
   }
 
   function toggleDay(day: number) {
@@ -343,10 +379,12 @@ export default function AlarmSettingsClient({ initialAlarm, initialTimezone, ini
                   style={{
                     minHeight: 44,
                     borderRadius: 999,
-                    background: selected ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
-                    color: selected ? '#000000' : 'rgba(255,255,255,0.65)',
+                    background: selected ? 'rgba(180,130,255,0.25)' : 'rgba(255,255,255,0.03)',
+                    border: selected ? '1px solid rgba(180,130,255,0.60)' : '1px solid rgba(255,255,255,0.10)',
+                    color: selected ? '#F0E1FF' : 'rgba(255,255,255,0.65)',
                     fontSize: 12,
                     letterSpacing: '0.06em',
+                    transition: 'background 100ms ease, border-color 100ms ease, color 100ms ease',
                   }}
                 >
                   {day.label}
@@ -372,21 +410,39 @@ export default function AlarmSettingsClient({ initialAlarm, initialTimezone, ini
             <button
               type="button"
               onClick={handleNotificationToggle}
+              disabled={notificationsLoading}
               style={{
                 width: '100%',
                 minHeight: 48,
                 borderRadius: 12,
                 border: '1px solid rgba(255,255,255,0.12)',
-                background: permission === 'granted' ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.03)',
+                background: pushEnabled ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.03)',
                 color: '#E8E4D9',
                 textAlign: 'left',
                 padding: '0 14px',
                 fontSize: 13,
+                opacity: notificationsLoading ? 0.7 : 1,
               }}
             >
-              {permission === 'granted'
-                ? 'Notifications enabled'
-                : 'Tap to enable alarm notifications'}
+              {notificationsLoading ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <svg width="16" height="16" viewBox="0 0 100 100" style={{ animation: 'moonPulse 1.5s ease-in-out infinite' }}>
+                    <defs>
+                      <radialGradient id="mg-notification" cx="32%" cy="30%" r="65%">
+                        <stop offset="0%" stopColor="rgba(240,225,255,1)" />
+                        <stop offset="100%" stopColor="rgba(140,80,255,0.6)" />
+                      </radialGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="42" fill="url(#mg-notification)" />
+                    <circle cx="66" cy="44" r="35" fill="#06040f" />
+                  </svg>
+                  <span>Saving...</span>
+                </span>
+              ) : pushEnabled ? (
+                'Notifications enabled'
+              ) : (
+                'Tap to enable alarm notifications'
+              )}
             </button>
           )}
         </div>
@@ -415,9 +471,29 @@ export default function AlarmSettingsClient({ initialAlarm, initialTimezone, ini
             color: '#000000',
             fontWeight: 600,
             fontSize: 15,
+            opacity: saving ? 0.7 : 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          {saving ? 'Saving…' : 'Save Alarm'}
+          {saving ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 100 100" style={{ animation: 'moonPulse 1.5s ease-in-out infinite' }}>
+                <defs>
+                  <radialGradient id="mg-save" cx="32%" cy="30%" r="65%">
+                    <stop offset="0%" stopColor="rgba(240,225,255,1)" />
+                    <stop offset="100%" stopColor="rgba(140,80,255,0.6)" />
+                  </radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="42" fill="url(#mg-save)" />
+                <circle cx="66" cy="44" r="35" fill="#06040f" />
+              </svg>
+              <span>Saving...</span>
+            </span>
+          ) : (
+            'Save Alarm'
+          )}
         </button>
 
         <p style={{ marginTop: 14, fontSize: 13, lineHeight: 1.65, color: 'rgba(255,255,255,0.48)' }}>
