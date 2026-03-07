@@ -11,6 +11,7 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectedFrom = searchParams.get('redirectedFrom') ?? '/dashboard'
+  const alreadyConfirmed = searchParams.get('message') === 'already_confirmed'
 
   const [mode, setMode] = useState<'password' | 'magic-link'>('password')
   const [email, setEmail] = useState('')
@@ -95,6 +96,15 @@ function LoginContent() {
         <h1 className="auth-heading text-2xl font-bold text-foreground">Welcome back</h1>
         <p className="auth-subheading mt-1 text-sm text-muted-foreground">Sign in to your Somnia account</p>
       </div>
+
+      {alreadyConfirmed && (
+        <p
+          role="status"
+          className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground"
+        >
+          Your account is already confirmed. Sign in below.
+        </p>
+      )}
 
       {/* Mode toggle */}
       <div className="auth-toggle mb-6 flex rounded-lg border border-surface-border bg-surface p-1">

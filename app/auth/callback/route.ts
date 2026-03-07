@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const { searchParams, origin, pathname } = url
+  const authType = searchParams.get('type')
 
   // Always complete auth on the canonical host so session cookies are scoped correctly.
   if (url.hostname === 'somniavault.me') {
@@ -34,6 +35,13 @@ export async function GET(request: Request) {
 
     if (!error) {
       return NextResponse.redirect(`${origin}${safeNext}`)
+    }
+
+    // Reused or stale signup confirmation links should guide users to sign in.
+    if (authType === 'signup') {
+      return NextResponse.redirect(
+        `${origin}/login?message=already_confirmed`
+      )
     }
   }
 
