@@ -1,17 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { compileMDX } from 'next-mdx-remote/rsc'
+import { MDXRemote } from 'next-mdx-remote/rsc'
 import remarkGfm from 'remark-gfm'
 
 import ShareActions from '@/components/blog/ShareActions'
 import { getAppUrl } from '@/lib/app-url'
 import {
   formatBlogDate,
-  getAllBlogPostsMeta,
+  getAllPosts,
   getBlogPostBySlug,
   getRelatedBlogPosts,
-  type BlogFrontmatter,
 } from '@/lib/blog'
 
 type BlogPostPageProps = {
@@ -21,8 +20,10 @@ type BlogPostPageProps = {
 }
 
 export async function generateStaticParams() {
-  const posts = await getAllBlogPostsMeta()
-  return posts.map((post) => ({ slug: post.slug }))
+  const posts = await getAllPosts()
+  return posts.map((post) => ({
+    slug: post.slug,
+  }))
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
@@ -59,15 +60,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound()
   }
 
-  const { content } = await compileMDX<BlogFrontmatter>({
-    source: post.content,
-    options: {
-      mdxOptions: {
-        remarkPlugins: [remarkGfm],
-      },
-    },
-  })
-
   const canonicalUrl = `${getAppUrl()}/blog/${post.frontmatter.slug}`
   const relatedPosts = await getRelatedBlogPosts(post.frontmatter.slug, post.frontmatter.tags, 2)
 
@@ -103,7 +95,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </header>
 
-        <article className="blog-post-content">{content}</article>
+        <article className="blog-post-content">
+          <MDXRemote
+            source={post.content}
+            options={{
+              mdxOptions: {
+                remarkPlugins: [remarkGfm],
+              },
+            }}
+          />
+        </article>
 
         <section className="blog-share-section" aria-label="Share this article">
           <h2 className="blog-section-title">Share this post</h2>

@@ -60,6 +60,10 @@ export async function getAllBlogPostsMeta(): Promise<BlogPostMeta[]> {
   return sortPostsNewestFirst(posts)
 }
 
+export async function getAllPosts(): Promise<BlogPostMeta[]> {
+  return getAllBlogPostsMeta()
+}
+
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   const fullPath = path.join(BLOG_CONTENT_DIR, `${slug}.mdx`)
 
