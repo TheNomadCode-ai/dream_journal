@@ -72,21 +72,48 @@ function shuffle<T>(values: T[]): T[] {
   return clone
 }
 
-function seedGuidance(text: string) {
-  const trimmed = text.trim()
-  const words = trimmed ? trimmed.split(/\s+/).length : 0
-  const chars = trimmed.length
+function getWordCount(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length
+}
 
-  if (chars < 20) {
-    return { tone: 'low', color: '#ff9f9f', message: 'Too vague. Add sensory detail, emotion, or a person/place.', words }
+function getDescriptiveness(text: string) {
+  const len = text.length
+  const wordCount = getWordCount(text)
+
+  if (len === 0) return null
+
+  if (wordCount <= 2) {
+    return {
+      message: 'Be more specific - who, what, or where?',
+      color: 'rgba(255,100,100,0.7)',
+    }
   }
-  if (chars < 50) {
-    return { tone: 'building', color: '#f5cf8f', message: 'Good start. Try adding one concrete image or feeling.', words }
+
+  if (wordCount <= 5) {
+    return {
+      message: 'Add more detail - a feeling, a place, a name.',
+      color: 'rgba(255,160,60,0.7)',
+    }
   }
-  if (chars < 120) {
-    return { tone: 'good', color: '#9ee7b6', message: 'Great clarity. This is descriptive enough for incubation.', words }
+
+  if (wordCount <= 10) {
+    return {
+      message: 'Getting vivid. Keep going if you can.',
+      color: 'rgba(255,210,80,0.7)',
+    }
   }
-  return { tone: 'strong', color: '#9be2ff', message: 'Excellent depth. Keep this focused intention for sleep.', words }
+
+  if (wordCount <= 20) {
+    return {
+      message: 'Good. Specific enough to work with.',
+      color: 'rgba(120,220,140,0.7)',
+    }
+  }
+
+  return {
+    message: 'Very detailed. Your subconscious has a lot to work with.',
+    color: 'rgba(100,200,255,0.7)',
+  }
 }
 
 function EveningSkeleton() {
@@ -118,6 +145,7 @@ export default function EveningPage() {
   const [initialSeconds, setInitialSeconds] = useState(0)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [seedText, setSeedText] = useState('')
+  const [touched, setTouched] = useState(false)
   const [shownSuggestions, setShownSuggestions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -326,7 +354,13 @@ export default function EveningPage() {
     setStage('planted')
   }
 
-  const guidance = seedGuidance(seedText)
+  function handleSeedChange(value: string) {
+    setSeedText(value)
+    if (value.length > 0) setTouched(true)
+  }
+
+  const descriptiveness = getDescriptiveness(seedText)
+  const wordCount = getWordCount(seedText)
   const sleepParts = parseTime(sleepTime, '23:00:00')
   const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
 
@@ -461,7 +495,7 @@ export default function EveningPage() {
             <p style={{ color: '#9f8abb', marginBottom: 8 }}>OR</p>
             <textarea
               value={seedText}
-              onChange={(event) => setSeedText(event.target.value.slice(0, 300))}
+              onChange={(event) => handleSeedChange(event.target.value.slice(0, 300))}
               placeholder="Write your own intention..."
               style={{
                 width: '100%',
@@ -474,10 +508,22 @@ export default function EveningPage() {
                 marginBottom: 8,
               }}
             />
-            <div style={{ border: `1px solid ${guidance.color}`, borderRadius: 10, padding: '8px 10px', marginBottom: 8, color: guidance.color }}>
-              {guidance.message}
-            </div>
-            <p style={{ textAlign: 'right', color: '#a88fd1', marginBottom: 12 }}>{seedText.length}/300 chars • {guidance.words} words</p>
+            {touched && seedText.length > 0 && descriptiveness ? (
+              <p
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '11px',
+                  letterSpacing: '0.1em',
+                  marginTop: '8px',
+                  marginBottom: 8,
+                  transition: 'color 0.4s ease',
+                  color: descriptiveness.color,
+                }}
+              >
+                {descriptiveness.message}
+              </p>
+            ) : null}
+            <p style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginBottom: 12 }}>{wordCount} words</p>
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
             <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim()}>
               {saving ? 'Planting...' : 'Plant this seed'}
