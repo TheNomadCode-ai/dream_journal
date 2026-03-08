@@ -39,16 +39,11 @@ export default function NotifyPage() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('target_wake_time, target_sleep_time, home_screen_installed, notification_permission_granted')
+        .select('target_wake_time, target_sleep_time, notification_permission_granted')
         .eq('id', user.id)
         .maybeSingle()
 
       if (!active) return
-
-      if (!profile?.home_screen_installed) {
-        router.replace('/install')
-        return
-      }
 
       setWakeTime(profile?.target_wake_time ?? '07:00:00')
       setSleepTime(profile?.target_sleep_time ?? '23:00:00')

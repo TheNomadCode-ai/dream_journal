@@ -47,7 +47,7 @@ export default function OnboardingPage() {
     }
 
     console.log('[Profile] Saved:', updatedFields)
-    router.replace('/install')
+    router.replace('/notify')
   }
 
   return (
@@ -106,7 +106,7 @@ export default function OnboardingPage() {
             <div>
               {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
               <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void saveAndContinue()} disabled={saving}>
-                {saving ? 'Saving...' : 'Continue to install'}
+                {saving ? 'Saving...' : 'Continue to notifications'}
               </button>
             </div>
           </>

@@ -54,35 +54,29 @@ export async function middleware(request: NextRequest) {
     .maybeSingle()
 
   const onboardingComplete = Boolean(profile?.onboarding_complete)
-  const homeScreenInstalled = Boolean(profile?.home_screen_installed)
   const notificationGranted = Boolean(profile?.notification_permission_granted)
   const hasSchedule = Boolean(profile?.target_wake_time && profile?.target_sleep_time)
 
   const isOnboardingPath = pathname === '/onboarding'
-  const isInstallPath = pathname === '/install'
   const isNotifyPath = pathname === '/notify'
 
-  // Completed users should never revisit onboarding/install/notify pages.
-  if (onboardingComplete && (isOnboardingPath || isInstallPath || isNotifyPath)) {
+  // Completed users should never revisit onboarding/notify pages.
+  if (onboardingComplete && (isOnboardingPath || isNotifyPath)) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Incomplete users must follow strict sequence:
-  // /onboarding -> /install -> /notify -> /dashboard
+  // /onboarding -> /notify -> /dashboard
   if (!onboardingComplete) {
     if (!hasSchedule && !isOnboardingPath) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
 
-    if (hasSchedule && !homeScreenInstalled && !isInstallPath) {
-      return NextResponse.redirect(new URL('/install', request.url))
-    }
-
-    if (hasSchedule && homeScreenInstalled && !notificationGranted && !isNotifyPath) {
+    if (hasSchedule && !notificationGranted && !isNotifyPath) {
       return NextResponse.redirect(new URL('/notify', request.url))
     }
 
-    if (hasSchedule && homeScreenInstalled && notificationGranted) {
+    if (hasSchedule && notificationGranted) {
       if (!isNotifyPath) return NextResponse.redirect(new URL('/notify', request.url))
     }
   }
