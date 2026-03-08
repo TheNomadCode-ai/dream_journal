@@ -75,6 +75,7 @@ export interface Database {
           seed_text: string
           seed_date: string
           was_dreamed: boolean | null
+          morning_entry_written: boolean
           dream_entry_id: string | null
           evening_window_opened_at: string | null
           evening_window_expires_at: string | null
@@ -87,6 +88,7 @@ export interface Database {
           seed_text: string
           seed_date?: string
           was_dreamed?: boolean | null
+          morning_entry_written?: boolean
           dream_entry_id?: string | null
           evening_window_opened_at?: string | null
           evening_window_expires_at?: string | null
@@ -97,6 +99,7 @@ export interface Database {
           seed_text?: string
           seed_date?: string
           was_dreamed?: boolean | null
+          morning_entry_written?: boolean
           dream_entry_id?: string | null
           evening_window_opened_at?: string | null
           evening_window_expires_at?: string | null

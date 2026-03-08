@@ -27,19 +27,19 @@ export default async function DashboardPage() {
   const [todaySeedResult, yesterdaySeedResult, recentSeedsResult, dreamsResult] = await Promise.all([
     supabase
       .from('dream_seeds')
-      .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, dream_entry_id')
+      .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, morning_entry_written, dream_entry_id')
       .eq('user_id', user.id)
       .eq('seed_date', today)
       .maybeSingle(),
     supabase
       .from('dream_seeds')
-      .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, dream_entry_id')
+      .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, morning_entry_written, dream_entry_id')
       .eq('user_id', user.id)
       .eq('seed_date', yesterday)
       .maybeSingle(),
     supabase
       .from('dream_seeds')
-      .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, dream_entry_id')
+      .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, morning_entry_written, dream_entry_id')
       .eq('user_id', user.id)
       .order('seed_date', { ascending: false })
       .limit(120),
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
     ? (
       await supabase
         .from('dream_seeds')
-        .select('dream_entry_id, seed_text, was_dreamed')
+        .select('dream_entry_id, seed_text, was_dreamed, morning_entry_written')
         .eq('user_id', user.id)
         .in('dream_entry_id', dreamIds)
     ).data ?? []

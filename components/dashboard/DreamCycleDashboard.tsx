@@ -12,6 +12,7 @@ type Seed = {
   seed_date: string
   was_dreamed: boolean | null
   morning_confirmed_at: string | null
+  morning_entry_written: boolean
   dream_entry_id: string | null
 }
 
@@ -26,6 +27,7 @@ type ArchiveSeed = {
   dream_entry_id: string | null
   seed_text: string
   was_dreamed: boolean | null
+  morning_entry_written: boolean
 }
 
 type Props = {
@@ -207,14 +209,28 @@ export default function DreamCycleDashboard({
           <div style={{ border: '1px solid #2a1f45', borderRadius: 12, overflow: 'hidden' }}>
             {dreams.map((dream) => {
               const seed = archiveByDream.get(dream.id)
+              const isLocked = seed ? !seed.morning_entry_written : false
               const appearedText = seed?.was_dreamed === true ? 'Yes' : seed?.was_dreamed === false ? 'No' : 'Unconfirmed'
               return (
                 <Link key={dream.id} href={`/dreams/${dream.id}`} style={{ display: 'block', background: '#100a22', borderBottom: '1px solid #231840', padding: 14 }}>
                   <div>
                     <p style={{ color: '#a993cd', fontSize: 12, marginBottom: 8 }}>{dream.date_of_dream}</p>
                     <div style={{ height: 1, background: 'rgba(255,255,255,0.09)', marginBottom: 10 }} />
-                    <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 2 }}>Seed: {seed?.seed_text ?? 'No seed linked'}</p>
-                    <p style={{ color: '#b9acd1', fontSize: 12, marginBottom: 8 }}>Appeared: {appearedText}</p>
+                    {seed ? (
+                      isLocked ? (
+                        <>
+                          <p style={{ color: '#9f8abb', fontSize: 12, marginBottom: 2 }}>Seed: Seed sealed until morning entry</p>
+                          <p style={{ color: '#8d7ba8', fontSize: 12, marginBottom: 8 }}>Appeared: Locked</p>
+                        </>
+                      ) : (
+                        <>
+                          <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 2 }}>Seed: {seed.seed_text}</p>
+                          <p style={{ color: '#b9acd1', fontSize: 12, marginBottom: 8 }}>Appeared: {appearedText}</p>
+                        </>
+                      )
+                    ) : (
+                      <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 8 }}>Seed: No seed linked</p>
+                    )}
                     <p style={{ color: '#bca7de', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{firstLine(dream.body_text)}</p>
                   </div>
                 </Link>
