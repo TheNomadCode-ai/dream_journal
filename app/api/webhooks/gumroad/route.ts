@@ -4,13 +4,14 @@ import { createServiceClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   const form = await request.formData()
+  const getField = (key: string) => (form as any).get(key)
 
-  const sellerId = String(form.get('seller_id') ?? '').trim()
+  const sellerId = String(getField('seller_id') ?? '').trim()
   const expectedSellerId = String(process.env.GUMROAD_SELLER_ID ?? '').trim()
-  const saleEmail = String(form.get('email') ?? '').trim().toLowerCase()
-  const productPermalink = String(form.get('permalink') ?? '').trim()
-  const refunded = form.get('refunded') === 'true'
-  const cancelled = form.get('cancelled') === 'true'
+  const saleEmail = String(getField('email') ?? '').trim().toLowerCase()
+  const productPermalink = String(getField('permalink') ?? '').trim()
+  const refunded = getField('refunded') === 'true'
+  const cancelled = getField('cancelled') === 'true'
 
   if (!expectedSellerId || sellerId !== expectedSellerId) {
     return NextResponse.json({ ok: false, error: 'invalid_seller' }, { status: 401 })

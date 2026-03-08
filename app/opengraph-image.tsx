@@ -53,7 +53,7 @@ export default function OGImage() {
             fontStyle: 'italic',
           }}
         >
-          Train your biological clock and wake naturally.
+          Plant an intention each night. Confirm what appeared by morning.
         </div>
         <div
           style={{

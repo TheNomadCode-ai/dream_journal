@@ -83,7 +83,7 @@ export async function GET(request: Request) {
   const total = results[0]?.total_count ?? 0
 
   const dreamIds = results.map((result) => result.id)
-  const tagsByDream = new Map<string, Array<{ id: string; name: string }>>()
+  const tagsByDream = new Map<string, Array<{ id: string; name: string; user_id: string; created_at: string }>>()
 
   if (dreamIds.length > 0) {
     const { data: tagRows } = await supabase
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
       const current = tagsByDream.get(dreamId) ?? []
       tags.forEach((tag) => {
         if (!current.some((existing) => existing.id === tag.id)) {
-          current.push({ id: tag.id, name: tag.name })
+          current.push({ id: tag.id, name: tag.name, user_id: user.id, created_at: new Date().toISOString() })
         }
       })
       tagsByDream.set(dreamId, current)
@@ -113,6 +113,9 @@ export async function GET(request: Request) {
   return NextResponse.json<DreamSearchResponse>({
     results: results.map(({ total_count: _tc, ...r }) => ({
       ...r,
+      mood_score: (r.mood_score === null
+        ? null
+        : (Math.min(5, Math.max(1, Math.round(r.mood_score))) as 1 | 2 | 3 | 4 | 5)),
       tags: tagsByDream.get(r.id) ?? [],
     })),
     query: rawQuery,

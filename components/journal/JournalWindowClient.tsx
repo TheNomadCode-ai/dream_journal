@@ -10,11 +10,9 @@ import { isWindowOpen } from '@/lib/window'
 type Props = {
   userId: string
   targetWakeTime: string
-  streak: number
-  bioClockScore: number
 }
 
-export default function JournalWindowClient({ userId, targetWakeTime, streak, bioClockScore }: Props) {
+export default function JournalWindowClient({ userId, targetWakeTime }: Props) {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [title, setTitle] = useState('')
@@ -97,8 +95,7 @@ export default function JournalWindowClient({ userId, targetWakeTime, streak, bi
           <p style={{ color: '#ccb7eb', marginBottom: 10 }}>
             Your 5 minute window opens at {new Date(`1970-01-01T${targetWakeTime.slice(0, 5)}:00`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} tomorrow.
           </p>
-          <p style={{ color: '#bca7de', marginBottom: 3 }}>{streak} day streak</p>
-          <p style={{ color: '#bca7de', marginBottom: 18 }}>Bio clock score: {bioClockScore}/100</p>
+          <p style={{ color: '#bca7de', marginBottom: 18 }}>Use the morning window to capture your entry tomorrow.</p>
           <Link href="/dashboard" className="btn-gold">Go to Dashboard</Link>
         </div>
       </div>

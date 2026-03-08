@@ -1,16 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { useProfile } from '@/lib/ProfileContext'
+import { parseTime } from '@/lib/dream-cycle'
+import { scheduleNotifications } from '@/lib/notifications'
 import { createClient } from '@/lib/supabase/client'
+
+type Screen = 1 | 2
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const supabase = createClient()
-  const { setProfile } = useProfile()
+  const supabase = useMemo(() => createClient(), [])
+
+  const [screen, setScreen] = useState<Screen>(1)
   const [wakeTime, setWakeTime] = useState('07:00')
+  const [sleepTime, setSleepTime] = useState('23:00')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,99 +32,101 @@ export default function OnboardingPage() {
       return
     }
 
-    setProfile((current) => {
-      if (!current) return current
-      return {
-        ...current,
-        onboarding_complete: true,
-        target_wake_time: `${wakeTime}:00`,
-      }
-    })
+    const updatedFields = {
+      target_wake_time: `${wakeTime}:00`,
+      target_sleep_time: `${sleepTime}:00`,
+      onboarding_complete: true,
+    }
 
-    const [selectedHour, selectedMinute] = wakeTime.split(':').map(Number)
-    void supabase
+    const { error: profileError } = await supabase
       .from('profiles')
-      .upsert({
-        id: user.id,
-        target_wake_time: `${wakeTime}:00`,
-        onboarding_complete: true,
-      }, { onConflict: 'id' })
-      .then(({ error: upsertError }) => {
-        if (upsertError) {
-          setError('Could not save your wake target. Please try again.')
-        }
-      })
+      .upsert({ id: user.id, ...updatedFields }, { onConflict: 'id' })
 
-    void (async () => {
-      try {
-        const permission = await Notification.requestPermission()
-        if (permission === 'granted' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-          const registration = await navigator.serviceWorker.ready
-          registration.active?.postMessage({
-            type: 'SCHEDULE_WAKE',
-            hour: selectedHour,
-            minute: selectedMinute,
-            title: '🌙 Good morning.',
-            body: 'Your 5 minute window is open. Capture your dream now.',
-          })
-        }
-      } catch {
-        // Notification permission is optional and should never block onboarding.
+    if (profileError) {
+      setError('Could not save setup. Please try again.')
+      setSaving(false)
+      return
+    }
+
+    console.log('[Profile] Saved:', updatedFields)
+
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        const wake = parseTime(`${wakeTime}:00`, '07:00:00')
+        const sleep = parseTime(`${sleepTime}:00`, '23:00:00')
+        await scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
       }
-    })()
+    } catch {
+      // Permission prompt should not block onboarding completion.
+    }
 
     router.replace('/dashboard')
   }
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'grid',
-        placeItems: 'center',
-        background: 'radial-gradient(circle at 20% 10%, rgba(111, 80, 187, 0.35), transparent 40%), #090713',
-        color: '#efe8ff',
-        padding: 24,
-      }}
-    >
-      <section style={{ width: 'min(560px, 100%)', textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontSize: 54, marginBottom: 10 }}>🌙 Somnia</p>
-        <h1 style={{ fontSize: 28, lineHeight: 1.2, letterSpacing: '0.03em', marginBottom: 12 }}>
-          WHEN DO YOU WANT TO WAKE UP?
-        </h1>
-        <p style={{ color: '#cdbde7', maxWidth: 420, margin: '0 auto 22px', lineHeight: 1.5 }}>
-          We&apos;ll send you a notification at this time every morning to capture your dreams.
-        </p>
+    <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <section style={{ width: 'min(720px, 100%)', minHeight: 'calc(100vh - 48px)', display: 'grid', alignContent: 'space-between', padding: '36px 0 24px' }}>
+        {screen === 1 ? (
+          <>
+            <div>
+              <p style={{ textAlign: 'center', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#a18dc7', fontSize: 11, marginBottom: 40 }}>Somnia</p>
+              <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(46px,8vw,72px)', lineHeight: 1.04, textAlign: 'center', marginBottom: 20 }}>
+                What if you could choose
+                <br />
+                what to dream about?
+              </h1>
+              <p style={{ color: '#b8a4d7', textAlign: 'center', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
+                Every evening Somnia gives you 5 minutes to plant a dream intention.
+                <br />
+                Every morning you find out if it worked.
+                <br />
+                <br />
+                Ancient technique. Modern tracking.
+                <br />
+                Your subconscious is more responsive than you think.
+              </p>
+            </div>
 
-        <input
-          className="time-picker"
-          type="time"
-          step={900}
-          value={wakeTime}
-          onChange={(event) => setWakeTime(event.target.value)}
-          style={{
-            width: '100%',
-            minHeight: 66,
-            borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.2)',
-            background: '#0f0a1d',
-            color: '#ffffff',
-            fontSize: 34,
-            textAlign: 'center',
-            marginBottom: 16,
-          }}
-        />
+            <button className="btn-gold" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setScreen(2)}>
+              Begin
+            </button>
+          </>
+        ) : (
+          <>
+            <div>
+              <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 48, marginBottom: 8 }}>WHEN DO YOU WAKE UP?</h1>
+              <input
+                className="time-picker"
+                type="time"
+                step={900}
+                value={wakeTime}
+                onChange={(event) => setWakeTime(event.target.value)}
+                style={{ marginBottom: 18 }}
+              />
 
-        <button
-          onClick={startDreaming}
-          disabled={saving}
-          className={`btn-gold ${saving ? 'btn-loading' : ''}`}
-          style={{ width: '100%', justifyContent: 'center', minHeight: 50, fontSize: 18 }}
-        >
-          {saving ? 'Saving...' : 'Start Dreaming →'}
-        </button>
+              <h2 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 38, marginBottom: 8 }}>WHEN DO YOU GO TO SLEEP?</h2>
+              <input
+                className="time-picker"
+                type="time"
+                step={900}
+                value={sleepTime}
+                onChange={(event) => setSleepTime(event.target.value)}
+              />
 
-        {error ? <p style={{ color: '#ffb6b6', marginTop: 10 }}>{error}</p> : null}
+              <p style={{ color: '#b8a4d7', marginTop: 14 }}>
+                We&apos;ll open your dream window each morning and your planting window each evening.
+              </p>
+            </div>
+
+            <div>
+              {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
+              <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void startDreaming()} disabled={saving}>
+                {saving ? 'Starting...' : 'Start Dreaming'}
+              </button>
+            </div>
+          </>
+        )}
       </section>
     </main>
   )

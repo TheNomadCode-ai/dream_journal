@@ -16,6 +16,9 @@ export interface Database {
           home_screen_installed: boolean
           tier: 'free' | 'pro' | 'lifetime'
           chronotype: string | null
+          last_seed_date: string | null
+          total_seeds_planted: number
+          total_seeds_dreamed: number
           streak_freezes_remaining: number
           streak_freeze_reset_date: string | null
           created_at: string
@@ -30,6 +33,9 @@ export interface Database {
           home_screen_installed?: boolean
           tier?: 'free' | 'pro' | 'lifetime'
           chronotype?: string | null
+          last_seed_date?: string | null
+          total_seeds_planted?: number
+          total_seeds_dreamed?: number
           streak_freezes_remaining?: number
           streak_freeze_reset_date?: string | null
           created_at?: string
@@ -44,9 +50,48 @@ export interface Database {
           home_screen_installed?: boolean
           tier?: 'free' | 'pro' | 'lifetime'
           chronotype?: string | null
+          last_seed_date?: string | null
+          total_seeds_planted?: number
+          total_seeds_dreamed?: number
           streak_freezes_remaining?: number
           streak_freeze_reset_date?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      dream_seeds: {
+        Row: {
+          id: string
+          user_id: string
+          seed_text: string
+          seed_date: string
+          was_dreamed: boolean | null
+          dream_entry_id: string | null
+          evening_window_opened_at: string | null
+          evening_window_expires_at: string | null
+          morning_confirmed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          seed_text: string
+          seed_date?: string
+          was_dreamed?: boolean | null
+          dream_entry_id?: string | null
+          evening_window_opened_at?: string | null
+          evening_window_expires_at?: string | null
+          morning_confirmed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          seed_text?: string
+          seed_date?: string
+          was_dreamed?: boolean | null
+          dream_entry_id?: string | null
+          evening_window_opened_at?: string | null
+          evening_window_expires_at?: string | null
+          morning_confirmed_at?: string | null
         }
         Relationships: []
       }

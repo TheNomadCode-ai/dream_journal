@@ -114,7 +114,7 @@ export default function InstallGate({ targetWakeTime, targetSleepTime, homeScree
           <div style={{ fontSize: 40, filter: 'drop-shadow(0 0 16px rgba(180,130,255,0.8))' }}>🌙</div>
           <p style={{ marginTop: 14, fontFamily: "'Josefin Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.16em', fontSize: 12 }}>One last step.</p>
           <p style={{ marginTop: 10, color: 'rgba(241,232,255,0.8)', lineHeight: 1.6 }}>
-            Add Somnia to your home screen to activate your morning notifications. This is how your biological clock training works.
+            Add Somnia to your home screen to keep your morning and evening notification windows reliable.
           </p>
         </div>
 
