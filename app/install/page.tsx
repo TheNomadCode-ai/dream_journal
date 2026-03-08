@@ -24,6 +24,7 @@ export default function InstallPage() {
   const supabase = useMemo(() => createClient(), [])
 
   const [canInstall, setCanInstall] = useState(false)
+  const [showManual, setShowManual] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [countdown, setCountdown] = useState(5)
 
@@ -31,30 +32,6 @@ export default function InstallPage() {
   const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
 
   useEffect(() => {
-    let active = true
-
-    async function bootstrap() {
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData.user
-      if (!user) {
-        router.replace('/login?redirectedFrom=%2Finstall')
-        return
-      }
-
-      const installed = detectInstalled()
-      if (!active) return
-
-      if (installed) {
-        await supabase
-          .from('profiles')
-          .update({ home_screen_installed: true })
-          .eq('id', user.id)
-
-        router.replace('/notify')
-        return
-      }
-    }
-
     const timer = window.setInterval(() => {
       setCountdown((value) => (value > 0 ? value - 1 : 0))
     }, 1000)
@@ -64,29 +41,53 @@ export default function InstallPage() {
       console.log('[Install] Prompt available')
     } else {
       console.log('[Install] No prompt - showing manual steps')
+      setShowManual(true)
     }
 
-    void bootstrap()
+    if (detectInstalled()) {
+      void (async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        const userId = session?.user?.id
+        if (userId) {
+          await supabase.from('profiles').update({ home_screen_installed: true }).eq('id', userId)
+        }
+        router.replace('/notify')
+      })()
+    }
 
     return () => {
-      active = false
       window.clearInterval(timer)
     }
   }, [router, supabase])
 
-  async function handleAndroidInstall() {
+  async function handleInstall() {
+    console.log('[Install] Button clicked')
+    console.log('[Install] Prompt available:', !!window.__pwaInstallPrompt)
+
     const prompt = window.__pwaInstallPrompt
     if (!prompt) {
+      console.log('[Install] No prompt stored')
       setMessage('Automatic install prompt is unavailable right now. Use the manual steps below.')
+      setShowManual(true)
       return
     }
 
-    await prompt.prompt()
-    const { outcome } = await prompt.userChoice
-    console.log('[Install] Outcome:', outcome)
-    if (outcome === 'accepted') {
-      window.__pwaInstallPrompt = null
-      router.push('/notify')
+    try {
+      await prompt.prompt()
+      const { outcome } = await prompt.userChoice
+      console.log('[Install] User choice:', outcome)
+
+      if (outcome === 'accepted') {
+        window.__pwaInstallPrompt = null
+        router.push('/notify')
+      } else {
+        setShowManual(true)
+      }
+    } catch (err) {
+      console.error('[Install] prompt() failed:', err)
+      setShowManual(true)
     }
   }
 
@@ -96,13 +97,15 @@ export default function InstallPage() {
     const installed = detectInstalled()
 
     if (installed) {
-      const { data } = await supabase.auth.getUser()
-      const user = data.user
-      if (user) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+      if (userId) {
         await supabase
           .from('profiles')
           .update({ home_screen_installed: true })
-          .eq('id', user.id)
+          .eq('id', userId)
       }
 
       router.replace('/notify')
@@ -152,28 +155,32 @@ export default function InstallPage() {
 
         {isAndroid ? (
           <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, marginBottom: 20 }}>
-            <button className="btn-gold" style={{ marginBottom: 14, width: '100%', justifyContent: 'center', opacity: canInstall ? 1 : 0.7 }} disabled={!canInstall} onClick={() => void handleAndroidInstall()}>
+            <button className="btn-gold" style={{ marginBottom: 14, width: '100%', justifyContent: 'center', opacity: canInstall ? 1 : 0.7 }} disabled={!canInstall} onClick={() => void handleInstall()}>
               Add Somnia to Home Screen
             </button>
-            <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 11, color: '#a995ca', marginBottom: 12 }}>Or add manually:</p>
-            <div style={{ display: 'grid', gap: 12 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                <p>Tap the three dots in Chrome top right</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
-                <p>Tap Add to Home screen</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M5 12l4 4L19 6"/></svg>
-                <p>Tap Add</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M3 10.5L12 3l9 7.5"/><path d="M6 9.5V21h12V9.5"/></svg>
-                <p>Open Somnia from your home screen and continue setup from there</p>
-              </div>
-            </div>
+            {showManual ? (
+              <>
+                <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 11, color: '#a995ca', marginBottom: 12 }}>Or add manually:</p>
+                <div style={{ display: 'grid', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                    <p>Tap the three dots in Chrome top right</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                    <p>Tap Add to Home screen</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M5 12l4 4L19 6"/></svg>
+                    <p>Tap Add</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M3 10.5L12 3l9 7.5"/><path d="M6 9.5V21h12V9.5"/></svg>
+                    <p>Open Somnia from your home screen and continue setup from there</p>
+                  </div>
+                </div>
+              </>
+            ) : null}
           </div>
         ) : null}
 
