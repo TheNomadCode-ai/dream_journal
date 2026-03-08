@@ -33,10 +33,20 @@ export default async function LandingPage() {
             <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Start for free</Link>
             <a href="#how-it-works" style={{ color: '#9f8abb', alignSelf: 'center' }}>How it works ↓</a>
           </div>
-          <p style={{ color: '#8f84a7', fontSize: 12 }}>
+          <p
+            style={{
+              color: '#d9c8f2',
+              fontFamily: "'Cormorant', Georgia, serif",
+              fontStyle: 'italic',
+              fontSize: 'clamp(22px,3.2vw,30px)',
+              lineHeight: 1.25,
+              maxWidth: 520,
+              margin: '8px auto 0',
+            }}
+          >
             No notifications. No reminders.
             <br />
-            You either build the habit or you don't.
+            Just rhythm.
           </p>
         </div>
       </section>
@@ -83,16 +93,15 @@ export default async function LandingPage() {
         </div>
         <aside style={{ border: '1px solid rgba(180,130,255,0.22)', borderRadius: 14, background: '#100a22', padding: 20, alignSelf: 'stretch' }}>
           <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 34, lineHeight: 1.25, marginBottom: 14 }}>
-            The future belongs to those who believe in the beauty of their dreams.
+            A dream which is not interpreted is like a letter which is not read.
           </p>
-          <p style={{ color: '#aa95cd' }}>— Eleanor Roosevelt</p>
+          <p style={{ color: '#aa95cd' }}>— The Talmud</p>
         </aside>
       </section>
 
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px 90px', textAlign: 'center' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 42 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 42 }}>
           <div><p style={{ fontSize: 40 }}>10</p><p style={{ color: '#aa95cd' }}>minutes<br />to plant</p></div>
-          <div><p style={{ fontSize: 40 }}>30%</p><p style={{ color: '#aa95cd' }}>of seeds<br />appear in dreams</p></div>
           <div><p style={{ fontSize: 40 }}>8 hrs</p><p style={{ color: '#aa95cd' }}>every night<br />your brain is working</p></div>
         </div>
       </section>
@@ -122,8 +131,6 @@ export default async function LandingPage() {
               <li>Evening seed planting</li>
               <li>Seed success tracking</li>
               <li>Dream pattern insights</li>
-              <li>AI seed suggestions</li>
-              <li>Weekly dream digest</li>
             </ul>
             <a href="https://sushankhanal.gumroad.com/l/somniavault?wanted=true" target="_blank" rel="noreferrer" className="btn-gold">Start free trial →</a>
             <p style={{ color: '#8f84a7', marginTop: 8, fontSize: 12 }}>Cancel anytime. No questions asked.</p>
