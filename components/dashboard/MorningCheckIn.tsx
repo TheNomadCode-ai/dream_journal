@@ -84,10 +84,12 @@ export default function MorningCheckIn({
   const [showJournalPrompt, setShowJournalPrompt] = useState(false)
   const [freezeMessage, setFreezeMessage] = useState<string | null>(null)
   const [milestone, setMilestone] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function submitMorning() {
     if (saving) return
     setSaving(true)
+    setError(null)
     setFreezeMessage(null)
 
     const today = new Date().toISOString().slice(0, 10)
@@ -121,48 +123,73 @@ export default function MorningCheckIn({
     }
 
     const deviation = toMinutes(wakeTime) - toMinutes(targetWakeTime)
-    const { error } = await supabase.from('wake_logs').upsert({
-      user_id: userId,
-      log_date: today,
-      actual_wake_time: `${wakeTime}:00`,
-      sleep_quality: quality,
-      morning_light: morningLight,
-      minutes_from_target: deviation,
-    })
+    const nextLog = { actual_wake_time: `${wakeTime}:00`, minutes_from_target: deviation, sleep_quality: quality, morning_light: morningLight }
+    const prevState = {
+      todayLog,
+      currentStreak,
+      lastLoggedDate,
+      freezesRemaining,
+      freezesResetDate,
+      feedback,
+      freezeMessage,
+      milestone,
+    }
 
-    if (!error) {
-      await supabase
+    // Optimistic UI update for instant interaction feedback.
+    setTodayLog(nextLog)
+    setCurrentStreak(nextStreak)
+    setLastLoggedDate(today)
+    setFreezesRemaining(activeFreezes)
+    setFreezesResetDate(thisMonday)
+
+    const absDeviation = Math.abs(deviation)
+    if (absDeviation <= 15 && morningLight >= 10) setFeedback('Excellent timing and light exposure. Your body clock gets a strong anchor today.')
+    else if (morningLight < 10) setFeedback('Nice log. Try 10+ minutes of outdoor light within an hour of waking tomorrow.')
+    else if (absDeviation <= 30) setFeedback('Getting closer. Keep this rhythm going.')
+    else setFeedback('Every morning counts. Light + consistency will pull your timing in.')
+
+    if (usedFreeze) {
+      setFreezeMessage('Streak freeze used. You have 0 freezes left this week.')
+    }
+
+    if (MILESTONES.includes(nextStreak)) {
+      setMilestone(nextStreak)
+    }
+
+    window.setTimeout(() => setShowJournalPrompt(true), 2000)
+
+    void Promise.all([
+      supabase.from('wake_logs').upsert({
+        user_id: userId,
+        log_date: today,
+        actual_wake_time: `${wakeTime}:00`,
+        sleep_quality: quality,
+        morning_light: morningLight,
+        minutes_from_target: deviation,
+      }),
+      supabase
         .from('profiles')
         .update({
           streak_freezes_remaining: activeFreezes,
           streak_freeze_reset_date: thisMonday,
         })
-        .eq('id', userId)
-
-      const nextLog = { actual_wake_time: `${wakeTime}:00`, minutes_from_target: deviation, sleep_quality: quality, morning_light: morningLight }
-      setTodayLog(nextLog)
-      setCurrentStreak(nextStreak)
-      setLastLoggedDate(today)
-      setFreezesRemaining(activeFreezes)
-
-      const absDeviation = Math.abs(deviation)
-      if (absDeviation <= 15 && morningLight >= 10) setFeedback('Excellent timing and light exposure. Your body clock gets a strong anchor today.')
-      else if (morningLight < 10) setFeedback('Nice log. Try 10+ minutes of outdoor light within an hour of waking tomorrow.')
-      else if (absDeviation <= 30) setFeedback('Getting closer. Keep this rhythm going.')
-      else setFeedback('Every morning counts. Light + consistency will pull your timing in.')
-
-      if (usedFreeze) {
-        setFreezeMessage('Streak freeze used. You have 0 freezes left this week.')
-      }
-
-      if (MILESTONES.includes(nextStreak)) {
-        setMilestone(nextStreak)
-      }
-
-      window.setTimeout(() => setShowJournalPrompt(true), 2000)
-    }
-
-    setSaving(false)
+        .eq('id', userId),
+    ])
+      .then(([wakeResult, profileResult]) => {
+        if (wakeResult.error || profileResult.error) {
+          setTodayLog(prevState.todayLog)
+          setCurrentStreak(prevState.currentStreak)
+          setLastLoggedDate(prevState.lastLoggedDate)
+          setFreezesRemaining(prevState.freezesRemaining)
+          setFreezesResetDate(prevState.freezesResetDate)
+          setFeedback(prevState.feedback)
+          setFreezeMessage(prevState.freezeMessage)
+          setMilestone(prevState.milestone)
+          setShowJournalPrompt(false)
+          setError('Could not save check-in. Please try again.')
+        }
+      })
+      .finally(() => setSaving(false))
   }
 
   async function shareMilestone() {
@@ -191,7 +218,7 @@ export default function MorningCheckIn({
   return (
     <section style={{ border: '1px solid rgba(180,130,255,0.35)', background: 'rgba(122,84,204,0.14)', boxShadow: '0 0 35px rgba(140,80,255,0.25)', padding: '18px', borderRadius: 14, marginBottom: 22 }}>
       <p style={{ fontSize: 24, marginBottom: 10 }}>🌙 Good morning. What time did you wake up?</p>
-      <input type="time" value={wakeTime} onChange={(event) => setWakeTime(event.target.value)} style={{ width: '100%', minHeight: 48, borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: '#100a22', color: '#fff', padding: '0 10px', fontSize: 20, marginBottom: 12 }} />
+      <input className="time-picker" type="time" value={wakeTime} onChange={(event) => setWakeTime(event.target.value)} style={{ width: '100%', minHeight: 48, borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: '#100a22', color: '#fff', padding: '0 10px', fontSize: 20, marginBottom: 12 }} />
       <p style={{ marginBottom: 8 }}>Sleep quality:</p>
       <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
         {[1, 2, 3, 4, 5].map((rating) => (
@@ -228,6 +255,7 @@ export default function MorningCheckIn({
       <button className="btn-gold" onClick={submitMorning} disabled={saving} style={{ width: '100%', justifyContent: 'center', opacity: saving ? 0.75 : 1 }}>
         {saving ? 'Logging...' : 'Log Morning →'}
       </button>
+      {error ? <p style={{ marginTop: 8, color: '#ffb6b6' }}>{error}</p> : null}
       {feedback ? <p style={{ marginTop: 10, color: '#f1e7ff' }}>{feedback}</p> : null}
       {freezeMessage ? <p style={{ marginTop: 6, color: '#e8ccff' }}>{freezeMessage}</p> : null}
       {showJournalPrompt ? (

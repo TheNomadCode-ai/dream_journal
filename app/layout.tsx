@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
+import { ProfileProvider } from '@/lib/ProfileContext'
 import '../styles/globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -98,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         <ServiceWorkerRegistrar />
         <TouchFeedback />
-        {children}
+        <ProfileProvider>{children}</ProfileProvider>
       </body>
     </html>
   )

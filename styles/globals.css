@@ -27,6 +27,7 @@
     scroll-behavior: smooth;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 
   body {
@@ -66,22 +67,25 @@
 
 * {
   -webkit-tap-highlight-color: rgba(180,130,255,0.15);
+  touch-action: manipulation;
 }
 
 button,
 a,
-[role='button'] {
+[role='button'],
+input,
+select {
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
+  transition: transform 80ms ease, opacity 80ms ease;
 }
 
 button:active,
 [role='button']:active,
 a:active {
-  transform: scale(0.97);
-  opacity: 0.85;
-  transition: transform 100ms ease, opacity 100ms ease;
+  transform: scale(0.96);
+  opacity: 0.8;
 }
 
 .touching {
@@ -148,6 +152,12 @@ a:active {
     filter: drop-shadow(0 0 20px rgba(180,130,255,0.8));
     transform: scale(1.08);
   }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
 }
 
 @keyframes confettiFall {
@@ -666,6 +676,45 @@ a:active {
 .search-skeleton {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 6px;
+}
+
+.dashboard-skeleton {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  animation: shimmer 1.5s infinite;
+}
+
+input.time-picker,
+.time-picker input[type='time'],
+.time-picker select {
+  font-size: 48px;
+  font-family: 'Georgia', serif;
+  color: rgba(255,255,255,0.90);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  padding: 16px 24px;
+  width: 100%;
+  text-align: center;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  transform: none;
+}
+
+.btn-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-loading::before {
+  content: '🌙';
+  animation: moonPulse 1s ease infinite;
 }
 
 .shimmer {

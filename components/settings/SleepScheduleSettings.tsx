@@ -32,43 +32,53 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  async function saveField(values: Record<string, unknown>, loadingText = 'Saving...') {
+  async function saveField(values: Record<string, unknown>) {
     setSaving(true)
-    setMessage(loadingText)
+    setMessage('Saved')
     const { data } = await supabase.auth.getUser()
     if (!data.user?.id) {
       setSaving(false)
       return
     }
 
-    await supabase.from('profiles').update(values).eq('id', data.user.id)
-    setSaving(false)
-    setMessage('Saved')
+    void supabase
+      .from('profiles')
+      .update(values)
+      .eq('id', data.user.id)
+      .then(({ error }) => {
+        if (error) {
+          setMessage('Could not save. Try again.')
+        }
+        setSaving(false)
+      }, () => {
+        setMessage('Could not save. Try again.')
+        setSaving(false)
+      })
   }
 
   async function updateWakeTime(value: string) {
     setWakeTime(value)
-    await saveField({ target_wake_time: `${value}:00` })
+    void saveField({ target_wake_time: `${value}:00` })
     const [hour, minute] = value.split(':').map(Number)
     if (notificationsEnabled) {
-      await scheduleWakeNotification(hour, minute)
+      void scheduleWakeNotification(hour, minute)
       const [sleepHour, sleepMinute] = bedtime.split(':').map(Number)
-      await scheduleWindDownNotification(sleepHour, sleepMinute)
+      void scheduleWindDownNotification(sleepHour, sleepMinute)
     }
   }
 
   async function updateBedtime(value: string) {
     setBedtime(value)
-    await saveField({ target_sleep_time: `${value}:00` })
+    void saveField({ target_sleep_time: `${value}:00` })
     if (notificationsEnabled) {
       const [sleepHour, sleepMinute] = value.split(':').map(Number)
-      await scheduleWindDownNotification(sleepHour, sleepMinute)
+      void scheduleWindDownNotification(sleepHour, sleepMinute)
     }
   }
 
   async function updateChronotype(value: string) {
     setChronotype(value)
-    await saveField({ chronotype: value })
+    void saveField({ chronotype: value })
   }
 
   async function toggleNotifications() {
@@ -111,7 +121,7 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '12px 10px', marginBottom: 10 }}>
         <p>NOTIFICATIONS</p>
-        <button className="btn-gold" onClick={toggleNotifications}>
+        <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} onClick={toggleNotifications}>
           {notificationsEnabled ? 'Disable' : 'Enable'}
         </button>
       </div>

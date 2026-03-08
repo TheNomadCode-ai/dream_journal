@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { useProfile } from '@/lib/ProfileContext'
 import { createClient } from '@/lib/supabase/client'
 
 export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { setProfile } = useProfile()
   const [wakeTime, setWakeTime] = useState('07:00')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,36 +27,46 @@ export default function OnboardingPage() {
       return
     }
 
-    const { error: upsertError } = await supabase
+    setProfile((current) => {
+      if (!current) return current
+      return {
+        ...current,
+        onboarding_complete: true,
+        target_wake_time: `${wakeTime}:00`,
+      }
+    })
+
+    const [selectedHour, selectedMinute] = wakeTime.split(':').map(Number)
+    void supabase
       .from('profiles')
       .upsert({
         id: user.id,
         target_wake_time: `${wakeTime}:00`,
         onboarding_complete: true,
       }, { onConflict: 'id' })
+      .then(({ error: upsertError }) => {
+        if (upsertError) {
+          setError('Could not save your wake target. Please try again.')
+        }
+      })
 
-    if (upsertError) {
-      setError('Could not save your wake target. Please try again.')
-      setSaving(false)
-      return
-    }
-
-    try {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-        const [selectedHour, selectedMinute] = wakeTime.split(':').map(Number)
-        const registration = await navigator.serviceWorker.ready
-        registration.active?.postMessage({
-          type: 'SCHEDULE_WAKE',
-          hour: selectedHour,
-          minute: selectedMinute,
-          title: '🌙 Good morning.',
-          body: 'Your 5 minute window is open. Capture your dream now.',
-        })
+    void (async () => {
+      try {
+        const permission = await Notification.requestPermission()
+        if (permission === 'granted' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready
+          registration.active?.postMessage({
+            type: 'SCHEDULE_WAKE',
+            hour: selectedHour,
+            minute: selectedMinute,
+            title: '🌙 Good morning.',
+            body: 'Your 5 minute window is open. Capture your dream now.',
+          })
+        }
+      } catch {
+        // Notification permission is optional and should never block onboarding.
       }
-    } catch {
-      // Notification permission is optional and should never block onboarding.
-    }
+    })()
 
     router.replace('/dashboard')
   }
@@ -80,6 +92,7 @@ export default function OnboardingPage() {
         </p>
 
         <input
+          className="time-picker"
           type="time"
           step={900}
           value={wakeTime}
@@ -100,7 +113,7 @@ export default function OnboardingPage() {
         <button
           onClick={startDreaming}
           disabled={saving}
-          className="btn-gold"
+          className={`btn-gold ${saving ? 'btn-loading' : ''}`}
           style={{ width: '100%', justifyContent: 'center', minHeight: 50, fontSize: 18 }}
         >
           {saving ? 'Saving...' : 'Start Dreaming →'}

@@ -3,6 +3,13 @@ export async function scheduleWakeNotification(hour: number, minute: number) {
   if (!('serviceWorker' in navigator)) return
   if (!('Notification' in window)) return
 
+  const now = new Date()
+  const target = new Date()
+  target.setHours(hour, minute, 0, 0)
+  if (target <= now) {
+    target.setDate(target.getDate() + 1)
+  }
+
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') return
 
@@ -11,6 +18,7 @@ export async function scheduleWakeNotification(hour: number, minute: number) {
     type: 'SCHEDULE_WAKE',
     hour,
     minute,
+    firstTriggerAt: target.toISOString(),
     title: '🌙 Good morning.',
     body: 'Your 5 minute window is open. Capture your dream now.',
   })

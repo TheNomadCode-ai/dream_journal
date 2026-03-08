@@ -4,7 +4,16 @@ const STORE = 'wake'
 const WAKE_KEY = 'schedule'
 
 let scheduledWake = null
-let lastWakeNotifiedDate = null
+
+function computeFirstTriggerAt(hour, minute) {
+  const now = new Date()
+  const target = new Date()
+  target.setHours(hour, minute, 0, 0)
+  if (target <= now) {
+    target.setDate(target.getDate() + 1)
+  }
+  return target.toISOString()
+}
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -55,14 +64,11 @@ async function maybeFireWakeNotification() {
   if (!wake) return
 
   const now = new Date()
-  const todayKey = now.toISOString().slice(0, 10)
 
   if (
     now.getHours() === wake.hour &&
-    now.getMinutes() === wake.minute &&
-    lastWakeNotifiedDate !== todayKey
+    now.getMinutes() === wake.minute
   ) {
-    lastWakeNotifiedDate = todayKey
     self.registration.showNotification(wake.title, {
       body: wake.body,
       icon: '/icons/icon-192x192.png',
@@ -90,6 +96,7 @@ self.addEventListener('message', (event) => {
     scheduledWake = {
       hour: event.data.hour,
       minute: event.data.minute,
+      firstTriggerAt: event.data.firstTriggerAt || computeFirstTriggerAt(event.data.hour, event.data.minute),
       title: event.data.title,
       body: event.data.body,
     }

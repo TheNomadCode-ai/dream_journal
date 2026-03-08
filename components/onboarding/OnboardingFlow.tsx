@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { useProfile } from '@/lib/ProfileContext'
 import { createClient } from '@/lib/supabase/client'
 import { scheduleWakeNotification, scheduleWindDownNotification } from '@/lib/notifications'
 
@@ -40,6 +41,7 @@ type Props = {
 export default function OnboardingFlow({ initialWakeTime }: Props) {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
+  const { setProfile } = useProfile()
   const [screen, setScreen] = useState<1 | 2>(1)
   const [wakeTime, setWakeTime] = useState(toLocalTimeString(initialWakeTime || '07:00:00'))
   const [saving, setSaving] = useState(false)
@@ -65,7 +67,17 @@ export default function OnboardingFlow({ initialWakeTime }: Props) {
       return
     }
 
-    const { error: updateError } = await supabase
+    setProfile((current) => {
+      if (!current) return current
+      return {
+        ...current,
+        target_wake_time: toWakeTimeWithSeconds(wakeTime),
+        target_sleep_time: bedtimeTime,
+        onboarding_complete: true,
+      }
+    })
+
+    void supabase
       .from('profiles')
       .update({
         target_wake_time: toWakeTimeWithSeconds(wakeTime),
@@ -73,16 +85,19 @@ export default function OnboardingFlow({ initialWakeTime }: Props) {
         onboarding_complete: true,
       })
       .eq('id', userId)
-
-    if (updateError) {
-      setSaving(false)
-      setError('Could not save your target right now.')
-      return
-    }
+      .then(({ error: updateError }) => {
+        if (updateError) {
+          setError('Could not save your target right now.')
+        }
+        setSaving(false)
+      }, () => {
+        setSaving(false)
+        setError('Could not save your target right now.')
+      })
 
     const [hour, minute] = wakeTime.split(':').map(Number)
-    await scheduleWakeNotification(hour, minute)
-    await scheduleWindDownNotification(bedtimeDate.getHours(), bedtimeDate.getMinutes())
+    void scheduleWakeNotification(hour, minute)
+    void scheduleWindDownNotification(bedtimeDate.getHours(), bedtimeDate.getMinutes())
     void bedtime
 
     router.replace('/install')

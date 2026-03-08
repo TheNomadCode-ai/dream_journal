@@ -35,23 +35,28 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('onboarding_complete, target_wake_time')
-    .eq('id', user.id)
-    .maybeSingle()
+  const [profileResult, dreamsResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('onboarding_complete, target_wake_time')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('dreams')
+      .select('id, title, body_text, date_of_dream')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('date_of_dream', { ascending: false })
+      .limit(30),
+  ])
+
+  const profile = profileResult.data
 
   if (!profile?.onboarding_complete) {
     redirect('/onboarding')
   }
 
-  const { data: dreams } = await supabase
-    .from('dreams')
-    .select('id, title, body_text, date_of_dream')
-    .eq('user_id', user.id)
-    .is('deleted_at', null)
-    .order('date_of_dream', { ascending: false })
-    .limit(30)
+  const dreams = dreamsResult.data
 
   const wakeLabel = formatWakeTime(profile?.target_wake_time ?? null)
 
