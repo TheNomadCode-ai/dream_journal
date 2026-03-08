@@ -57,7 +57,7 @@ export default function SignupPage() {
     setLoading(true)
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
-    const { error: signupError } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -69,14 +69,14 @@ export default function SignupPage() {
       },
     })
 
-    if (signupError) {
-      setError(signupError.message)
+    if (error) {
+      setError(error.message)
       setLoading(false)
       return
     }
 
     // Email confirmation is disabled, so session is created immediately.
-    router.push('/onboarding')
+    router.replace('/onboarding')
   }
 
   return (

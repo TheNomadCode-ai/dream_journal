@@ -2,6 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { updateSession } from '@/lib/supabase/middleware'
+
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/privacy', '/terms']
 
 function isPublicPath(pathname: string) {
@@ -19,11 +21,11 @@ function isPublicPath(pathname: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (isPublicPath(pathname)) {
-    return NextResponse.next()
-  }
+  const { response, user } = await updateSession(request)
 
-  let response = NextResponse.next({ request: { headers: request.headers } })
+  if (isPublicPath(pathname)) {
+    return response
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,13 +36,12 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: any[]) {
+          cookiesToSet.forEach(({ name, value }: any) => request.cookies.set(name, value))
           cookiesToSet.forEach(({ name, value, options }: any) => response.cookies.set(name, value, options))
         },
       },
     }
   )
-
-  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
