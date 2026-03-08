@@ -100,6 +100,7 @@ export interface Database {
           actual_wake_time: string
           actual_sleep_time: string | null
           sleep_quality: number | null
+          morning_light: number | null
           minutes_from_target: number | null
           created_at: string
         }
@@ -110,6 +111,7 @@ export interface Database {
           actual_wake_time: string
           actual_sleep_time?: string | null
           sleep_quality?: number | null
+          morning_light?: number | null
           minutes_from_target?: number | null
           created_at?: string
         }
@@ -117,6 +119,7 @@ export interface Database {
           actual_wake_time?: string
           actual_sleep_time?: string | null
           sleep_quality?: number | null
+          morning_light?: number | null
           minutes_from_target?: number | null
         }
         Relationships: []

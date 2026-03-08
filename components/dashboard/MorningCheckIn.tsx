@@ -10,6 +10,7 @@ type WakeLog = {
   actual_wake_time: string
   minutes_from_target: number
   sleep_quality: number | null
+  morning_light: number | null
 }
 
 type Props = {
@@ -49,12 +50,12 @@ function mondayOfCurrentWeek(date: Date) {
 }
 
 function milestoneMessage(streak: number) {
-  if (streak >= 90) return 'Legend status. Your rhythm is locked in.'
-  if (streak >= 60) return 'Two months of momentum. Keep this cadence.'
-  if (streak >= 30) return 'One full month of training. Incredible consistency.'
-  if (streak >= 21) return 'Three-week habit formed. Your body is adapting.'
-  if (streak >= 14) return 'Two weeks strong. You are getting sharper each morning.'
-  return 'Week one complete. Your biological clock is waking up.'
+  if (streak >= 90) return 'Ninety dawns. You are operating on a trained circadian rhythm.'
+  if (streak >= 60) return 'Sixty mornings in sync. This is elite consistency.'
+  if (streak >= 30) return 'Thirty-day lock-in. Your clock now expects this rhythm.'
+  if (streak >= 21) return 'Three weeks complete. Habit architecture is now stable.'
+  if (streak >= 14) return 'Two weeks done. Your wake timing is getting sharper.'
+  return 'Seven-day milestone reached. Your clock has started adapting.'
 }
 
 export default function MorningCheckIn({
@@ -77,6 +78,7 @@ export default function MorningCheckIn({
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   })
   const [quality, setQuality] = useState(3)
+  const [morningLight, setMorningLight] = useState(10)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [showJournalPrompt, setShowJournalPrompt] = useState(false)
@@ -124,6 +126,7 @@ export default function MorningCheckIn({
       log_date: today,
       actual_wake_time: `${wakeTime}:00`,
       sleep_quality: quality,
+      morning_light: morningLight,
       minutes_from_target: deviation,
     })
 
@@ -138,16 +141,17 @@ export default function MorningCheckIn({
         })
         .eq('id', userId)
 
-      const nextLog = { actual_wake_time: `${wakeTime}:00`, minutes_from_target: deviation, sleep_quality: quality }
+      const nextLog = { actual_wake_time: `${wakeTime}:00`, minutes_from_target: deviation, sleep_quality: quality, morning_light: morningLight }
       setTodayLog(nextLog)
       setCurrentStreak(nextStreak)
       setLastLoggedDate(today)
       setFreezesRemaining(activeFreezes)
 
       const absDeviation = Math.abs(deviation)
-      if (absDeviation <= 15) setFeedback('🌙 Incredible. Your body is learning.')
-      else if (absDeviation <= 30) setFeedback('Getting closer. Keep going.')
-      else setFeedback('Every morning counts. See you tomorrow.')
+      if (absDeviation <= 15 && morningLight >= 10) setFeedback('Excellent timing and light exposure. Your body clock gets a strong anchor today.')
+      else if (morningLight < 10) setFeedback('Nice log. Try 10+ minutes of outdoor light within an hour of waking tomorrow.')
+      else if (absDeviation <= 30) setFeedback('Getting closer. Keep this rhythm going.')
+      else setFeedback('Every morning counts. Light + consistency will pull your timing in.')
 
       if (usedFreeze) {
         setFreezeMessage('Streak freeze used. You have 0 freezes left this week.')
@@ -198,6 +202,31 @@ export default function MorningCheckIn({
           </button>
         ))}
       </div>
+      <p style={{ marginBottom: 8 }}>Morning outdoor light (minutes in first hour):</p>
+      <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+        {[
+          { label: '0 to 5 min', value: 5 },
+          { label: '5 to 10 min', value: 10 },
+          { label: '10 to 20 min', value: 20 },
+          { label: '20+ min', value: 30 },
+        ].map((option) => (
+          <button
+            key={option.value}
+            onClick={() => setMorningLight(option.value)}
+            style={{
+              minHeight: 42,
+              borderRadius: 10,
+              border: `1px solid ${morningLight === option.value ? 'rgba(232,193,104,0.9)' : 'rgba(255,255,255,0.2)'}`,
+              background: morningLight === option.value ? 'rgba(232,193,104,0.12)' : '#100a22',
+              color: '#f3eaff',
+              textAlign: 'left',
+              padding: '0 12px',
+            }}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <button className="btn-gold" onClick={submitMorning} disabled={saving} style={{ width: '100%', justifyContent: 'center', opacity: saving ? 0.75 : 1 }}>
         {saving ? 'Logging...' : 'Log Morning →'}
       </button>
@@ -234,11 +263,11 @@ export default function MorningCheckIn({
             ))}
           </div>
 
-          <div id="somnia-milestone-card" style={{ width: 'min(580px, 100%)', border: '1px solid rgba(180,130,255,0.35)', borderRadius: 16, background: 'radial-gradient(circle at 50% 0%, rgba(134,90,220,0.5), #120a25 55%)', padding: '30px 24px', textAlign: 'center', position: 'relative' }}>
+          <div id="somnia-milestone-card" style={{ width: 'min(640px, 100%)', minHeight: 640, border: '1px solid rgba(180,130,255,0.35)', borderRadius: 16, background: 'radial-gradient(circle at 50% 0%, rgba(134,90,220,0.5), #120a25 55%)', padding: '36px 26px', textAlign: 'center', position: 'relative', display: 'grid', alignContent: 'center' }}>
             <p style={{ fontSize: 58, marginBottom: 8, filter: 'drop-shadow(0 0 16px rgba(180,130,255,0.72))' }}>🌙</p>
-            <h2 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 54, marginBottom: 8 }}>{milestone} Day Streak 🔥</h2>
+            <h2 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 54, marginBottom: 8, lineHeight: 1.05 }}>{milestone} Day Streak</h2>
             <p style={{ color: '#e5d7ff', marginBottom: 12 }}>{milestoneMessage(milestone)}</p>
-            <p style={{ color: '#d2beef', marginBottom: 18 }}>I&apos;ve logged {milestone} mornings with Somnia</p>
+            <p style={{ color: '#d2beef', marginBottom: 18 }}>I&apos;ve logged {milestone} mornings with Somnia and I&apos;m training my biological clock.</p>
             <p style={{ color: '#beabd9' }}>somniavault.me</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 18 }}>
               <button className="btn-gold" onClick={shareMilestone}>Share →</button>

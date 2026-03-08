@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-import { scheduleWakeNotification } from '@/lib/notifications'
+import { scheduleWakeNotification, scheduleWindDownNotification } from '@/lib/notifications'
 
 function toLocalTimeString(value: string) {
   return value.slice(0, 5)
@@ -82,6 +82,7 @@ export default function OnboardingFlow({ initialWakeTime }: Props) {
 
     const [hour, minute] = wakeTime.split(':').map(Number)
     await scheduleWakeNotification(hour, minute)
+    await scheduleWindDownNotification(bedtimeDate.getHours(), bedtimeDate.getMinutes())
     void bedtime
 
     router.replace('/install')

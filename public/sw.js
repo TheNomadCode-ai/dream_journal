@@ -1,11 +1,13 @@
 const DB_NAME = 'somnia-local-notifications'
 const DB_VERSION = 1
 const STORE = 'schedule'
-const KEY = 'wake'
+const WAKE_KEY = 'wake'
+const WIND_DOWN_KEY = 'wind-down'
 const DIGEST_KEY = 'digest'
 
 let checkTimer = null
-let lastNotifiedDate = null
+let lastWakeNotifiedDate = null
+let lastWindDownNotifiedDate = null
 let lastWeeklyDigestDate = null
 
 function openDb() {
@@ -27,7 +29,7 @@ function openDb() {
 async function setSchedule(data) {
   const db = await openDb()
   const tx = db.transaction(STORE, 'readwrite')
-  tx.objectStore(STORE).put(data, KEY)
+  tx.objectStore(STORE).put(data.value, data.key)
   return new Promise((resolve) => {
     tx.oncomplete = () => resolve(true)
   })
@@ -36,41 +38,42 @@ async function setSchedule(data) {
 async function getSchedule() {
   const db = await openDb()
   const tx = db.transaction(STORE, 'readonly')
-  const request = tx.objectStore(STORE).get(KEY)
+  const store = tx.objectStore(STORE)
+  const wakeRequest = store.get(WAKE_KEY)
+  const windDownRequest = store.get(WIND_DOWN_KEY)
+  const digestRequest = store.get(DIGEST_KEY)
+
   return new Promise((resolve) => {
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => resolve(null)
+    tx.oncomplete = () => {
+      resolve({
+        wake: wakeRequest.result ?? null,
+        windDown: windDownRequest.result ?? null,
+        digest: digestRequest.result ?? null,
+      })
+    }
+    tx.onerror = () => resolve({ wake: null, windDown: null, digest: null })
   })
 }
 
-async function clearSchedule() {
+async function clearSchedule(key) {
   const db = await openDb()
   const tx = db.transaction(STORE, 'readwrite')
-  tx.objectStore(STORE).delete(KEY)
+  tx.objectStore(STORE).delete(key)
   return new Promise((resolve) => {
     tx.oncomplete = () => resolve(true)
   })
 }
 
 async function maybeFireNotification() {
-  const schedule = await getSchedule()
-  const digest = await (async () => {
-    const db = await openDb()
-    const tx = db.transaction(STORE, 'readonly')
-    const request = tx.objectStore(STORE).get(DIGEST_KEY)
-    return new Promise((resolve) => {
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => resolve(null)
-    })
-  })()
+  const schedules = await getSchedule()
 
   const now = new Date()
   const todayKey = now.toISOString().slice(0, 10)
   const hour = now.getHours()
   const minute = now.getMinutes()
 
-  if (schedule && hour === schedule.hour && minute === schedule.minute && lastNotifiedDate !== todayKey) {
-    lastNotifiedDate = todayKey
+  if (schedules.wake && hour === schedules.wake.hour && minute === schedules.wake.minute && lastWakeNotifiedDate !== todayKey) {
+    lastWakeNotifiedDate = todayKey
     self.registration.showNotification('🌙 Good morning. Your window is open.', {
       body: 'You have 5 minutes to capture your dream.',
       icon: '/icons/icon-192x192.png',
@@ -80,9 +83,21 @@ async function maybeFireNotification() {
     })
   }
 
+  if (schedules.windDown && hour === schedules.windDown.hour && minute === schedules.windDown.minute && lastWindDownNotifiedDate !== todayKey) {
+    lastWindDownNotifiedDate = todayKey
+    self.registration.showNotification('🌙 Wind down time.', {
+      body: 'Your bedtime is in 60 minutes. Put your phone down soon.',
+      icon: '/icons/icon-192x192.png',
+      tag: 'wind-down',
+      requireInteraction: false,
+      silent: false,
+      data: { url: '/dashboard' },
+    })
+  }
+
   // Sunday digest at 9:00 local time.
   if (
-    digest &&
+    schedules.digest &&
     now.getDay() === 0 &&
     hour === 9 &&
     minute === 0 &&
@@ -90,7 +105,7 @@ async function maybeFireNotification() {
   ) {
     lastWeeklyDigestDate = todayKey
     self.registration.showNotification('Your week in review 🌙', {
-      body: `${digest.morningsLogged} mornings logged · ${digest.streak} day streak · ${digest.minutesCloser} min closer to target`,
+      body: `${schedules.digest.morningsLogged} mornings logged\n${schedules.digest.streak} day streak\n${schedules.digest.lightPercent}% mornings with light\nAvg ${schedules.digest.averageMinutesFromTarget} min from target`,
       icon: '/icons/icon-192x192.png',
       tag: 'weekly-digest',
       data: { url: '/dashboard' },
@@ -120,21 +135,32 @@ self.addEventListener('message', (event) => {
 
   if (event.data.type === 'SCHEDULE_ALARM') {
     const { hour, minute } = event.data
-    void setSchedule({ hour, minute }).then(() => {
+    void setSchedule({ key: WAKE_KEY, value: { hour, minute } }).then(() => {
+      startTicker()
+    })
+  }
+
+  if (event.data.type === 'SCHEDULE_WIND_DOWN') {
+    const { hour, minute } = event.data
+    void setSchedule({ key: WIND_DOWN_KEY, value: { hour, minute } }).then(() => {
       startTicker()
     })
   }
 
   if (event.data.type === 'CANCEL_ALARM') {
-    void clearSchedule()
+    void clearSchedule(WAKE_KEY)
   }
 
-  if (event.data.type === 'SCHEDULE_WEEKLY_DIGEST') {
-    const { morningsLogged, streak, minutesCloser } = event.data
+  if (event.data.type === 'CANCEL_WIND_DOWN') {
+    void clearSchedule(WIND_DOWN_KEY)
+  }
+
+  if (event.data.type === 'SCHEDULE_WEEKLY' || event.data.type === 'SCHEDULE_WEEKLY_DIGEST') {
+    const { morningsLogged, streak, lightPercent, averageMinutesFromTarget } = event.data
     void (async () => {
       const db = await openDb()
       const tx = db.transaction(STORE, 'readwrite')
-      tx.objectStore(STORE).put({ morningsLogged, streak, minutesCloser }, DIGEST_KEY)
+      tx.objectStore(STORE).put({ morningsLogged, streak, lightPercent, averageMinutesFromTarget }, DIGEST_KEY)
     })()
   }
 })

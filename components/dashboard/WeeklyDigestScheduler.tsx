@@ -7,13 +7,14 @@ import { scheduleWeeklyDigestNotification } from '@/lib/notifications'
 type Props = {
   morningsLogged: number
   streak: number
-  minutesCloser: number
+  lightPercent: number
+  averageMinutesFromTarget: number
 }
 
-export default function WeeklyDigestScheduler({ morningsLogged, streak, minutesCloser }: Props) {
+export default function WeeklyDigestScheduler({ morningsLogged, streak, lightPercent, averageMinutesFromTarget }: Props) {
   useEffect(() => {
-    void scheduleWeeklyDigestNotification({ morningsLogged, streak, minutesCloser })
-  }, [morningsLogged, streak, minutesCloser])
+    void scheduleWeeklyDigestNotification({ morningsLogged, streak, lightPercent, averageMinutesFromTarget })
+  }, [morningsLogged, streak, lightPercent, averageMinutesFromTarget])
 
   return null
 }

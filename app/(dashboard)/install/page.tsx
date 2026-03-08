@@ -13,13 +13,14 @@ export default async function InstallPage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('target_wake_time, home_screen_installed')
+    .select('target_wake_time, target_sleep_time, home_screen_installed')
     .eq('id', user.id)
     .maybeSingle()
 
   return (
     <InstallGate
       targetWakeTime={profile?.target_wake_time ?? '07:00:00'}
+      targetSleepTime={profile?.target_sleep_time ?? '23:00:00'}
       homeScreenInstalled={Boolean(profile?.home_screen_installed)}
     />
   )

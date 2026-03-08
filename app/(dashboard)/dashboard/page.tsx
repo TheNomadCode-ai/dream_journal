@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import BioClock from '@/components/dashboard/BioClock'
+import MorningLightCard from '@/components/dashboard/MorningLightCard'
 import MorningCheckIn from '@/components/dashboard/MorningCheckIn'
 import WeeklyDigestScheduler from '@/components/dashboard/WeeklyDigestScheduler'
 import FreeTierLimitBanner from '@/components/dashboard/FreeTierLimitBanner'
@@ -45,14 +46,14 @@ export default async function DashboardPage() {
 
   const { data: todayLog } = await supabase
     .from('wake_logs')
-    .select('actual_wake_time, minutes_from_target, sleep_quality')
+    .select('actual_wake_time, minutes_from_target, sleep_quality, morning_light')
     .eq('user_id', user.id)
     .eq('log_date', today)
     .maybeSingle()
 
   const { data: wakeLogs } = await supabase
     .from('wake_logs')
-    .select('log_date, minutes_from_target')
+    .select('log_date, minutes_from_target, sleep_quality, morning_light')
     .eq('user_id', user.id)
     .order('log_date', { ascending: false })
     .limit(14)
@@ -80,23 +81,23 @@ export default async function DashboardPage() {
   monday.setDate(now.getDate() + mondayOffset)
   const mondayKey = monday.toISOString().slice(0, 10)
   const weeklyLogs = (wakeLogs ?? []).filter((log) => log.log_date >= mondayKey)
-  const previousWindow = (wakeLogs ?? []).slice(0, 14)
-  const currentWeekAvg = weeklyLogs.length
-    ? weeklyLogs.reduce((sum, log) => sum + Math.abs(log.minutes_from_target ?? 0), 0) / weeklyLogs.length
+  const averageMinutesFromTarget = weeklyLogs.length
+    ? Math.round(weeklyLogs.reduce((sum, log) => sum + Math.abs(log.minutes_from_target ?? 0), 0) / weeklyLogs.length)
     : 0
-  const previousWeekLogs = previousWindow.slice(7)
-  const previousWeekAvg = previousWeekLogs.length
-    ? previousWeekLogs.reduce((sum, log) => sum + Math.abs(log.minutes_from_target ?? 0), 0) / previousWeekLogs.length
-    : currentWeekAvg
-  const minutesCloser = Math.max(0, Math.round(previousWeekAvg - currentWeekAvg))
+  const lightHits = weeklyLogs.filter((log) => (log.morning_light ?? 0) >= 10).length
+  const lightPercent = weeklyLogs.length ? Math.round((lightHits / weeklyLogs.length) * 100) : 0
+  const showMorningLightCard = (wakeLogs ?? []).length < 7
 
   return (
     <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 40px 110px' }}>
       <WeeklyDigestScheduler
         morningsLogged={weeklyLogs.length}
         streak={profile?.current_streak ?? 0}
-        minutesCloser={minutesCloser}
+        lightPercent={lightPercent}
+        averageMinutesFromTarget={averageMinutesFromTarget}
       />
+
+      <MorningLightCard visible={showMorningLightCard} />
 
       {tier === 'free' ? <FreeTierLimitBanner totalEntries={dreamCount ?? 0} /> : null}
 
@@ -110,7 +111,7 @@ export default async function DashboardPage() {
         initialFreezesResetDate={profile?.streak_freezes_reset_date ?? null}
       />
 
-      <BioClock logs={(wakeLogs ?? []).slice(0, 7)} />
+      <BioClock logs={(wakeLogs ?? []).slice(0, 7)} freezesRemaining={profile?.streak_freezes_remaining ?? 0} />
 
       <header style={{ marginBottom: 18 }}>
         <p style={{ fontFamily: "'Josefin Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: '#9e8bbc', marginBottom: 8 }}>

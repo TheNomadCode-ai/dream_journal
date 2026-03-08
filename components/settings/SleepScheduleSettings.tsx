@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import { cancelWakeNotification, requestNotificationPermission, scheduleWakeNotification } from '@/lib/notifications'
+import { cancelWakeNotification, requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '@/lib/notifications'
 
 type Props = {
   initialWakeTime: string
@@ -52,12 +52,18 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
     const [hour, minute] = value.split(':').map(Number)
     if (notificationsEnabled) {
       await scheduleWakeNotification(hour, minute)
+      const [sleepHour, sleepMinute] = bedtime.split(':').map(Number)
+      await scheduleWindDownNotification(sleepHour, sleepMinute)
     }
   }
 
   async function updateBedtime(value: string) {
     setBedtime(value)
     await saveField({ target_sleep_time: `${value}:00` })
+    if (notificationsEnabled) {
+      const [sleepHour, sleepMinute] = value.split(':').map(Number)
+      await scheduleWindDownNotification(sleepHour, sleepMinute)
+    }
   }
 
   async function updateChronotype(value: string) {
@@ -70,7 +76,9 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
       const granted = await requestNotificationPermission()
       if (granted) {
         const [hour, minute] = wakeTime.split(':').map(Number)
+        const [sleepHour, sleepMinute] = bedtime.split(':').map(Number)
         await scheduleWakeNotification(hour, minute)
+        await scheduleWindDownNotification(sleepHour, sleepMinute)
         setNotificationsEnabled(true)
         await saveField({ push_enabled: true }, 'Loading...')
       }

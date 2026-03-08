@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-import { requestNotificationPermission, scheduleWakeNotification } from '@/lib/notifications'
+import { requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '@/lib/notifications'
 
 type Props = {
   targetWakeTime: string
+  targetSleepTime: string
   homeScreenInstalled: boolean
 }
 
@@ -16,7 +17,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
-export default function InstallGate({ targetWakeTime, homeScreenInstalled }: Props) {
+export default function InstallGate({ targetWakeTime, targetSleepTime, homeScreenInstalled }: Props) {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
@@ -72,7 +73,9 @@ export default function InstallGate({ targetWakeTime, homeScreenInstalled }: Pro
     }
 
     const [hour, minute] = targetWakeTime.slice(0, 5).split(':').map(Number)
+    const [sleepHour, sleepMinute] = targetSleepTime.slice(0, 5).split(':').map(Number)
     await scheduleWakeNotification(hour, minute)
+    await scheduleWindDownNotification(sleepHour, sleepMinute)
     setNotifStatus('✓ confirmed')
   }
 
