@@ -91,7 +91,7 @@ export default async function LandingPage() {
 
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px 90px', textAlign: 'center' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 42 }}>
-          <div><p style={{ fontSize: 40 }}>5</p><p style={{ color: '#aa95cd' }}>minutes<br />to plant</p></div>
+          <div><p style={{ fontSize: 40 }}>10</p><p style={{ color: '#aa95cd' }}>minutes<br />to plant</p></div>
           <div><p style={{ fontSize: 40 }}>30%</p><p style={{ color: '#aa95cd' }}>of seeds<br />appear in dreams</p></div>
           <div><p style={{ fontSize: 40 }}>8 hrs</p><p style={{ color: '#aa95cd' }}>every night<br />your brain is working</p></div>
         </div>

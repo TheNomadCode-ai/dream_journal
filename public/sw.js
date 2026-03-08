@@ -119,11 +119,11 @@ setInterval(async () => {
   }
 
   // Check evening notification
-  // Evening fires 30 min before sleep time
+  // Evening fires 10 min before sleep time
   const sleep = schedule.sleep
   if (sleep) {
     let eveningH = sleep.hour
-    let eveningM = sleep.minute - 30
+    let eveningM = sleep.minute - 10
     if (eveningM < 0) {
       eveningM += 60
       eveningH -= 1
@@ -138,7 +138,7 @@ setInterval(async () => {
       console.log('[SW] Firing evening notification')
       await self.registration.showNotification(
         'Time to plant tonight\'s seed.', {
-          body: 'Your 5 minute planting window is open.',
+          body: 'Your 10 minute planting window is open.',
           icon: '/icons/icon-192x192.png',
           tag: 'evening',
           requireInteraction: true,

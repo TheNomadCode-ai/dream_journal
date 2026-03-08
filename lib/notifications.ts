@@ -10,7 +10,7 @@ export async function scheduleNotifications(
   if (!('serviceWorker' in navigator)) return
 
   const registration = await navigator.serviceWorker.ready
-  const evening = minusMinutes(sleepHour, sleepMinute, 30)
+  const evening = minusMinutes(sleepHour, sleepMinute, 10)
 
   console.log('[Notification] Scheduled wake:', { hour: wakeHour, minute: wakeMinute })
   console.log('[Notification] Scheduled evening:', { hour: evening.hour, minute: evening.minute })

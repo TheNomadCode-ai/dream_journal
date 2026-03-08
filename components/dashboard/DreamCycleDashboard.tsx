@@ -71,7 +71,7 @@ export default function DreamCycleDashboard({
 
   const wake = parseTime(wakeTime, '07:00:00')
   const sleep = parseTime(sleepTime, '23:00:00')
-  const evening = minusMinutes(sleep.hour, sleep.minute, 30)
+  const evening = minusMinutes(sleep.hour, sleep.minute, 10)
 
   const morningWindow = windowForToday(wake.hour, wake.minute, 5)
   const eveningWindow = windowForToday(evening.hour, evening.minute, 5)

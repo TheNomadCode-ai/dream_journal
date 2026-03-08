@@ -147,8 +147,8 @@ export default function EveningPage() {
       setTrialEnded(trialHasEnded)
 
       const sleepParts = parseTime(sleep, '23:00:00')
-      const notif = minusMinutes(sleepParts.hour, sleepParts.minute, 30)
-      const windowState = windowForToday(notif.hour, notif.minute, 5)
+      const notif = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
+      const windowState = windowForToday(notif.hour, notif.minute, 10)
       const seconds = Math.max(0, Math.ceil((windowState.expiresAt.getTime() - Date.now()) / 1000))
 
       console.log('[Evening] Window check:', {
@@ -250,7 +250,7 @@ export default function EveningPage() {
     setError(null)
 
     const today = dateKeyLocal(0)
-    const expiresAt = addMinutes(windowOpenedAt, 5)
+    const expiresAt = addMinutes(windowOpenedAt, 10)
 
     const { error: seedError } = await supabase
       .from('dream_seeds')
@@ -293,7 +293,7 @@ export default function EveningPage() {
 
   const guidance = seedGuidance(seedText)
   const sleepParts = parseTime(sleepTime, '23:00:00')
-  const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 30)
+  const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
 
   if (stage === 'loading') {
     return <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
