@@ -1,33 +1,41 @@
 import { createClient } from '@/lib/supabase/server'
-import { normalizeTier, type Tier } from '@/lib/tier-config'
 
-export type { Tier } from '@/lib/tier-config'
-export { isPro, LIMITS, PRO_UPGRADE_URL } from '@/lib/tier-config'
+export const FREE_FEATURES = [
+  'dream_journal',
+  'morning_capture',
+  'dream_archive',
+  'streak',
+  'search',
+] as const
 
-export async function getUserTier(): Promise<Tier> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export const PRO_FEATURES = [
+  'seed_planting',
+  'seed_insights',
+  'ai_suggestions',
+  'weekly_digest',
+  'notebooks_unlimited',
+] as const
 
-  if (!user) return 'free'
+export type EffectiveTier = 'free' | 'pro'
 
-  const { data } = await supabase
-    .from('profiles')
-    .select('tier')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  return normalizeTier(data?.tier)
-}
-
-export async function getUserTierForUserId(userId: string): Promise<Tier> {
+export async function getUserTier(userId: string): Promise<EffectiveTier> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('profiles')
-    .select('tier')
+    .select('tier, trial_ends_at')
     .eq('id', userId)
     .maybeSingle()
 
-  return normalizeTier(data?.tier)
+  if (data?.trial_ends_at) {
+    const trialEnd = new Date(data.trial_ends_at)
+    if (trialEnd > new Date()) {
+      return 'pro'
+    }
+  }
+
+  return data?.tier === 'pro' ? 'pro' : 'free'
+}
+
+export function isPro(tier: string): boolean {
+  return tier === 'pro'
 }

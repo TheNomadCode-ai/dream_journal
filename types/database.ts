@@ -14,6 +14,9 @@ export interface Database {
           target_sleep_time: string | null
           onboarding_complete: boolean
           home_screen_installed: boolean
+          trial_started_at: string | null
+          trial_ends_at: string | null
+          notification_permission_granted: boolean
           tier: 'free' | 'pro' | 'lifetime'
           chronotype: string | null
           last_seed_date: string | null
@@ -31,6 +34,9 @@ export interface Database {
           target_sleep_time?: string | null
           onboarding_complete?: boolean
           home_screen_installed?: boolean
+          trial_started_at?: string | null
+          trial_ends_at?: string | null
+          notification_permission_granted?: boolean
           tier?: 'free' | 'pro' | 'lifetime'
           chronotype?: string | null
           last_seed_date?: string | null
@@ -48,6 +54,9 @@ export interface Database {
           target_sleep_time?: string | null
           onboarding_complete?: boolean
           home_screen_installed?: boolean
+          trial_started_at?: string | null
+          trial_ends_at?: string | null
+          notification_permission_granted?: boolean
           tier?: 'free' | 'pro' | 'lifetime'
           chronotype?: string | null
           last_seed_date?: string | null

@@ -1,17 +1,5 @@
 import { minusMinutes } from '@/lib/dream-cycle'
 
-function computeFirstTriggerAt(hour: number, minute: number) {
-  const now = new Date()
-  const target = new Date()
-  target.setHours(hour, minute, 0, 0)
-
-  if (target <= now) {
-    target.setDate(target.getDate() + 1)
-  }
-
-  return target.toISOString()
-}
-
 export async function scheduleNotifications(
   wakeHour: number,
   wakeMinute: number,
@@ -32,12 +20,10 @@ export async function scheduleNotifications(
     wake: {
       hour: wakeHour,
       minute: wakeMinute,
-      firstTriggerAt: computeFirstTriggerAt(wakeHour, wakeMinute),
     },
-    evening: {
-      hour: evening.hour,
-      minute: evening.minute,
-      firstTriggerAt: computeFirstTriggerAt(evening.hour, evening.minute),
+    sleep: {
+      hour: sleepHour,
+      minute: sleepMinute,
     },
   })
 }

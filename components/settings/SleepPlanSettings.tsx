@@ -10,14 +10,13 @@ type Props = {
   initialWakeTime: string
   initialSleepTime: string
   tier: string
-  freeEntriesUsed: number
 }
 
 function toInput(value: string) {
   return value.slice(0, 5)
 }
 
-export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, tier, freeEntriesUsed }: Props) {
+export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, tier }: Props) {
   const supabase = useMemo(() => createClient(), [])
   const [wakeTime, setWakeTime] = useState(toInput(initialWakeTime || '07:00:00'))
   const [sleepTime, setSleepTime] = useState(toInput(initialSleepTime || '23:00:00'))
@@ -95,10 +94,10 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Plan</p>
         <p style={{ color: '#efe8ff', marginBottom: 8 }}>Current: {tier === 'pro' ? 'Pro' : 'Free'}</p>
         {tier === 'pro' ? (
-          <p style={{ color: '#cbb7e4' }}>Unlimited entries enabled.</p>
+          <p style={{ color: '#cbb7e4' }}>Pro features unlocked.</p>
         ) : (
           <>
-            <p style={{ color: '#cbb7e4', marginBottom: 12 }}>Free: {freeEntriesUsed}/30 entries used</p>
+            <p style={{ color: '#cbb7e4', marginBottom: 12 }}>Free includes unlimited dream journaling and archive.</p>
             <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" className="btn-gold">
               Upgrade to Pro - $4.99/mo
             </a>

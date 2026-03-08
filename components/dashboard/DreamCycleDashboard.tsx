@@ -37,6 +37,8 @@ type Props = {
   archiveSeeds: ArchiveSeed[]
   totalSeedsPlanted: number
   totalSeedsDreamed: number
+  trialDaysRemaining: number
+  showNotificationReminderBanner: boolean
 }
 
 function firstLine(value: string | null) {
@@ -64,6 +66,8 @@ export default function DreamCycleDashboard({
   archiveSeeds,
   totalSeedsPlanted,
   totalSeedsDreamed,
+  trialDaysRemaining,
+  showNotificationReminderBanner,
 }: Props) {
   const [showMilestone, setShowMilestone] = useState(false)
 
@@ -105,6 +109,25 @@ export default function DreamCycleDashboard({
 
   return (
     <div className="page-enter" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 120px' }}>
+      {trialDaysRemaining > 0 ? (
+        <section style={{ border: '1px solid rgba(201,168,76,0.7)', borderRadius: 12, background: 'rgba(201,168,76,0.07)', padding: 14, marginBottom: 12 }}>
+          <p style={{ color: '#e9defa', marginBottom: 4 }}>You are on a free Pro trial.</p>
+          <p style={{ color: '#cdbde7', marginBottom: 8 }}>{trialDaysRemaining} days remaining.</p>
+          <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" style={{ color: '#c9a84c' }}>
+            {'Upgrade before trial ends ->'}
+          </a>
+        </section>
+      ) : null}
+
+      {showNotificationReminderBanner ? (
+        <section style={{ border: '1px solid rgba(201,168,76,0.45)', borderRadius: 12, background: 'rgba(201,168,76,0.06)', padding: 14, marginBottom: 12 }}>
+          <p style={{ color: '#e9defa', marginBottom: 6 }}>Notifications are still off.</p>
+          <Link href="/notify" style={{ color: '#c9a84c' }}>
+            {'Enable notifications ->'}
+          </Link>
+        </section>
+      ) : null}
+
       <section style={{ border: '1px solid #2a1f45', borderRadius: 14, background: '#100a22', padding: 18, marginBottom: 18 }}>
         {state === 'BEFORE_EVENING' ? (
           <>

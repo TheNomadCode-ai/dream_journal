@@ -48,20 +48,42 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_complete, home_screen_installed')
+    .select('onboarding_complete, home_screen_installed, notification_permission_granted, target_wake_time, target_sleep_time')
     .eq('id', user.id)
     .maybeSingle()
 
   const onboardingComplete = Boolean(profile?.onboarding_complete)
   const homeScreenInstalled = Boolean(profile?.home_screen_installed)
+  const notificationGranted = Boolean(profile?.notification_permission_granted)
+  const hasSchedule = Boolean(profile?.target_wake_time && profile?.target_sleep_time)
 
-  // Onboarding is the single place for notification/install requirements.
-  if ((!onboardingComplete || !homeScreenInstalled) && pathname !== '/onboarding') {
-    return NextResponse.redirect(new URL('/onboarding', request.url))
+  const isOnboardingPath = pathname === '/onboarding'
+  const isInstallPath = pathname === '/install'
+  const isNotifyPath = pathname === '/notify'
+
+  // Completed users should never revisit onboarding/install/notify pages.
+  if (onboardingComplete && (isOnboardingPath || isInstallPath || isNotifyPath)) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  if (onboardingComplete && homeScreenInstalled && pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Incomplete users must follow strict sequence:
+  // /onboarding -> /install -> /notify -> /dashboard
+  if (!onboardingComplete) {
+    if (!hasSchedule && !isOnboardingPath) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+
+    if (hasSchedule && !homeScreenInstalled && !isInstallPath) {
+      return NextResponse.redirect(new URL('/install', request.url))
+    }
+
+    if (hasSchedule && homeScreenInstalled && !notificationGranted && !isNotifyPath) {
+      return NextResponse.redirect(new URL('/notify', request.url))
+    }
+
+    if (hasSchedule && homeScreenInstalled && notificationGranted) {
+      if (!isNotifyPath) return NextResponse.redirect(new URL('/notify', request.url))
+    }
   }
 
   return response

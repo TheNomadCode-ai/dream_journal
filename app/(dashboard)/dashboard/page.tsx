@@ -14,7 +14,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_complete, target_wake_time, target_sleep_time, total_seeds_planted, total_seeds_dreamed')
+    .select('onboarding_complete, target_wake_time, target_sleep_time, total_seeds_planted, total_seeds_dreamed, tier, trial_ends_at, notification_permission_granted')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -66,6 +66,12 @@ export default async function DashboardPage() {
     ).data ?? []
     : []
 
+  const isTrialUser = profile?.tier === 'free' && Boolean(profile?.trial_ends_at) && new Date(profile?.trial_ends_at ?? '') > new Date()
+  const trialDaysRemaining = isTrialUser
+    ? Math.max(1, Math.ceil((new Date(profile?.trial_ends_at ?? '').getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0
+  const showNotificationReminderBanner = profile?.notification_permission_granted === false
+
   return (
     <DreamCycleDashboard
       wakeTime={profile.target_wake_time ?? '07:00:00'}
@@ -77,6 +83,8 @@ export default async function DashboardPage() {
       archiveSeeds={archiveSeeds as any}
       totalSeedsPlanted={profile.total_seeds_planted ?? 0}
       totalSeedsDreamed={profile.total_seeds_dreamed ?? 0}
+      trialDaysRemaining={trialDaysRemaining}
+      showNotificationReminderBanner={showNotificationReminderBanner}
     />
   )
 }

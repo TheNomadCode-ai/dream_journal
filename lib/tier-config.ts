@@ -4,7 +4,6 @@ export const PRO_UPGRADE_URL = 'https://sushankhanal.gumroad.com/l/somniavault'
 
 export const LIMITS = {
   free: {
-    maxEntries: 30,
     maxNotebooks: 1,
     aiInsights: false,
     voiceCapture: false,
@@ -12,7 +11,6 @@ export const LIMITS = {
     weeklyDigest: false,
   },
   pro: {
-    maxEntries: Number.POSITIVE_INFINITY,
     maxNotebooks: Number.POSITIVE_INFINITY,
     aiInsights: true,
     voiceCapture: true,
@@ -20,7 +18,6 @@ export const LIMITS = {
     weeklyDigest: true,
   },
   lifetime: {
-    maxEntries: Number.POSITIVE_INFINITY,
     maxNotebooks: Number.POSITIVE_INFINITY,
     aiInsights: true,
     voiceCapture: true,

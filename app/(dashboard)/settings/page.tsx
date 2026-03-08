@@ -11,20 +11,11 @@ export default async function SettingsPage() {
 
   if (!user) redirect('/login')
 
-  const [profileResult, dreamsResult] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('target_wake_time, target_sleep_time, tier')
-      .eq('id', user.id)
-      .maybeSingle(),
-    supabase
-      .from('dreams')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .is('deleted_at', null),
-  ])
-
-  const profile = profileResult.data
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('target_wake_time, target_sleep_time, tier')
+    .eq('id', user.id)
+    .maybeSingle()
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 24px 120px' }}>
@@ -39,7 +30,6 @@ export default async function SettingsPage() {
         initialWakeTime={profile?.target_wake_time ?? '07:00:00'}
         initialSleepTime={profile?.target_sleep_time ?? '23:00:00'}
         tier={profile?.tier ?? 'free'}
-        freeEntriesUsed={dreamsResult.count ?? 0}
       />
 
       <div style={{ height: 1, background: 'rgba(255,255,255,0.12)', margin: '34px 0 16px' }} />
