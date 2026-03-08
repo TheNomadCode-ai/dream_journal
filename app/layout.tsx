@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
-import RequirementsGate from '@/components/app/RequirementsGate'
 import { ProfileProvider } from '@/lib/ProfileContext'
 import '../styles/globals.css'
 
@@ -96,9 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         <ServiceWorkerRegistrar />
         <TouchFeedback />
-        <ProfileProvider>
-          <RequirementsGate>{children}</RequirementsGate>
-        </ProfileProvider>
+        <ProfileProvider>{children}</ProfileProvider>
       </body>
     </html>
   )

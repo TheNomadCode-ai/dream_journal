@@ -48,17 +48,19 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_complete')
+    .select('onboarding_complete, home_screen_installed')
     .eq('id', user.id)
     .maybeSingle()
 
   const onboardingComplete = Boolean(profile?.onboarding_complete)
+  const homeScreenInstalled = Boolean(profile?.home_screen_installed)
 
-  if (!onboardingComplete && pathname !== '/onboarding') {
+  // Onboarding is the single place for notification/install requirements.
+  if ((!onboardingComplete || !homeScreenInstalled) && pathname !== '/onboarding') {
     return NextResponse.redirect(new URL('/onboarding', request.url))
   }
 
-  if (onboardingComplete && pathname === '/onboarding') {
+  if (onboardingComplete && homeScreenInstalled && pathname === '/onboarding') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
