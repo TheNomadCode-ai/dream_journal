@@ -1,134 +1,40 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-
-import { parseTime } from '@/lib/dream-cycle'
-import { scheduleNotifications } from '@/lib/notifications'
-import { createClient } from '@/lib/supabase/client'
-
-function prettyTime(value: string | null | undefined) {
-  if (!value) return '7:00 AM'
-  const [h, m] = value.slice(0, 5).split(':').map(Number)
-  const suffix = h >= 12 ? 'PM' : 'AM'
-  const hour12 = h % 12 || 12
-  return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`
-}
 
 export default function NotifyPage() {
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
 
-  const [wakeTime, setWakeTime] = useState('07:00:00')
-  const [sleepTime, setSleepTime] = useState('23:00:00')
-  const [requesting, setRequesting] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [denied, setDenied] = useState(false)
-  const [manualMessage, setManualMessage] = useState<string | null>(null)
+  const [status, setStatus] = useState<'idle' | 'requesting'>('idle')
 
   useEffect(() => {
-    let active = true
+    const interval = setInterval(() => {
+      if (typeof Notification === 'undefined') return
 
-    async function bootstrap() {
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData.user
-      if (!user) {
-        router.replace('/login?redirectedFrom=%2Fnotify')
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('target_wake_time, target_sleep_time, notification_permission_granted')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (!active) return
-
-      setWakeTime(profile?.target_wake_time ?? '07:00:00')
-      setSleepTime(profile?.target_sleep_time ?? '23:00:00')
-
-      const alreadyGranted = typeof Notification !== 'undefined' && Notification.permission === 'granted'
-      if (alreadyGranted || profile?.notification_permission_granted) {
-        await supabase
-          .from('profiles')
-          .update({ notification_permission_granted: true, onboarding_complete: true })
-          .eq('id', user.id)
-
+      if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+        console.log('[Notify] Permission resolved:', Notification.permission)
+        clearInterval(interval)
         router.push('/dashboard')
       }
-    }
-
-    void bootstrap()
+    }, 500)
 
     return () => {
-      active = false
+      clearInterval(interval)
     }
-  }, [router, supabase])
+  }, [router])
 
-  async function allowNotifications() {
-    if (requesting) return
-    setRequesting(true)
+  const handleAllow = async () => {
+    setStatus('requesting')
 
     try {
-      const permission = await Notification.requestPermission()
-      console.log('[Notify] Permission:', permission)
-
-      const { data } = await supabase.auth.getUser()
-      const user = data.user
-
-      if (permission === 'granted') {
-        const wake = parseTime(wakeTime, '07:00:00')
-        const sleep = parseTime(sleepTime, '23:00:00')
-        await scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
-        console.log('[Notify] Scheduled:', { wakeH: wake.hour, wakeM: wake.minute, sleepH: sleep.hour, sleepM: sleep.minute })
-
-        if (user) {
-          await supabase
-            .from('profiles')
-            .update({ notification_permission_granted: true, onboarding_complete: true })
-            .eq('id', user.id)
-        }
-
-        setSuccess(true)
-        setDenied(false)
-      } else {
-        if (user) {
-          await supabase
-            .from('profiles')
-            .update({ notification_permission_granted: false, onboarding_complete: true })
-            .eq('id', user.id)
-        }
-
-        setDenied(true)
-        setManualMessage('Enable notifications in settings for your morning and evening windows.')
-      }
-
-      router.push('/dashboard')
-    } catch (err) {
-      console.error('[Notify] Error:', err)
+      await Notification.requestPermission()
+    } catch (error) {
+      console.log(error)
+    } finally {
+      // No matter what happens above, always go to dashboard.
       router.push('/dashboard')
     }
-  }
-
-  async function recheckManualEnable() {
-    const granted = Notification.permission === 'granted'
-    if (granted) {
-      await allowNotifications()
-      return
-    }
-
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
-    if (user) {
-      await supabase
-        .from('profiles')
-        .update({ notification_permission_granted: false, onboarding_complete: true })
-        .eq('id', user.id)
-    }
-
-    setManualMessage('Still denied. Continuing to dashboard with a reminder banner.')
-    setTimeout(() => router.replace('/dashboard'), 1200)
   }
 
   return (
@@ -150,44 +56,9 @@ export default function NotifyPage() {
           Nothing else. Ever.
         </p>
 
-        {!success ? (
-          <button className={`btn-gold ${requesting ? 'btn-loading' : ''}`} style={{ minHeight: 54 }} onClick={() => void allowNotifications()}>
-            {requesting ? 'Requesting...' : 'Allow Notifications ->'}
-          </button>
-        ) : (
-          <div style={{ border: '1px solid rgba(158,231,182,0.4)', borderRadius: 12, background: 'rgba(158,231,182,0.06)', padding: 14 }}>
-            <p style={{ color: '#9ee7b6', marginBottom: 6 }}>✓ Notifications enabled.</p>
-            <p style={{ color: '#d3c5ea' }}>Your first window opens at {prettyTime(wakeTime)}.</p>
-          </div>
-        )}
-
-        {denied ? (
-          <div style={{ marginTop: 20, border: '1px solid rgba(255,255,255,0.16)', borderRadius: 12, padding: 14 }}>
-            <p style={{ marginBottom: 8, color: '#efdcff' }}>
-              You'll need to enable notifications manually to use Somnia fully.
-            </p>
-            <p style={{ color: '#c8b6e3', marginBottom: 8 }}>
-              iPhone:
-              <br />
-              {'Settings -> Safari -> Advanced ->'}
-              <br />
-              {'Website Data -> somniavault.me ->'}
-              <br />
-              {'Notifications -> Allow'}
-            </p>
-            <p style={{ color: '#c8b6e3', marginBottom: 12 }}>
-              Android:
-              <br />
-              {'Settings -> Apps -> Chrome ->'}
-              <br />
-              {'Notifications -> Allow'}
-            </p>
-            <button className="btn-ghost-gold" onClick={() => void recheckManualEnable()}>
-              {"I've enabled them ->"}
-            </button>
-            {manualMessage ? <p style={{ color: '#f5cf8f', marginTop: 8 }}>{manualMessage}</p> : null}
-          </div>
-        ) : null}
+        <button className={`btn-gold ${status === 'requesting' ? 'btn-loading' : ''}`} style={{ minHeight: 54 }} onClick={() => void handleAllow()}>
+          {status === 'requesting' ? 'Requesting...' : 'Allow Notifications ->'}
+        </button>
       </section>
     </main>
   )
