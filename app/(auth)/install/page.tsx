@@ -56,7 +56,7 @@ export default function InstallPage() {
       }
 
       if (isStandalone()) {
-        router.push('/onboarding')
+        router.push('/dashboard')
       }
     })()
 
@@ -77,7 +77,7 @@ export default function InstallPage() {
     if (outcome === 'accepted') {
       localStorage.setItem('somnia_installed', 'true')
       setTimeout(() => {
-        router.push('/onboarding')
+        router.push('/dashboard')
       }, 1000)
     }
   }
@@ -87,7 +87,7 @@ export default function InstallPage() {
 
     if (isStandalone()) {
       localStorage.setItem('somnia_installed', 'true')
-      router.push('/onboarding')
+      router.push('/dashboard')
       return
     }
 

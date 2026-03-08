@@ -49,17 +49,19 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_complete, home_screen_installed, notification_permission_granted, target_wake_time, target_sleep_time')
+    .select('onboarding_complete')
     .eq('id', user.id)
-    .maybeSingle()
+    .single()
 
-  const onboardingComplete = Boolean(profile?.onboarding_complete)
+  const onboardingComplete = profile?.onboarding_complete === true
 
-  if (!onboardingComplete) {
-    const allowedIncompletePaths = ['/install', '/onboarding']
-    if (!allowedIncompletePaths.includes(pathname)) {
-      return NextResponse.redirect(new URL('/install', request.url))
-    }
+  if (
+    !onboardingComplete &&
+    !pathname.startsWith('/onboarding') &&
+    !pathname.startsWith('/install') &&
+    !pathname.startsWith('/notify')
+  ) {
+    return NextResponse.redirect(new URL('/onboarding', request.url))
   }
 
   return response

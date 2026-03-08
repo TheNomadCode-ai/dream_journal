@@ -1,14 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
 
 type Screen = 1 | 2
 
 export default function OnboardingPage() {
-  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
 
   const [screen, setScreen] = useState<Screen>(1)
@@ -17,37 +15,68 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function saveAndContinue() {
+  async function handleComplete() {
     if (saving) return
     setSaving(true)
     setError(null)
 
-    const { data: authData } = await supabase.auth.getUser()
-    const user = authData.user
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
 
-    if (!user) {
-      router.replace('/login?redirectedFrom=%2Fonboarding')
-      return
-    }
+      console.log('User:', user?.id, userError)
 
-    const updatedFields = {
-      target_wake_time: `${wakeTime}:00`,
-      target_sleep_time: `${sleepTime}:00`,
-      onboarding_complete: false,
-    }
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, ...updatedFields }, { onConflict: 'id' })
+      const { data, error: saveError } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: user.id,
+            target_wake_time: wakeTime,
+            target_sleep_time: sleepTime,
+            onboarding_complete: true,
+          },
+          {
+            onConflict: 'id',
+          }
+        )
+        .select()
+        .single()
 
-    if (profileError) {
-      setError('Could not save setup. Please try again.')
+      console.log('Save result:', data, saveError)
+
+      if (saveError) {
+        setError('Could not save. Try again.')
+        setSaving(false)
+        return
+      }
+
+      const { data: verify } = await supabase
+        .from('profiles')
+        .select('onboarding_complete')
+        .eq('id', user.id)
+        .single()
+
+      console.log('Verified:', verify)
+
+      if (!verify?.onboarding_complete) {
+        setError('Save failed. Try again.')
+        setSaving(false)
+        return
+      }
+
+      window.location.href = '/install'
+    } catch (err) {
+      console.log('Error:', err)
+      setError('Something went wrong.')
       setSaving(false)
-      return
     }
-
-    console.log('[Profile] Saved:', updatedFields)
-    window.location.href = '/dashboard'
   }
 
   return (
@@ -99,14 +128,14 @@ export default function OnboardingPage() {
               />
 
               <p style={{ color: '#b8a4d7', marginTop: 14 }}>
-                Next, you will enable notifications for your morning and evening windows.
+                Next, you'll finish installation.
               </p>
             </div>
 
             <div>
               {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
-              <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void saveAndContinue()} disabled={saving}>
-                {saving ? 'Saving...' : 'Continue to dashboard'}
+              <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void handleComplete()} disabled={saving}>
+                {saving ? 'Saving...' : 'Continue to install'}
               </button>
             </div>
           </>
