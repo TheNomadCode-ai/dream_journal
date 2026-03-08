@@ -24,6 +24,7 @@ export default function InstallPage() {
   const [canInstall, setCanInstall] = useState(false)
   const [countdown, setCountdown] = useState(5)
   const [message, setMessage] = useState<string | null>(null)
+  const [installedReady, setInstalledReady] = useState(false)
 
   const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !navigator.MSStream
   const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
@@ -76,9 +77,7 @@ export default function InstallPage() {
 
     if (outcome === 'accepted') {
       localStorage.setItem('somnia_installed', 'true')
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 1000)
+      setInstalledReady(true)
     }
   }
 
@@ -87,7 +86,7 @@ export default function InstallPage() {
 
     if (isStandalone()) {
       localStorage.setItem('somnia_installed', 'true')
-      router.push('/dashboard')
+      setInstalledReady(true)
       return
     }
 
@@ -108,59 +107,76 @@ export default function InstallPage() {
           <circle cx="66" cy="44" r="35" fill="#06040f" />
         </svg>
 
-        <p style={{ letterSpacing: '0.18em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 14 }}>Required</p>
-        <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(42px,8vw,58px)', lineHeight: 1.08, marginBottom: 12 }}>
-          Add Somnia to your
-          <br />
-          home screen.
-        </h1>
-        <p style={{ color: '#b8a4d7', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 24 }}>
-          Your morning and evening notifications only work reliably when Somnia is installed on your home screen.
-        </p>
-
-        {isAndroid ? (
-          <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16 }}>
-            <button className="btn-gold" style={{ width: '100%', justifyContent: 'center', opacity: canInstall ? 1 : 0.65 }} disabled={!canInstall} onClick={() => void handleInstall()}>
-              Add to Home Screen
-            </button>
-            {!canInstall ? (
-              <p style={{ color: '#9f8abb', marginTop: 12, fontSize: 13 }}>Waiting for install prompt from Chrome...</p>
-            ) : null}
+        {installedReady ? (
+          <div>
+            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(42px,8vw,58px)', lineHeight: 1.08, marginBottom: 12 }}>
+              You're all set.
+            </h1>
+            <p style={{ color: '#b8a4d7', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 20 }}>
+              Now open Somnia from your home screen to continue.
+            </p>
+            <div style={{ fontSize: 32, opacity: 0.7, marginBottom: 8, animation: 'moonPulse 1.6s ease-in-out infinite' }}>↓</div>
+            <p style={{ color: '#9f8abb', fontSize: 13 }}>
+              Find the Somnia icon on your home screen and tap it.
+            </p>
           </div>
-        ) : null}
-
-        {isIOS ? (
-          <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, textAlign: 'left' }}>
-            <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Before you continue</p>
-            <p style={{ color: '#d6c9eb', fontStyle: 'italic', lineHeight: 1.65, marginBottom: 14 }}>
-              Open Somnia from your home screen to continue setup. This takes less than 30 seconds.
+        ) : (
+          <>
+            <p style={{ letterSpacing: '0.18em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 14 }}>Required</p>
+            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(42px,8vw,58px)', lineHeight: 1.08, marginBottom: 12 }}>
+              Add Somnia to your
+              <br />
+              home screen.
+            </h1>
+            <p style={{ color: '#b8a4d7', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 24 }}>
+              Your morning and evening notifications only work reliably when Somnia is installed on your home screen.
             </p>
 
-            <div style={{ display: 'grid', gap: 12, marginBottom: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M12 15V4" /><path d="M8 8l4-4 4 4" /><rect x="4" y="11" width="16" height="9" rx="2" /></svg>
-                <p>Tap the Share button at the bottom of Safari</p>
+            {isAndroid ? (
+              <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16 }}>
+                <button className="btn-gold" style={{ width: '100%', justifyContent: 'center', opacity: canInstall ? 1 : 0.65 }} disabled={!canInstall} onClick={() => void handleInstall()}>
+                  Add to Home Screen
+                </button>
+                {!canInstall ? (
+                  <p style={{ color: '#9f8abb', marginTop: 12, fontSize: 13 }}>Waiting for install prompt from Chrome...</p>
+                ) : null}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M12 8v8M8 12h8" /></svg>
-                <p>Tap Add to Home Screen</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M5 12l4 4L19 6" /></svg>
-                <p>Tap Add</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M3 10.5L12 3l9 7.5" /><path d="M6 9.5V21h12V9.5" /></svg>
-                <p>Open Somnia from your home screen</p>
-              </div>
-            </div>
+            ) : null}
 
-            <button className="btn-ghost-gold" style={{ width: '100%', justifyContent: 'center', opacity: countdown > 0 ? 0.45 : 1 }} disabled={countdown > 0} onClick={handleIOSContinue}>
-              {countdown > 0 ? `I've added it - continue (${countdown})` : "I've added it - continue ->"}
-            </button>
-            {message ? <p style={{ color: '#ffb9ca', marginTop: 10, textAlign: 'center' }}>{message}</p> : null}
-          </div>
-        ) : null}
+            {isIOS ? (
+              <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, textAlign: 'left' }}>
+                <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Before you continue</p>
+                <p style={{ color: '#d6c9eb', fontStyle: 'italic', lineHeight: 1.65, marginBottom: 14 }}>
+                  Open Somnia from your home screen to continue setup. This takes less than 30 seconds.
+                </p>
+
+                <div style={{ display: 'grid', gap: 12, marginBottom: 14 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M12 15V4" /><path d="M8 8l4-4 4 4" /><rect x="4" y="11" width="16" height="9" rx="2" /></svg>
+                    <p>Tap the Share button at the bottom of Safari</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M12 8v8M8 12h8" /></svg>
+                    <p>Tap Add to Home Screen</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M5 12l4 4L19 6" /></svg>
+                    <p>Tap Add</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M3 10.5L12 3l9 7.5" /><path d="M6 9.5V21h12V9.5" /></svg>
+                    <p>Open Somnia from your home screen</p>
+                  </div>
+                </div>
+
+                <button className="btn-ghost-gold" style={{ width: '100%', justifyContent: 'center', opacity: countdown > 0 ? 0.45 : 1 }} disabled={countdown > 0} onClick={handleIOSContinue}>
+                  {countdown > 0 ? `I've added it - continue (${countdown})` : "I've added it - continue ->"}
+                </button>
+                {message ? <p style={{ color: '#ffb9ca', marginTop: 10, textAlign: 'center' }}>{message}</p> : null}
+              </div>
+            ) : null}
+          </>
+        )}
       </section>
     </main>
   )

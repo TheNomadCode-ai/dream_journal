@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,7 +13,6 @@ const loadingMessages = [
 ]
 
 export default function SignupPage() {
-  const router = useRouter()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -75,8 +73,7 @@ export default function SignupPage() {
       return
     }
 
-    // Email confirmation is disabled, so session is created immediately.
-    router.push('/install')
+    window.location.href = '/install'
   }
 
   return (
