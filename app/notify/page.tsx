@@ -70,40 +70,45 @@ export default function NotifyPage() {
     if (requesting) return
     setRequesting(true)
 
-    const permission = await Notification.requestPermission()
-    if (permission === 'granted') {
-      const wake = parseTime(wakeTime, '07:00:00')
-      const sleep = parseTime(sleepTime, '23:00:00')
-      await scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
+    try {
+      const permission = await Notification.requestPermission()
+      console.log('[Notify] Permission:', permission)
 
       const { data } = await supabase.auth.getUser()
       const user = data.user
-      if (user) {
-        await supabase
-          .from('profiles')
-          .update({ notification_permission_granted: true, onboarding_complete: true })
-          .eq('id', user.id)
+
+      if (permission === 'granted') {
+        const wake = parseTime(wakeTime, '07:00:00')
+        const sleep = parseTime(sleepTime, '23:00:00')
+        await scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
+        console.log('[Notify] Scheduled:', { wakeH: wake.hour, wakeM: wake.minute, sleepH: sleep.hour, sleepM: sleep.minute })
+
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({ notification_permission_granted: true, onboarding_complete: true })
+            .eq('id', user.id)
+        }
+
+        setSuccess(true)
+        setDenied(false)
+      } else {
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({ notification_permission_granted: false, onboarding_complete: true })
+            .eq('id', user.id)
+        }
+
+        setDenied(true)
+        setManualMessage('Enable notifications in settings for your morning and evening windows.')
       }
 
-      setSuccess(true)
-      setDenied(false)
-      setTimeout(() => router.push('/dashboard'), 1200)
-      return
+      router.push('/dashboard')
+    } catch (err) {
+      console.error('[Notify] Error:', err)
+      router.push('/dashboard')
     }
-
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
-    if (user) {
-      await supabase
-        .from('profiles')
-        .update({ notification_permission_granted: false, onboarding_complete: true })
-        .eq('id', user.id)
-    }
-
-    setDenied(true)
-    setManualMessage('Notifications are off. You can enable them later in settings.')
-    setTimeout(() => router.push('/dashboard'), 1200)
-    return
   }
 
   async function recheckManualEnable() {

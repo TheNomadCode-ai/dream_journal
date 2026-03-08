@@ -75,6 +75,7 @@ export default function InstallPage() {
     console.log('[Install] Outcome:', outcome)
 
     if (outcome === 'accepted') {
+      localStorage.setItem('somnia_installed', 'true')
       setTimeout(() => {
         router.push('/onboarding')
       }, 1000)
@@ -85,6 +86,7 @@ export default function InstallPage() {
     if (countdown > 0) return
 
     if (isStandalone()) {
+      localStorage.setItem('somnia_installed', 'true')
       router.push('/onboarding')
       return
     }
