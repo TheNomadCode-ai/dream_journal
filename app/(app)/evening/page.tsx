@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import CountdownTimer from '@/components/ui/CountdownTimer'
 import { addMinutes, dateKeyLocal, formatClock, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
@@ -15,7 +16,7 @@ type SeedRow = {
   morning_confirmed_at: string | null
 }
 
-const SUGGESTIONS = [
+const SUGGESTIONS_40 = [
   'A place where you felt completely safe',
   'Someone you miss',
   "A problem you're trying to solve",
@@ -24,9 +25,69 @@ const SUGGESTIONS = [
   "A door you've never opened",
   "Something you're afraid to want",
   'A conversation you never had',
+  'A hidden room in your home',
+  'Meeting your future self',
+  'A river that speaks',
+  'A forgotten friend returning',
+  'Flying over your hometown',
+  'An unresolved conflict made peaceful',
+  'A mountain at sunrise',
+  'Receiving guidance from a wise elder',
+  'A city made of glass',
+  'A letter arriving with your name',
+  'An animal guide appearing',
+  'A dream inside a dream',
+  'A safe reunion with someone lost',
+  'A new creative idea taking shape',
+  'Walking through a familiar place transformed',
+  'Finding a key that unlocks truth',
+  'A healing conversation',
+  'A star map with your path',
+  'A childhood room revisited',
+  'Dancing without fear',
+  'A calm ocean at night',
+  'A bridge to a new chapter',
+  'A mirror showing your strengths',
+  'Meeting the part of you that is brave',
+  'A garden that grows overnight',
+  'A temple filled with light',
+  'A mystery finally understood',
+  'A symbol that repeats with meaning',
+  'A train to an unknown destination',
+  'A moonlit path through trees',
+  'A moment of deep forgiveness',
+  'A room full of future possibilities',
 ]
 
 type Stage = 'loading' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted'
+
+function shuffle<T>(values: T[]): T[] {
+  const clone = [...values]
+  for (let i = clone.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const temp = clone[i]
+    clone[i] = clone[j]
+    clone[j] = temp
+  }
+  return clone
+}
+
+function seedGuidance(text: string) {
+  const trimmed = text.trim()
+  const words = trimmed ? trimmed.split(/\s+/).length : 0
+  const chars = trimmed.length
+
+  if (chars < 20) {
+    return { tone: 'low', color: '#ff9f9f', message: 'Too vague. Add sensory detail, emotion, or a person/place.', words }
+  }
+  if (chars < 50) {
+    return { tone: 'building', color: '#f5cf8f', message: 'Good start. Try adding one concrete image or feeling.', words }
+  }
+  if (chars < 120) {
+    return { tone: 'good', color: '#9ee7b6', message: 'Great clarity. This is descriptive enough for incubation.', words }
+  }
+  return { tone: 'strong', color: '#9be2ff', message: 'Excellent depth. Keep this focused intention for sleep.', words }
+}
 
 export default function EveningPage() {
   const supabase = useMemo(() => createClient(), [])
@@ -38,14 +99,16 @@ export default function EveningPage() {
   const [sleepTime, setSleepTime] = useState('23:00:00')
   const [windowOpenedAt, setWindowOpenedAt] = useState<Date | null>(null)
   const [windowExpiresAt, setWindowExpiresAt] = useState<Date | null>(null)
-  const [minutesRemaining, setMinutesRemaining] = useState(0)
+  const [initialSeconds, setInitialSeconds] = useState(0)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [seedText, setSeedText] = useState('')
+  const [shownSuggestions, setShownSuggestions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const rotateIndex = Number(dateKeyLocal().replace(/-/g, '')) % SUGGESTIONS.length
-  const suggestions = [...SUGGESTIONS.slice(rotateIndex), ...SUGGESTIONS.slice(0, rotateIndex)].slice(0, 3)
+  useEffect(() => {
+    setShownSuggestions(shuffle(SUGGESTIONS_40).slice(0, 6))
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -77,16 +140,17 @@ export default function EveningPage() {
       const sleepParts = parseTime(sleep, '23:00:00')
       const notif = minusMinutes(sleepParts.hour, sleepParts.minute, 30)
       const windowState = windowForToday(notif.hour, notif.minute, 5)
+      const seconds = Math.max(0, Math.ceil((windowState.expiresAt.getTime() - Date.now()) / 1000))
 
       console.log('[Evening] Window check:', {
         now: new Date().toISOString(),
         windowOpen: windowState.isOpen,
-        minutesRemaining: windowState.minutesRemaining,
+        secondsRemaining: seconds,
       })
 
       setWindowOpenedAt(windowState.openedAt)
       setWindowExpiresAt(windowState.expiresAt)
-      setMinutesRemaining(windowState.minutesRemaining)
+      setInitialSeconds(seconds)
 
       if (!windowState.isOpen) {
         setStage('closed')
@@ -103,9 +167,13 @@ export default function EveningPage() {
 
       if (!active) return
 
-      console.log('[Evening] Yesterday seed:', priorSeed)
-
       setYesterdaySeed(priorSeed as SeedRow | null)
+
+      const draftKey = `somnia-evening-draft:${user.id}:${dateKeyLocal(0)}`
+      const storedDraft = localStorage.getItem(draftKey)
+      if (storedDraft) {
+        setSeedText(storedDraft)
+      }
 
       if (priorSeed && !priorSeed.morning_confirmed_at) {
         setStage('confirm')
@@ -123,19 +191,24 @@ export default function EveningPage() {
   }, [router, supabase])
 
   useEffect(() => {
-    if (!windowExpiresAt) return
+    if (!userId || stage !== 'plant') return
+    const draftKey = `somnia-evening-draft:${userId}:${dateKeyLocal(0)}`
+    const autosave = window.setInterval(() => {
+      localStorage.setItem(draftKey, seedText)
+    }, 5000)
 
-    const timer = window.setInterval(() => {
-      const now = new Date()
-      const nextRemaining = Math.max(0, Math.ceil((windowExpiresAt.getTime() - now.getTime()) / 60000))
-      setMinutesRemaining(nextRemaining)
-      if (nextRemaining <= 0 && stage !== 'planted') {
-        setStage('closed')
-      }
-    }, 1000)
+    return () => window.clearInterval(autosave)
+  }, [seedText, stage, userId])
 
-    return () => window.clearInterval(timer)
-  }, [stage, windowExpiresAt])
+  function onTimeout() {
+    if (userId) {
+      const draftKey = `somnia-evening-draft:${userId}:${dateKeyLocal(0)}`
+      localStorage.setItem(draftKey, seedText)
+    }
+    if (stage !== 'planted') {
+      setStage('closed')
+    }
+  }
 
   async function confirmYesterday(value: boolean | null) {
     if (!yesterdaySeed) {
@@ -150,8 +223,6 @@ export default function EveningPage() {
         morning_confirmed_at: new Date().toISOString(),
       })
       .eq('id', yesterdaySeed.id)
-
-    console.log('[Morning] Confirmation:', value)
 
     setYesterdaySeed({ ...yesterdaySeed, was_dreamed: value, morning_confirmed_at: new Date().toISOString() })
     setStage('journal-prompt')
@@ -197,23 +268,26 @@ export default function EveningPage() {
       })
       .eq('id', userId)
 
+    const draftKey = `somnia-evening-draft:${userId}:${dateKeyLocal(0)}`
+    localStorage.removeItem(draftKey)
+
     console.log('[Evening] Seed planted:', seedText.trim())
-    console.log('[Profile] Saved:', { last_seed_date: today, total_seeds_planted: (profile?.total_seeds_planted ?? 0) + 1 })
 
     setSaving(false)
     setStage('planted')
   }
 
+  const guidance = seedGuidance(seedText)
   const sleepParts = parseTime(sleepTime, '23:00:00')
   const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 30)
 
   if (stage === 'loading') {
-    return <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
+    return <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
   }
 
   if (stage === 'closed') {
     return (
-      <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 50, marginBottom: 12 }}>The planting window has closed.</h1>
           <p style={{ color: '#bca7de', marginBottom: 8 }}>Tonight's window was at {formatClock(eveningParts.hour, eveningParts.minute)}.</p>
@@ -225,9 +299,9 @@ export default function EveningPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+    <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
-        <p style={{ position: 'absolute', right: 0, top: 0, color: '#ccb7eb', fontSize: 13 }}>{minutesRemaining}:00</p>
+        {windowExpiresAt ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
 
         {stage === 'confirm' && yesterdaySeed ? (
           <div>
@@ -263,18 +337,19 @@ export default function EveningPage() {
           <div>
             <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Tonight's dream seed</p>
             <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 44, marginBottom: 14 }}>What do you want to dream about?</h1>
-            <div style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
-              {suggestions.map((suggestion) => (
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', marginBottom: 12 }}>
+              {shownSuggestions.map((suggestion) => (
                 <button
                   key={suggestion}
-                  className="btn-ghost-gold"
-                  style={{ border: '1px solid #3a2c61', borderRadius: 10, minHeight: 46, justifyContent: 'flex-start', padding: '0 12px', color: '#e7ddfa' }}
+                  className="btn-ghost-gold seed-card"
+                  style={{ border: '1px solid #3a2c61', borderRadius: 10, minHeight: 56, justifyContent: 'flex-start', padding: '8px 12px', color: '#e7ddfa', textAlign: 'left' }}
                   onClick={() => setSeedText(suggestion)}
                 >
                   {suggestion}
                 </button>
               ))}
             </div>
+            <button className="btn-ghost-gold" style={{ marginBottom: 14 }} onClick={() => setShownSuggestions(shuffle(SUGGESTIONS_40).slice(0, 6))}>Show different suggestions</button>
             <p style={{ color: '#9f8abb', marginBottom: 8 }}>OR</p>
             <textarea
               value={seedText}
@@ -291,9 +366,12 @@ export default function EveningPage() {
                 marginBottom: 8,
               }}
             />
-            <p style={{ textAlign: 'right', color: '#a88fd1', marginBottom: 12 }}>{seedText.length}/300</p>
+            <div style={{ border: `1px solid ${guidance.color}`, borderRadius: 10, padding: '8px 10px', marginBottom: 8, color: guidance.color }}>
+              {guidance.message}
+            </div>
+            <p style={{ textAlign: 'right', color: '#a88fd1', marginBottom: 12 }}>{seedText.length}/300 chars • {guidance.words} words</p>
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
-            <button className="btn-gold" style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim()}>
+            <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim()}>
               {saving ? 'Planting...' : 'Plant this seed'}
             </button>
           </div>

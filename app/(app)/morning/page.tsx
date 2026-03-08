@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import CountdownTimer from '@/components/ui/CountdownTimer'
 import { dateKeyLocal, formatClock, parseTime, windowForToday } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
@@ -17,6 +18,23 @@ type SeedRow = {
 
 type Stage = 'loading' | 'closed' | 'confirm' | 'journal' | 'saved'
 
+function journalGuidance(text: string) {
+  const trimmed = text.trim()
+  const words = trimmed ? trimmed.split(/\s+/).length : 0
+  const chars = trimmed.length
+
+  if (chars < 80) {
+    return { color: '#ff9f9f', message: 'Too brief. Add setting, people, and what happened first.', words }
+  }
+  if (chars < 180) {
+    return { color: '#f5cf8f', message: 'Good start. Add one emotion and one sensory detail.', words }
+  }
+  if (chars < 320) {
+    return { color: '#9ee7b6', message: 'Strong detail. Keep going with sequence and symbols.', words }
+  }
+  return { color: '#9be2ff', message: 'Excellent depth. This is highly useful dream data.', words }
+}
+
 export default function MorningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -26,7 +44,7 @@ export default function MorningPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [wakeTime, setWakeTime] = useState('07:00:00')
   const [windowExpiresAt, setWindowExpiresAt] = useState<Date | null>(null)
-  const [minutesRemaining, setMinutesRemaining] = useState(0)
+  const [initialSeconds, setInitialSeconds] = useState(0)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [body, setBody] = useState('')
   const [saving, setSaving] = useState(false)
@@ -57,15 +75,16 @@ export default function MorningPage() {
 
       const wakeParts = parseTime(wake, '07:00:00')
       const windowState = windowForToday(wakeParts.hour, wakeParts.minute, 5)
+      const seconds = Math.max(0, Math.ceil((windowState.expiresAt.getTime() - Date.now()) / 1000))
 
       console.log('[Morning] Window check:', {
         now: new Date().toISOString(),
         windowOpen: windowState.isOpen,
-        minutesRemaining: windowState.minutesRemaining,
+        secondsRemaining: seconds,
       })
 
       setWindowExpiresAt(windowState.expiresAt)
-      setMinutesRemaining(windowState.minutesRemaining)
+      setInitialSeconds(seconds)
 
       const yesterday = dateKeyLocal(-1)
       const { data: seed } = await supabase
@@ -78,7 +97,6 @@ export default function MorningPage() {
       if (!active) return
 
       setYesterdaySeed(seed as SeedRow | null)
-      console.log('[Morning] Seed to confirm:', seed)
 
       if (!windowState.isOpen) {
         setStage('closed')
@@ -100,23 +118,6 @@ export default function MorningPage() {
   }, [router, supabase])
 
   useEffect(() => {
-    if (!windowExpiresAt) return
-
-    const timer = window.setInterval(() => {
-      const now = new Date()
-      const nextRemaining = Math.max(0, Math.ceil((windowExpiresAt.getTime() - now.getTime()) / 60000))
-      setMinutesRemaining(nextRemaining)
-
-      if (nextRemaining <= 0 && stage === 'journal' && !savedAtZero.current) {
-        savedAtZero.current = true
-        void saveJournal(true)
-      }
-    }, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [stage, windowExpiresAt])
-
-  useEffect(() => {
     if (!userId || stage !== 'journal') return
 
     const key = `somnia-morning-draft:${userId}:${dateKeyLocal(-1)}`
@@ -127,7 +128,7 @@ export default function MorningPage() {
 
     const autosave = window.setInterval(() => {
       localStorage.setItem(key, body)
-    }, 20000)
+    }, 5000)
 
     return () => window.clearInterval(autosave)
   }, [body, stage, userId])
@@ -158,8 +159,6 @@ export default function MorningPage() {
         .update({ total_seeds_dreamed: (profile?.total_seeds_dreamed ?? 0) + 1 })
         .eq('id', userId)
     }
-
-    console.log('[Morning] Confirmation:', value)
 
     setYesterdaySeed({ ...yesterdaySeed, was_dreamed: value, morning_confirmed_at: new Date().toISOString() })
     setStage('journal')
@@ -202,19 +201,36 @@ export default function MorningPage() {
         .eq('id', yesterdaySeed.id)
     }
 
-    console.log('[Morning] Journal saved:', data.id)
+    if (userId) {
+      const key = `somnia-morning-draft:${userId}:${dateKeyLocal(-1)}`
+      localStorage.removeItem(key)
+    }
 
     setSaving(false)
     setStage('saved')
   }
 
+  function onTimeout() {
+    if (savedAtZero.current) return
+    savedAtZero.current = true
+
+    if (stage === 'journal') {
+      void saveJournal(true)
+      return
+    }
+
+    setStage('closed')
+  }
+
+  const guidance = journalGuidance(body)
+
   if (stage === 'loading') {
-    return <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
+    return <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
   }
 
   if (stage === 'closed') {
     return (
-      <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Your morning window has passed.</h1>
           <p style={{ color: '#bca7de', marginBottom: 8 }}>It opens again tomorrow at {formatClock(parseTime(wakeTime).hour, parseTime(wakeTime).minute)}.</p>
@@ -230,9 +246,9 @@ export default function MorningPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+    <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
-        <p style={{ position: 'absolute', right: 0, top: 0, color: '#c8b5e7', fontSize: 13 }}>{minutesRemaining}:00</p>
+        {windowExpiresAt ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
 
         {stage === 'confirm' && yesterdaySeed ? (
           <div>
@@ -259,14 +275,18 @@ export default function MorningPage() {
             <textarea
               value={body}
               onChange={(event) => setBody(event.target.value)}
-              disabled={saving || minutesRemaining <= 0}
+              disabled={saving}
               style={{ width: '100%', minHeight: 340, borderRadius: 12, border: '1px solid rgba(201,168,76,0.45)', background: '#0f0a1d', color: '#fff', padding: 14, marginBottom: 10 }}
               placeholder="Write everything you remember..."
             />
+            <p style={{ color: '#a88fd1', marginBottom: 12 }}>{body.trim().length} chars • {guidance.words} words</p>
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
-            <button className="btn-gold" onClick={() => void saveJournal(false)} disabled={saving || !body.trim()}>
+            <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} onClick={() => void saveJournal(false)} disabled={saving || !body.trim()}>
               {saving ? 'Saving...' : 'Save entry'}
             </button>
+            <div style={{ position: 'fixed', left: 14, right: 14, bottom: 10, borderRadius: 10, border: `1px solid ${guidance.color}`, background: 'rgba(15,10,29,0.92)', padding: '10px 12px', color: guidance.color, zIndex: 40 }}>
+              {guidance.message}
+            </div>
           </div>
         ) : null}
 

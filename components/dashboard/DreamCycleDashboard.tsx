@@ -104,7 +104,7 @@ export default function DreamCycleDashboard({
   const archiveByDream = new Map(archiveSeeds.map((item) => [item.dream_entry_id, item]))
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 120px' }}>
+    <div className="page-enter" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 120px' }}>
       <section style={{ border: '1px solid #2a1f45', borderRadius: 14, background: '#100a22', padding: 18, marginBottom: 18 }}>
         {state === 'BEFORE_EVENING' ? (
           <>
@@ -148,7 +148,7 @@ export default function DreamCycleDashboard({
         ) : null}
       </section>
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 18 }}>
         <article style={{ border: '1px solid #2a1f45', borderRadius: 12, background: '#100a22', padding: 14 }}>
           <p style={{ textTransform: 'uppercase', fontSize: 11, color: '#9f8abb', letterSpacing: '0.12em' }}>Streak</p>
           <p style={{ fontSize: 32, marginTop: 4 }}>{streak}</p>
@@ -177,14 +177,14 @@ export default function DreamCycleDashboard({
           <div style={{ border: '1px solid #2a1f45', borderRadius: 12, overflow: 'hidden' }}>
             {dreams.map((dream) => {
               const seed = archiveByDream.get(dream.id)
+              const appearedText = seed?.was_dreamed === true ? 'Yes' : seed?.was_dreamed === false ? 'No' : 'Unconfirmed'
               return (
-                <Link key={dream.id} href={`/dreams/${dream.id}`} style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 12, background: '#100a22', borderBottom: '1px solid #231840', padding: 14 }}>
+                <Link key={dream.id} href={`/dreams/${dream.id}`} style={{ display: 'block', background: '#100a22', borderBottom: '1px solid #231840', padding: 14 }}>
                   <div>
-                    <p style={{ color: '#a993cd', fontSize: 12 }}>{dream.date_of_dream}</p>
-                    <p style={{ color: seed?.was_dreamed ? '#9be2b0' : '#9492a2', fontSize: 12 }}>{seed?.was_dreamed ? 'appeared' : "didn't"}</p>
-                  </div>
-                  <div>
-                    <p style={{ color: '#e9defa', marginBottom: 4 }}>{seed?.seed_text ?? 'No seed linked'}</p>
+                    <p style={{ color: '#a993cd', fontSize: 12, marginBottom: 8 }}>{dream.date_of_dream}</p>
+                    <div style={{ height: 1, background: 'rgba(255,255,255,0.09)', marginBottom: 10 }} />
+                    <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 2 }}>Seed: {seed?.seed_text ?? 'No seed linked'}</p>
+                    <p style={{ color: '#b9acd1', fontSize: 12, marginBottom: 8 }}>Appeared: {appearedText}</p>
                     <p style={{ color: '#bca7de', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{firstLine(dream.body_text)}</p>
                   </div>
                 </Link>
