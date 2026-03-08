@@ -1,14 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
 
 declare global {
   interface Navigator {
@@ -27,8 +22,8 @@ function detectInstalled() {
 export default function InstallPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null)
 
+  const [canInstall, setCanInstall] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [countdown, setCountdown] = useState(5)
 
@@ -60,32 +55,37 @@ export default function InstallPage() {
       }
     }
 
-    const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault()
-      deferredPromptRef.current = event as BeforeInstallPromptEvent
-    }
-
     const timer = window.setInterval(() => {
       setCountdown((value) => (value > 0 ? value - 1 : 0))
     }, 1000)
 
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    if (window.__pwaInstallPrompt) {
+      setCanInstall(true)
+      console.log('[Install] Prompt available')
+    } else {
+      console.log('[Install] No prompt - showing manual steps')
+    }
+
     void bootstrap()
 
     return () => {
       active = false
       window.clearInterval(timer)
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
     }
   }, [router, supabase])
 
   async function handleAndroidInstall() {
-    const deferredPrompt = deferredPromptRef.current
-    if (!deferredPrompt) return
+    const prompt = window.__pwaInstallPrompt
+    if (!prompt) {
+      setMessage('Automatic install prompt is unavailable right now. Use the manual steps below.')
+      return
+    }
 
-    await deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
+    await prompt.prompt()
+    const { outcome } = await prompt.userChoice
+    console.log('[Install] Outcome:', outcome)
     if (outcome === 'accepted') {
+      window.__pwaInstallPrompt = null
       router.push('/notify')
     }
   }
@@ -150,23 +150,20 @@ export default function InstallPage() {
           </div>
         ) : null}
 
-        {isAndroid && deferredPromptRef.current ? (
-          <button className="btn-gold" style={{ marginBottom: 20 }} onClick={() => void handleAndroidInstall()}>
-            {'Add Somnia to Home Screen ->'}
-          </button>
-        ) : null}
-
-        {isAndroid && !deferredPromptRef.current ? (
+        {isAndroid ? (
           <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, marginBottom: 20 }}>
-            <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 11, color: '#a995ca', marginBottom: 12 }}>HOW TO ADD ON ANDROID</p>
+            <button className="btn-gold" style={{ marginBottom: 14, width: '100%', justifyContent: 'center', opacity: canInstall ? 1 : 0.7 }} disabled={!canInstall} onClick={() => void handleAndroidInstall()}>
+              Add Somnia to Home Screen
+            </button>
+            <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 11, color: '#a995ca', marginBottom: 12 }}>Or add manually:</p>
             <div style={{ display: 'grid', gap: 12 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                <p>Tap the three dots in Chrome</p>
+                <p>Tap the three dots in Chrome top right</p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
-                <p>Tap Add to Home Screen</p>
+                <p>Tap Add to Home screen</p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M5 12l4 4L19 6"/></svg>
