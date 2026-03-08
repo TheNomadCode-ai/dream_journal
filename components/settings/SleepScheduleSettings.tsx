@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import { cancelWakeNotification, requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '@/lib/notifications'
+import { cancelWakeNotification, requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '../../lib/notifications'
 
 type Props = {
   initialWakeTime: string

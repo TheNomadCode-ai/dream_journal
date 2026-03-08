@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-import { requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '@/lib/notifications'
+import { requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '../../lib/notifications'
 
 type Props = {
   targetWakeTime: string

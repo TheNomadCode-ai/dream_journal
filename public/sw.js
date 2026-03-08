@@ -83,8 +83,7 @@ setInterval(async () => {
   const m = now.getMinutes()
   const today = now.toDateString()
 
-  console.log('[SW] Tick:',
-    ${h}:, 'schedule:', schedule)
+  console.log('[SW] Tick:', `${h}:${String(m).padStart(2, '0')}`, 'schedule:', schedule)
 
   const fired = await getFiredToday()
 
