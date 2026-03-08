@@ -16,23 +16,29 @@ export default async function LandingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#06040f', color: '#f1e9ff' }}>
-      <section style={{ maxWidth: 980, margin: '0 auto', padding: '56px 24px 74px', textAlign: 'center' }}>
-        <p style={{ textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: 10, color: '#9f8abb', marginBottom: 18 }}>Somnia</p>
-        <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(48px,8vw,82px)', lineHeight: 1.04, marginBottom: 18 }}>
-          You spend a third of your life asleep.
-          <br />
-          Most of it disappears by morning.
-        </h1>
-        <p style={{ maxWidth: 480, margin: '0 auto 24px', color: '#baa7d8', lineHeight: 1.7 }}>
-          Somnia is a dream programming practice.
-          Plant an intention every evening.
-          Find out what your subconscious does with it by morning.
-        </p>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Start for free</Link>
-          <a href="#how-it-works" className="btn-ghost-gold">See how it works</a>
+      <section style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '64px 24px' }}>
+        <div style={{ maxWidth: 640, textAlign: 'center' }}>
+          <p style={{ textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: 10, color: '#9f8abb', marginBottom: 18 }}>Somnia</p>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(52px,9vw,86px)', lineHeight: 1.03, marginBottom: 18 }}>
+            What if you could choose
+            <br />
+            what to dream about?
+          </h1>
+          <p style={{ maxWidth: 480, margin: '0 auto 26px', color: '#baa7d8', lineHeight: 1.75 }}>
+            Every evening you plant an intention.
+            Every morning you find out what your subconscious did with it overnight.
+            Ancient technique. Personal archive.
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+            <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Start for free</Link>
+            <a href="#how-it-works" style={{ color: '#9f8abb', alignSelf: 'center' }}>How it works ↓</a>
+          </div>
+          <p style={{ color: '#8f84a7', fontSize: 12 }}>
+            No notifications. No reminders.
+            <br />
+            You either build the habit or you don't.
+          </p>
         </div>
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.14)', marginTop: 38 }} />
       </section>
 
       <section id="how-it-works" style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px 90px' }}>
@@ -70,29 +76,59 @@ export default async function LandingPage() {
           <p style={{ color: '#c2b0df', lineHeight: 1.75 }}>
             During REM sleep your brain replays and processes information from waking life. Thoughts held with intention before sleep are more likely to be processed during this phase.
             <br /><br />
-            This is called dream incubation. It has been documented since Aristotle, studied in sleep labs at Harvard and MIT, and practiced by figures from Edison to Salvador Dali.
+            This is called dream incubation. It has been documented since Aristotle, studied in sleep research at Harvard and MIT, and practiced by figures from Edison to Salvador Dali.
             <br /><br />
-            Somnia is the first app built around this practice.
+            Somnia is the first app built entirely around this practice.
           </p>
         </div>
         <aside style={{ border: '1px solid rgba(180,130,255,0.22)', borderRadius: 14, background: '#100a22', padding: 20, alignSelf: 'stretch' }}>
           <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 34, lineHeight: 1.25, marginBottom: 14 }}>
-            The investigation of the truth is in one way hard, in another easy. No one is able to attain it adequately, while on the other hand we do not collectively fail.
+            The future belongs to those who believe in the beauty of their dreams.
           </p>
-          <p style={{ color: '#aa95cd' }}>- Aristotle, on dreams, 350 BC</p>
+          <p style={{ color: '#aa95cd' }}>— Eleanor Roosevelt</p>
         </aside>
       </section>
 
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px 90px', textAlign: 'center' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 42 }}>
-          <div><p style={{ fontSize: 40 }}>5</p><p style={{ color: '#aa95cd' }}>minutes to plant</p></div>
-          <div><p style={{ fontSize: 40 }}>30%</p><p style={{ color: '#aa95cd' }}>of seeds dreamed</p></div>
-          <div><p style={{ fontSize: 40 }}>8 hours</p><p style={{ color: '#aa95cd' }}>every night your brain works</p></div>
+          <div><p style={{ fontSize: 40 }}>5</p><p style={{ color: '#aa95cd' }}>minutes<br />to plant</p></div>
+          <div><p style={{ fontSize: 40 }}>30%</p><p style={{ color: '#aa95cd' }}>of seeds<br />appear in dreams</p></div>
+          <div><p style={{ fontSize: 40 }}>8 hrs</p><p style={{ color: '#aa95cd' }}>every night<br />your brain is working</p></div>
         </div>
+      </section>
 
-        <h2 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 54, marginBottom: 10 }}>Your subconscious has been waiting.</h2>
-        <p style={{ color: '#baa7d8', marginBottom: 14 }}>Free to start. No card required.</p>
-        <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Begin tonight</Link>
+      <section style={{ maxWidth: 980, margin: '0 auto', padding: '0 24px 90px' }}>
+        <p style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: '#9f8abb', marginBottom: 16, textAlign: 'center' }}>Pricing</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+          <article style={{ border: '1px solid rgba(180,130,255,0.22)', borderRadius: 14, background: '#100a22', padding: 18 }}>
+            <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#9f8abb', fontSize: 11, marginBottom: 6 }}>Free</p>
+            <p style={{ fontSize: 28, marginBottom: 10 }}>$0 forever</p>
+            <ul style={{ color: '#c2b0df', lineHeight: 1.8, marginBottom: 12, paddingLeft: 16 }}>
+              <li>Dream journal</li>
+              <li>Morning capture window</li>
+              <li>Dream archive</li>
+              <li>Streak tracking</li>
+              <li>Search your dreams</li>
+            </ul>
+            <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Start free →</Link>
+          </article>
+
+          <article style={{ border: '1px solid rgba(200,160,80,0.35)', borderRadius: 14, background: '#100a22', padding: 18 }}>
+            <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#c9a84c', fontSize: 11, marginBottom: 6 }}>Pro</p>
+            <p style={{ fontSize: 28, marginBottom: 2 }}>$4.99 / month</p>
+            <p style={{ color: '#aa95cd', fontSize: 12, marginBottom: 10 }}>First 7 days free</p>
+            <ul style={{ color: '#c2b0df', lineHeight: 1.8, marginBottom: 12, paddingLeft: 16 }}>
+              <li>Everything in free</li>
+              <li>Evening seed planting</li>
+              <li>Seed success tracking</li>
+              <li>Dream pattern insights</li>
+              <li>AI seed suggestions</li>
+              <li>Weekly dream digest</li>
+            </ul>
+            <a href="https://sushankhanal.gumroad.com/l/somniavault?wanted=true" target="_blank" rel="noreferrer" className="btn-gold">Start free trial →</a>
+            <p style={{ color: '#8f84a7', marginTop: 8, fontSize: 12 }}>Cancel anytime. No questions asked.</p>
+          </article>
+        </div>
       </section>
 
       <section style={{ maxWidth: 480, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
@@ -112,8 +148,8 @@ export default async function LandingPage() {
         </a>
       </section>
 
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '18px 24px 30px', display: 'flex', justifyContent: 'space-between', color: '#9f8abb', gap: 14, flexWrap: 'wrap' }}>
+      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '18px 24px 30px', display: 'flex', justifyContent: 'space-between', color: '#9f8abb', gap: 14, flexWrap: 'wrap', fontSize: 12 }}>
           <p>Somnia</p>
           <p><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <Link href="/blog">Blog</Link></p>
           <p>somniavault.me</p>

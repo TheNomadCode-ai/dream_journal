@@ -24,7 +24,7 @@ export async function getUserTier(userId: string): Promise<EffectiveTier> {
     .from('profiles')
     .select('tier, trial_ends_at')
     .eq('id', userId)
-    .maybeSingle()
+    .single()
 
   if (data?.trial_ends_at) {
     const trialEnd = new Date(data.trial_ends_at)

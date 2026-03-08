@@ -106,6 +106,7 @@ export default function EveningPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSeedAccess, setHasSeedAccess] = useState(false)
+  const [trialEnded, setTrialEnded] = useState(false)
 
   useEffect(() => {
     setShownSuggestions(shuffle(SUGGESTIONS_40).slice(0, 6))
@@ -140,8 +141,10 @@ export default function EveningPage() {
 
       const tier = profile?.tier ?? 'free'
       const trialActive = Boolean(profile?.trial_ends_at) && new Date(profile?.trial_ends_at ?? '').getTime() > Date.now()
+      const trialHasEnded = tier === 'free' && Boolean(profile?.trial_ends_at) && !trialActive
       const canPlantSeeds = tier === 'pro' || trialActive
       setHasSeedAccess(canPlantSeeds)
+      setTrialEnded(trialHasEnded)
 
       const sleepParts = parseTime(sleep, '23:00:00')
       const notif = minusMinutes(sleepParts.hour, sleepParts.minute, 30)
@@ -313,11 +316,16 @@ export default function EveningPage() {
     return (
       <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 24, display: 'grid', placeItems: 'center' }}>
         <section style={{ width: 'min(760px, 100%)' }}>
+          <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>
+            {trialEnded ? 'Your trial has ended' : 'Pro feature'}
+          </p>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(40px,6vw,54px)', marginBottom: 12 }}>
-            Dream Seed Planting is a Pro feature.
+            Continue planting
+            <br />
+            dream seeds.
           </h1>
           <p style={{ color: '#c6b4e3', lineHeight: 1.7, marginBottom: 18 }}>
-            Free users can journal their dreams every morning. Pro users can program what they dream about the night before.
+            You used Somnia Pro free for 7 days. Upgrade to keep planting seeds every evening and tracking what your subconscious does with them.
           </p>
 
           <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, background: '#100a22', padding: 14, marginBottom: 16 }}>
@@ -341,10 +349,10 @@ export default function EveningPage() {
           </div>
 
           <div style={{ display: 'grid', gap: 10 }}>
-            <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" className="btn-gold" style={{ justifyContent: 'center' }}>
+            <a href="https://sushankhanal.gumroad.com/l/somniavault?wanted=true" target="_blank" rel="noreferrer" className="btn-gold" style={{ justifyContent: 'center' }}>
               {'Upgrade to Pro - $4.99/mo ->'}
             </a>
-            <button className="btn-ghost-gold" onClick={() => router.push('/dashboard')}>Maybe later</button>
+            <button className="btn-ghost-gold" onClick={() => router.push('/dashboard')}>{'Continue with free ->'}</button>
           </div>
         </section>
       </main>

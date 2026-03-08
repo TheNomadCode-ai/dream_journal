@@ -75,6 +75,14 @@ export default async function DashboardPage() {
 
   return (
     <>
+      {trialDaysRemaining > 0 ? (
+        <section style={{ background: 'rgba(20,10,40,0.95)', borderBottom: '1px solid rgba(200,160,80,0.15)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ color: 'rgba(255,255,255,0.68)', fontSize: 12 }}>Pro trial - {trialDaysRemaining} days remaining</p>
+          <a href="https://sushankhanal.gumroad.com/l/somniavault?wanted=true" target="_blank" rel="noreferrer" style={{ padding: '6px 10px', border: '1px solid rgba(200,160,80,0.5)', borderRadius: 4, color: 'rgba(200,160,80,0.9)', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+            {'Upgrade ->'}
+          </a>
+        </section>
+      ) : null}
       <DashboardSetupFlow userId={user.id} initialWakeTime={profile?.target_wake_time ?? null} initialSleepTime={profile?.target_sleep_time ?? null} />
       <DreamCycleDashboard
         wakeTime={wakeTime}
@@ -86,7 +94,6 @@ export default async function DashboardPage() {
         archiveSeeds={archiveSeeds as any}
         totalSeedsPlanted={totalSeedsPlanted}
         totalSeedsDreamed={totalSeedsDreamed}
-        trialDaysRemaining={trialDaysRemaining}
         showNotificationReminderBanner={showNotificationReminderBanner}
       />
     </>
