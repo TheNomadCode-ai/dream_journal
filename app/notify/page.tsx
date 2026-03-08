@@ -55,7 +55,7 @@ export default function NotifyPage() {
           .update({ notification_permission_granted: true, onboarding_complete: true })
           .eq('id', user.id)
 
-        router.replace('/dashboard')
+        router.push('/dashboard')
       }
     }
 
@@ -87,12 +87,23 @@ export default function NotifyPage() {
 
       setSuccess(true)
       setDenied(false)
-      setTimeout(() => router.replace('/dashboard'), 2000)
+      setTimeout(() => router.push('/dashboard'), 1200)
       return
     }
 
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ notification_permission_granted: false, onboarding_complete: true })
+        .eq('id', user.id)
+    }
+
     setDenied(true)
-    setRequesting(false)
+    setManualMessage('Notifications are off. You can enable them later in settings.')
+    setTimeout(() => router.push('/dashboard'), 1200)
+    return
   }
 
   async function recheckManualEnable() {

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
-import { InstallOverlay } from '@/components/InstallOverlay'
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
 import { ProfileProvider } from '@/lib/ProfileContext'
@@ -97,7 +96,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistrar />
         <TouchFeedback />
         <ProfileProvider>{children}</ProfileProvider>
-        <InstallOverlay />
       </body>
     </html>
   )

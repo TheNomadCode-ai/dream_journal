@@ -47,7 +47,7 @@ export default function OnboardingPage() {
     }
 
     console.log('[Profile] Saved:', updatedFields)
-    router.replace('/notify')
+    router.push('/notify')
   }
 
   return (
@@ -99,7 +99,7 @@ export default function OnboardingPage() {
               />
 
               <p style={{ color: '#b8a4d7', marginTop: 14 }}>
-                Next, you will add Somnia to your home screen and enable notifications.
+                Next, you will enable notifications for your morning and evening windows.
               </p>
             </div>
 

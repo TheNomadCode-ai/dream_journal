@@ -76,7 +76,7 @@ export default function SignupPage() {
     }
 
     // Email confirmation is disabled, so session is created immediately.
-    router.replace('/onboarding')
+    router.push('/install')
   }
 
   return (

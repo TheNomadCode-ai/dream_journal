@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 import { updateSession } from '@/lib/supabase/middleware'
 
-const PUBLIC_PATHS = ['/', '/login', '/signup', '/privacy', '/terms']
+const PUBLIC_PATHS = ['/', '/login', '/signup', '/install', '/privacy', '/terms']
 
 function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.includes(pathname)) return true
@@ -54,30 +54,11 @@ export async function middleware(request: NextRequest) {
     .maybeSingle()
 
   const onboardingComplete = Boolean(profile?.onboarding_complete)
-  const notificationGranted = Boolean(profile?.notification_permission_granted)
-  const hasSchedule = Boolean(profile?.target_wake_time && profile?.target_sleep_time)
 
-  const isOnboardingPath = pathname === '/onboarding'
-  const isNotifyPath = pathname === '/notify'
-
-  // Completed users should never revisit onboarding/notify pages.
-  if (onboardingComplete && (isOnboardingPath || isNotifyPath)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Incomplete users must follow strict sequence:
-  // /onboarding -> /notify -> /dashboard
   if (!onboardingComplete) {
-    if (!hasSchedule && !isOnboardingPath) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
-    }
-
-    if (hasSchedule && !notificationGranted && !isNotifyPath) {
-      return NextResponse.redirect(new URL('/notify', request.url))
-    }
-
-    if (hasSchedule && notificationGranted) {
-      if (!isNotifyPath) return NextResponse.redirect(new URL('/notify', request.url))
+    const allowedIncompletePaths = ['/install', '/onboarding', '/notify']
+    if (!allowedIncompletePaths.includes(pathname)) {
+      return NextResponse.redirect(new URL('/install', request.url))
     }
   }
 
