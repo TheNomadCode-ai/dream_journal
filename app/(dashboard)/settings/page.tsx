@@ -41,6 +41,25 @@ export default async function SettingsPage() {
         tier={profile?.tier ?? 'free'}
         freeEntriesUsed={dreamsResult.count ?? 0}
       />
+
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.12)', margin: '34px 0 16px' }} />
+      <p style={{ color: '#9e8bbc', fontSize: 13, lineHeight: 1.7, marginBottom: 8 }}>
+        Somnia is built by one person.
+        <br />
+        If something is broken, missing,
+        <br />
+        or you just want to share a dream -
+        <br />
+        I read every message.
+      </p>
+      <a
+        href="https://twitter.com/messages/compose?recipient_id=sirberialo007"
+        target="_blank"
+        rel="noreferrer"
+        style={{ color: '#c9a84c' }}
+      >
+        {'Message the founder ->'}
+      </a>
     </div>
   )
 }

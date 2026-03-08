@@ -95,6 +95,23 @@ export default async function LandingPage() {
         <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Begin tonight</Link>
       </section>
 
+      <section style={{ maxWidth: 480, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
+        <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', color: '#e8e4d9', marginBottom: 8 }}>
+          Built by a solo founder obsessed with the science of dreams.
+        </p>
+        <p style={{ color: '#9f8abb', marginBottom: 10 }}>
+          Questions, feedback, or just want to talk about dreams -
+        </p>
+        <a
+          href="https://twitter.com/messages/compose?recipient_id=sirberialo007"
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: '#c9a84c' }}
+        >
+          {'reach out on X ->'}
+        </a>
+      </section>
+
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', padding: '18px 24px 30px', display: 'flex', justifyContent: 'space-between', color: '#9f8abb', gap: 14, flexWrap: 'wrap' }}>
           <p>Somnia</p>
