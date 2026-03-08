@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { unstable_noStore as noStore } from 'next/cache'
 
 import DashboardSetupFlow from '@/components/dashboard/DashboardSetupFlow'
 import DreamCycleDashboard from '@/components/dashboard/DreamCycleDashboard'
@@ -6,6 +7,7 @@ import { dateKeyLocal } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardPage() {
+  noStore()
   const supabase = await createClient()
   const {
     data: { user },
@@ -15,9 +17,9 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_complete, target_wake_time, target_sleep_time, total_seeds_planted, total_seeds_dreamed, tier, trial_ends_at, notification_permission_granted')
+    .select('*')
     .eq('id', user.id)
-    .maybeSingle()
+    .single()
 
   const today = dateKeyLocal(0)
   const yesterday = dateKeyLocal(-1)

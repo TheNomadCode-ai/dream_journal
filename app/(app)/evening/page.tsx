@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import CountdownTimer from '@/components/ui/CountdownTimer'
-import { addMinutes, dateKeyLocal, formatClock, getEveningWindowState, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
+import { addMinutes, dateKeyLocal, formatClock, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
 type SeedRow = {
@@ -132,7 +132,8 @@ export default function EveningPage() {
     let active = true
 
     async function load() {
-      const { data: authData } = await supabase.auth.getUser()
+      const freshSupabase = createClient()
+      const { data: authData } = await freshSupabase.auth.getUser()
       const user = authData.user
 
       if (!user) {
@@ -144,41 +145,50 @@ export default function EveningPage() {
 
       setUserId(user.id)
 
-      const { data: profile } = await supabase
+      const { data: freshProfile } = await freshSupabase
         .from('profiles')
-        .select('target_sleep_time, target_wake_time, tier, trial_ends_at')
+        .select('*')
         .eq('id', user.id)
-        .maybeSingle()
+        .single()
 
-      const wake = profile?.target_wake_time ?? '07:00:00'
-      const sleep = profile?.target_sleep_time ?? '23:00:00'
+      console.log('[Evening] Fresh profile:', freshProfile?.target_sleep_time)
+      const wake = freshProfile?.target_wake_time ?? '07:00:00'
+      const sleep = freshProfile?.target_sleep_time ?? '23:00:00'
       setWakeTime(wake)
       setSleepTime(sleep)
 
-      const tier = profile?.tier ?? 'free'
-      const trialActive = Boolean(profile?.trial_ends_at) && new Date(profile?.trial_ends_at ?? '').getTime() > Date.now()
-      const trialHasEnded = tier === 'free' && Boolean(profile?.trial_ends_at) && !trialActive
+      const tier = freshProfile?.tier ?? 'free'
+      const trialActive = Boolean(freshProfile?.trial_ends_at) && new Date(freshProfile?.trial_ends_at ?? '').getTime() > Date.now()
+      const trialHasEnded = tier === 'free' && Boolean(freshProfile?.trial_ends_at) && !trialActive
       const canPlantSeeds = tier === 'pro' || trialActive
       setHasSeedAccess(canPlantSeeds)
       setTrialEnded(trialHasEnded)
 
+      const [h, m] = sleep.split(':').map(Number)
+      const nowH = new Date().getHours()
+      const nowM = new Date().getMinutes()
+      const nowTotal = nowH * 60 + nowM
+      const sleepTotal = h * 60 + m
+      const windowStart = sleepTotal - 10
+      const windowEnd = sleepTotal
+      const windowOpen = nowTotal >= windowStart && nowTotal <= windowEnd
+
       const sleepParts = parseTime(sleep, '23:00:00')
       const notif = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
       const windowState = windowForToday(notif.hour, notif.minute, 10)
-      const eveningState = getEveningWindowState(sleep, new Date(), 10)
       const seconds = Math.max(0, Math.ceil((windowState.expiresAt.getTime() - Date.now()) / 1000))
 
       console.log('[Evening] Window check:', {
-        nowMinutes: eveningState.nowMinutes,
-        windowStart: eveningState.windowStartMinutes,
-        windowEnd: eveningState.windowEndMinutes,
-        windowOpen: eveningState.windowOpen,
-        minutesUntilWindow: eveningState.minutesUntilWindow,
+        nowMinutes: nowTotal,
+        windowStart,
+        windowEnd,
+        windowOpen,
+        minutesUntilWindow: windowStart - nowTotal,
       })
 
       setWindowOpenedAt(windowState.openedAt)
       setWindowExpiresAt(windowState.expiresAt)
-      setMinutesUntilWindow(Math.max(0, eveningState.minutesUntilWindow))
+      setMinutesUntilWindow(Math.max(0, windowStart - nowTotal))
       setInitialSeconds(seconds)
 
       if (!canPlantSeeds) {
@@ -186,12 +196,12 @@ export default function EveningPage() {
         return
       }
 
-      if (eveningState.windowOpen) {
+      if (windowOpen) {
         // continue
-      } else if (eveningState.minutesUntilWindow > 0) {
+      } else if (windowStart - nowTotal > 0) {
         setStage('upcoming')
         return
-      } else if (eveningState.hasPassed) {
+      } else if (nowTotal > windowEnd) {
         setStage('closed')
         return
       }

@@ -24,26 +24,34 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
   const [wakeTime, setWakeTime] = useState(toInput(initialWakeTime || '07:00:00'))
   const [sleepTime, setSleepTime] = useState(toInput(initialSleepTime || '23:00:00'))
   const [message, setMessage] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  async function saveSchedule(nextWake: string, nextSleep: string) {
+  async function handleSave() {
+    if (saving) return
+    setSaving(true)
     setMessage(null)
 
     const { data } = await supabase.auth.getUser()
     const user = data.user
-    if (!user) return
+    if (!user) {
+      setSaving(false)
+      return
+    }
 
     const updatedFields = {
-      target_wake_time: `${nextWake}:00`,
-      target_sleep_time: `${nextSleep}:00`,
+      id: user.id,
+      target_wake_time: wakeTime,
+      target_sleep_time: sleepTime,
     }
 
     const { error } = await supabase
       .from('profiles')
-      .update(updatedFields)
-      .eq('id', user.id)
+      .upsert(updatedFields, { onConflict: 'id' })
 
     if (error) {
+      console.error('Save failed:', error)
       setMessage('Could not save. Try again.')
+      setSaving(false)
       return
     }
 
@@ -56,8 +64,8 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         : Notification.permission
 
       if (permission === 'granted') {
-        const wake = parseTime(`${nextWake}:00`, '07:00:00')
-        const sleep = parseTime(`${nextSleep}:00`, '23:00:00')
+        const wake = parseTime(wakeTime, '07:00:00')
+        const sleep = parseTime(sleepTime, '23:00:00')
         void scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
       }
     }
@@ -74,21 +82,36 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
           <TimeWheelPicker
             value={wakeTime}
             label="Wake time"
-            onChange={(time) => {
-              setWakeTime(time)
-              void saveSchedule(time, sleepTime)
-            }}
+            onChange={setWakeTime}
           />
         </div>
 
         <TimeWheelPicker
           value={sleepTime}
           label="Sleep time"
-          onChange={(time) => {
-            setSleepTime(time)
-            void saveSchedule(wakeTime, time)
-          }}
+          onChange={setSleepTime}
         />
+
+        <button
+          onClick={() => void handleSave()}
+          disabled={saving}
+          style={{
+            width: '100%',
+            padding: '16px',
+            marginTop: '24px',
+            background: 'transparent',
+            border: '1px solid rgba(200,160,80,0.5)',
+            borderRadius: '4px',
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            letterSpacing: '0.2em',
+            color: 'rgba(200,160,80,0.9)',
+            textTransform: 'uppercase',
+            cursor: saving ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {saving ? 'Saving...' : 'Save Schedule'}
+        </button>
 
         {message ? <p style={{ color: '#cfbde7', marginTop: 10 }}>{message}</p> : null}
       </section>

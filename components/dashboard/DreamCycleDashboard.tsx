@@ -55,6 +55,26 @@ const MILESTONES = new Map<number, string>([
   [90, 'Ninety days. You have changed how you sleep.'],
 ])
 
+function getEveningWindowTime(sleepTime: string) {
+  const [h, m] = sleepTime.split(':').map(Number)
+
+  const totalMinutes = h * 60 + m - 10
+  let windowH = Math.floor(totalMinutes / 60)
+  let windowM = totalMinutes % 60
+
+  if (windowH < 0) windowH += 24
+  if (windowM < 0) {
+    windowM += 60
+    windowH -= 1
+  }
+
+  const period = windowH >= 12 ? 'PM' : 'AM'
+  const displayH = windowH > 12 ? windowH - 12 : windowH === 0 ? 12 : windowH
+  const displayM = windowM.toString().padStart(2, '0')
+
+  return `${displayH}:${displayM} ${period}`
+}
+
 export default function DreamCycleDashboard({
   wakeTime,
   sleepTime,
@@ -117,7 +137,7 @@ export default function DreamCycleDashboard({
       <section style={{ border: '1px solid #2a1f45', borderRadius: 14, background: '#100a22', padding: 18, marginBottom: 18 }}>
         {state === 'BEFORE_EVENING' ? (
           <>
-            <p style={{ color: '#efe8ff', marginBottom: 8 }}>Tonight's planting window opens at {formatClock(evening.hour, evening.minute)}</p>
+            <p style={{ color: '#efe8ff', marginBottom: 8 }}>Tonight's planting window opens at {getEveningWindowTime(sleepTime)}</p>
             <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, 100 - Math.max(0, eveningWindow.minutesUntilOpen) / 10))}%`, background: '#c9a84c' }} />
             </div>

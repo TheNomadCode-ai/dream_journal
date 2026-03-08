@@ -115,7 +115,7 @@ export default function DashboardSetupFlow({ userId, initialWakeTime, initialSle
   const eveningOpenLabel = useMemo(() => {
     const [h, m] = sleepTime.split(':').map(Number)
     let hour = h
-    let minute = m - 30
+    let minute = m - 10
     if (minute < 0) {
       minute += 60
       hour -= 1
