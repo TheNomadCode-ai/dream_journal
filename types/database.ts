@@ -6,6 +6,29 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string
+          target_wake_time: string | null
+          onboarding_complete: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          target_wake_time?: string | null
+          onboarding_complete?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          target_wake_time?: string | null
+          onboarding_complete?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           id: string

@@ -1,20 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-import BioClock from '@/components/dashboard/BioClock'
-import MorningLightCard from '@/components/dashboard/MorningLightCard'
-import MorningCheckIn from '@/components/dashboard/MorningCheckIn'
-import WeeklyDigestScheduler from '@/components/dashboard/WeeklyDigestScheduler'
-import FreeTierLimitBanner from '@/components/dashboard/FreeTierLimitBanner'
+import NotificationReminderBanner from '@/components/dashboard/NotificationReminderBanner'
 import { createClient } from '@/lib/supabase/server'
-import { normalizeTier } from '@/lib/tier-config'
 
 type DreamRow = {
   id: string
   title: string | null
   body_text: string | null
-  mood_score: number | null
-  lucid: boolean
   date_of_dream: string
 }
 
@@ -26,15 +19,25 @@ function formatDate(dateStr: string) {
   })
 }
 
+function formatWakeTime(time: string | null) {
+  const value = time ?? '07:00:00'
+  return new Date(`1970-01-01T${value.slice(0, 5)}:00`).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('tier, plan, onboarding_complete, target_wake_time, current_streak, last_logged_date, streak_freezes_remaining, streak_freezes_reset_date')
+    .from('profiles')
+    .select('onboarding_complete, target_wake_time')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -42,76 +45,34 @@ export default async function DashboardPage() {
     redirect('/onboarding')
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-
-  const { data: todayLog } = await supabase
-    .from('wake_logs')
-    .select('actual_wake_time, minutes_from_target, sleep_quality, morning_light')
-    .eq('user_id', user.id)
-    .eq('log_date', today)
-    .maybeSingle()
-
-  const { data: wakeLogs } = await supabase
-    .from('wake_logs')
-    .select('log_date, minutes_from_target, sleep_quality, morning_light')
-    .eq('user_id', user.id)
-    .order('log_date', { ascending: false })
-    .limit(14)
-
-  const { count: dreamCount } = await supabase
-    .from('dreams')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .is('deleted_at', null)
-
   const { data: dreams } = await supabase
     .from('dreams')
-    .select('id, title, body_text, mood_score, lucid, date_of_dream')
+    .select('id, title, body_text, date_of_dream')
     .eq('user_id', user.id)
     .is('deleted_at', null)
     .order('date_of_dream', { ascending: false })
     .limit(30)
 
-  const tier = normalizeTier(profile?.tier ?? profile?.plan)
-
-  const now = new Date()
-  const day = now.getDay()
-  const mondayOffset = day === 0 ? -6 : 1 - day
-  const monday = new Date(now)
-  monday.setDate(now.getDate() + mondayOffset)
-  const mondayKey = monday.toISOString().slice(0, 10)
-  const weeklyLogs = (wakeLogs ?? []).filter((log) => log.log_date >= mondayKey)
-  const averageMinutesFromTarget = weeklyLogs.length
-    ? Math.round(weeklyLogs.reduce((sum, log) => sum + Math.abs(log.minutes_from_target ?? 0), 0) / weeklyLogs.length)
-    : 0
-  const lightHits = weeklyLogs.filter((log) => (log.morning_light ?? 0) >= 10).length
-  const lightPercent = weeklyLogs.length ? Math.round((lightHits / weeklyLogs.length) * 100) : 0
-  const showMorningLightCard = (wakeLogs ?? []).length < 7
+  const wakeLabel = formatWakeTime(profile?.target_wake_time ?? null)
 
   return (
     <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 40px 110px' }}>
-      <WeeklyDigestScheduler
-        morningsLogged={weeklyLogs.length}
-        streak={profile?.current_streak ?? 0}
-        lightPercent={lightPercent}
-        averageMinutesFromTarget={averageMinutesFromTarget}
-      />
+      <NotificationReminderBanner />
 
-      <MorningLightCard visible={showMorningLightCard} />
-
-      {tier === 'free' ? <FreeTierLimitBanner totalEntries={dreamCount ?? 0} /> : null}
-
-      <MorningCheckIn
-        userId={user.id}
-        targetWakeTime={profile?.target_wake_time ?? '07:00:00'}
-        initialTodayLog={todayLog ?? null}
-        initialCurrentStreak={profile?.current_streak ?? 0}
-        initialLastLoggedDate={profile?.last_logged_date ?? null}
-        initialFreezesRemaining={profile?.streak_freezes_remaining ?? 1}
-        initialFreezesResetDate={profile?.streak_freezes_reset_date ?? null}
-      />
-
-      <BioClock logs={(wakeLogs ?? []).slice(0, 7)} freezesRemaining={profile?.streak_freezes_remaining ?? 0} />
+      <Link
+        href="/settings"
+        style={{
+          display: 'block',
+          border: '1px solid #2f2250',
+          borderRadius: 12,
+          background: '#100a22',
+          padding: '14px 16px',
+          marginBottom: 20,
+          color: '#efe8ff',
+        }}
+      >
+        🌙 Your wake target: {wakeLabel}
+      </Link>
 
       <header style={{ marginBottom: 18 }}>
         <p style={{ fontFamily: "'Josefin Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: '#9e8bbc', marginBottom: 8 }}>
@@ -125,8 +86,8 @@ export default async function DashboardPage() {
       {!dreams || dreams.length === 0 ? (
         <div style={{ textAlign: 'center', border: '1px solid #2a1f45', borderRadius: 14, padding: '54px 18px', background: '#100a22' }}>
           <div style={{ fontSize: 46, marginBottom: 8 }}>🌙</div>
-          <p style={{ fontSize: 24, marginBottom: 6 }}>No dreams recorded yet.</p>
-          <p style={{ color: '#beaada' }}>Log your morning above to write your first entry.</p>
+          <p style={{ fontSize: 24, marginBottom: 6 }}>No dreams yet.</p>
+          <p style={{ color: '#beaada' }}>No dreams yet. Your first window opens at {wakeLabel} tomorrow.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: '#2a1f45' }}>

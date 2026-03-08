@@ -8,9 +8,11 @@ export async function scheduleWakeNotification(hour: number, minute: number) {
 
   const registration = await navigator.serviceWorker.ready
   registration.active?.postMessage({
-    type: 'SCHEDULE_ALARM',
+    type: 'SCHEDULE_WAKE',
     hour,
     minute,
+    title: '🌙 Good morning.',
+    body: 'Your 5 minute window is open. Capture your dream now.',
   })
 }
 
@@ -50,8 +52,7 @@ export async function cancelWakeNotification() {
   if (typeof window === 'undefined') return
   if (!('serviceWorker' in navigator)) return
   const registration = await navigator.serviceWorker.ready
-  registration.active?.postMessage({ type: 'CANCEL_ALARM' })
-  registration.active?.postMessage({ type: 'CANCEL_WIND_DOWN' })
+  registration.active?.postMessage({ type: 'CLEAR_WAKE' })
 }
 
 export async function scheduleWeeklyDigestNotification(data: {
