@@ -48,7 +48,7 @@ export default async function LandingPage() {
             {
               number: '01',
               title: 'Plant',
-              body: 'Each evening a 5 minute window opens. Write what you want your subconscious to process tonight. A memory. A question. A person. Close the app and sleep.',
+              body: 'Each evening a 10 minute window opens. Write what you want your subconscious to process tonight. A memory. A question. A person. Close the app and sleep.',
             },
             {
               number: '02',

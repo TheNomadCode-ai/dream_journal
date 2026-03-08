@@ -94,7 +94,15 @@ export default function DreamCycleDashboard({
   const evening = minusMinutes(sleep.hour, sleep.minute, 10)
 
   const morningWindow = windowForToday(wake.hour, wake.minute, 5)
-  const eveningWindow = windowForToday(evening.hour, evening.minute, 5)
+  const eveningWindow = windowForToday(evening.hour, evening.minute, 10)
+
+  const now = new Date()
+  const nowTotal = now.getHours() * 60 + now.getMinutes()
+  const [sleepH, sleepM] = sleepTime.split(':').map(Number)
+  const sleepTotal = sleepH * 60 + sleepM
+  const windowStart = sleepTotal - 10
+  const windowEnd = sleepTotal
+  const minutesRemaining = Math.max(0, windowEnd - nowTotal)
 
   const streak = computeLoopStreak(recentSeeds.map((seed) => ({ seed_date: seed.seed_date, morning_confirmed_at: seed.morning_confirmed_at })))
   const successRate = totalSeedsPlanted > 0 ? Math.round((totalSeedsDreamed / totalSeedsPlanted) * 100) : 0
@@ -139,7 +147,7 @@ export default function DreamCycleDashboard({
           <>
             <p style={{ color: '#efe8ff', marginBottom: 8 }}>Tonight's planting window opens at {getEveningWindowTime(sleepTime)}</p>
             <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, 100 - Math.max(0, eveningWindow.minutesUntilOpen) / 10))}%`, background: '#c9a84c' }} />
+              <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, 100 - Math.max(0, nowTotal < windowStart ? windowStart - nowTotal : 0) / 10))}%`, background: '#c9a84c' }} />
             </div>
           </>
         ) : null}
@@ -147,7 +155,7 @@ export default function DreamCycleDashboard({
         {state === 'EVENING_OPEN' ? (
           <>
             <p style={{ color: '#efe8ff', marginBottom: 8 }}>Your planting window is open.</p>
-            <p style={{ color: '#cdbde7', marginBottom: 12 }}>{eveningWindow.minutesRemaining} minutes remaining</p>
+            <p style={{ color: '#cdbde7', marginBottom: 12 }}>{minutesRemaining} minutes remaining</p>
             <Link className="btn-gold" href="/evening">Plant Tonight's Seed</Link>
           </>
         ) : null}

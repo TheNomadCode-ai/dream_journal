@@ -59,7 +59,7 @@ const SUGGESTIONS_40 = [
   'A room full of future possibilities',
 ]
 
-type Stage = 'loading' | 'upcoming' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted' | 'upgrade'
+type Stage = 'upcoming' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted' | 'upgrade'
 
 function shuffle<T>(values: T[]): T[] {
   const clone = [...values]
@@ -118,16 +118,14 @@ function getDescriptiveness(text: string) {
 
 function EveningSkeleton() {
   return (
-    <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
-      <section style={{ width: 'min(760px, 100%)', margin: '0 auto' }}>
-        <div style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', marginBottom: 16, animation: 'pulse 1.5s infinite' }} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-          {[1, 2, 3].map((item) => (
-            <div key={item} style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
-          ))}
-        </div>
-      </section>
-    </main>
+    <div>
+      <div style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', marginBottom: 16, animation: 'pulse 1.5s infinite' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[1, 2, 3].map((item) => (
+          <div key={item} style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -135,7 +133,12 @@ export default function EveningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
-  const [stage, setStage] = useState<Stage>('loading')
+  const [profile, setProfile] = useState({
+    target_sleep_time: '23:00',
+    target_wake_time: '07:00',
+  })
+  const [loaded, setLoaded] = useState(false)
+  const [stage, setStage] = useState<Stage>('plant')
   const [userId, setUserId] = useState<string | null>(null)
   const [wakeTime, setWakeTime] = useState('07:00:00')
   const [sleepTime, setSleepTime] = useState('23:00:00')
@@ -145,7 +148,6 @@ export default function EveningPage() {
   const [initialSeconds, setInitialSeconds] = useState(0)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [seedText, setSeedText] = useState('')
-  const [touched, setTouched] = useState(false)
   const [shownSuggestions, setShownSuggestions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -180,10 +182,15 @@ export default function EveningPage() {
         .single()
 
       console.log('[Evening] Fresh profile:', freshProfile?.target_sleep_time)
+      setProfile({
+        target_sleep_time: (freshProfile?.target_sleep_time ?? '23:00:00').slice(0, 5),
+        target_wake_time: (freshProfile?.target_wake_time ?? '07:00:00').slice(0, 5),
+      })
       const wake = freshProfile?.target_wake_time ?? '07:00:00'
       const sleep = freshProfile?.target_sleep_time ?? '23:00:00'
       setWakeTime(wake)
       setSleepTime(sleep)
+      setLoaded(true)
 
       const tier = freshProfile?.tier ?? 'free'
       const trialActive = Boolean(freshProfile?.trial_ends_at) && new Date(freshProfile?.trial_ends_at ?? '').getTime() > Date.now()
@@ -354,18 +361,21 @@ export default function EveningPage() {
     setStage('planted')
   }
 
-  function handleSeedChange(value: string) {
-    setSeedText(value)
-    if (value.length > 0) setTouched(true)
-  }
-
   const descriptiveness = getDescriptiveness(seedText)
   const wordCount = getWordCount(seedText)
-  const sleepParts = parseTime(sleepTime, '23:00:00')
+  const sleepParts = parseTime(loaded ? sleepTime : `${profile.target_sleep_time}:00`, '23:00:00')
   const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
 
-  if (stage === 'loading') {
-    return <EveningSkeleton />
+  if (!loaded) {
+    return (
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+        <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
+          <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Tonight's dream seed</p>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 44, marginBottom: 14 }}>What do you want to dream about?</h1>
+          <EveningSkeleton />
+        </section>
+      </main>
+    )
   }
 
   if (stage === 'closed') {
@@ -495,7 +505,7 @@ export default function EveningPage() {
             <p style={{ color: '#9f8abb', marginBottom: 8 }}>OR</p>
             <textarea
               value={seedText}
-              onChange={(event) => handleSeedChange(event.target.value.slice(0, 300))}
+              onChange={(event) => setSeedText(event.target.value.slice(0, 300))}
               placeholder="Write your own intention..."
               style={{
                 width: '100%',
@@ -508,7 +518,7 @@ export default function EveningPage() {
                 marginBottom: 8,
               }}
             />
-            {touched && seedText.length > 0 && descriptiveness ? (
+            {seedText.length > 0 && descriptiveness ? (
               <p
                 style={{
                   fontFamily: 'monospace',
@@ -523,7 +533,7 @@ export default function EveningPage() {
                 {descriptiveness.message}
               </p>
             ) : null}
-            <p style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginBottom: 12 }}>{wordCount} words</p>
+            {seedText.length > 0 ? <p style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} words</p> : null}
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
             <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim()}>
               {saving ? 'Planting...' : 'Plant this seed'}
