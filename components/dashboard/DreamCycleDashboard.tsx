@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-import { computeLoopStreak, formatClock, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
+import { computeLoopStreak, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
 
 type Seed = {
   id: string
@@ -55,26 +56,6 @@ const MILESTONES = new Map<number, string>([
   [90, 'Ninety days. You have changed how you sleep.'],
 ])
 
-function getEveningWindowTime(sleepTime: string) {
-  const [h, m] = sleepTime.split(':').map(Number)
-
-  const totalMinutes = h * 60 + m - 10
-  let windowH = Math.floor(totalMinutes / 60)
-  let windowM = totalMinutes % 60
-
-  if (windowH < 0) windowH += 24
-  if (windowM < 0) {
-    windowM += 60
-    windowH -= 1
-  }
-
-  const period = windowH >= 12 ? 'PM' : 'AM'
-  const displayH = windowH > 12 ? windowH - 12 : windowH === 0 ? 12 : windowH
-  const displayM = windowM.toString().padStart(2, '0')
-
-  return `${displayH}:${displayM} ${period}`
-}
-
 export default function DreamCycleDashboard({
   wakeTime,
   sleepTime,
@@ -87,7 +68,9 @@ export default function DreamCycleDashboard({
   totalSeedsDreamed,
   showNotificationReminderBanner,
 }: Props) {
+  const router = useRouter()
   const [showMilestone, setShowMilestone] = useState(false)
+  const [now, setNow] = useState(new Date())
 
   const wake = parseTime(wakeTime, '07:00:00')
   const sleep = parseTime(sleepTime, '23:00:00')
@@ -96,13 +79,26 @@ export default function DreamCycleDashboard({
   const morningWindow = windowForToday(wake.hour, wake.minute, 5)
   const eveningWindow = windowForToday(evening.hour, evening.minute, 10)
 
-  const now = new Date()
   const nowTotal = now.getHours() * 60 + now.getMinutes()
   const [sleepH, sleepM] = sleepTime.split(':').map(Number)
   const sleepTotal = sleepH * 60 + sleepM
   const windowStart = sleepTotal - 10
   const windowEnd = sleepTotal
   const minutesRemaining = Math.max(0, windowEnd - nowTotal)
+
+  function formatTime(totalMins: number) {
+    let h = Math.floor(totalMins / 60)
+    let m = totalMins % 60
+    if (h >= 24) h -= 24
+    if (h < 0) h += 24
+    if (m < 0) m += 60
+    const period = h >= 12 ? 'PM' : 'AM'
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h
+    const displayM = m.toString().padStart(2, '0')
+    return `${displayH}:${displayM} ${period}`
+  }
+
+  const windowStartFormatted = formatTime(windowStart)
 
   const streak = computeLoopStreak(recentSeeds.map((seed) => ({ seed_date: seed.seed_date, morning_confirmed_at: seed.morning_confirmed_at })))
   const successRate = totalSeedsPlanted > 0 ? Math.round((totalSeedsDreamed / totalSeedsPlanted) * 100) : 0
@@ -131,6 +127,13 @@ export default function DreamCycleDashboard({
     }
   }, [streak])
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNow(new Date())
+    }, 30000)
+    return () => window.clearInterval(interval)
+  }, [])
+
   const archiveByDream = new Map(archiveSeeds.map((item) => [item.dream_entry_id, item]))
 
   return (
@@ -143,44 +146,27 @@ export default function DreamCycleDashboard({
       ) : null}
 
       <section style={{ border: '1px solid #2a1f45', borderRadius: 14, background: '#100a22', padding: 18, marginBottom: 18 }}>
-        {state === 'BEFORE_EVENING' ? (
+        {nowTotal < windowStart ? (
           <>
-            <p style={{ color: '#efe8ff', marginBottom: 8 }}>Tonight's planting window opens at {getEveningWindowTime(sleepTime)}</p>
+            <p style={{ color: '#efe8ff', marginBottom: 8 }}>Tonight's planting window opens at {windowStartFormatted}</p>
             <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, 100 - Math.max(0, nowTotal < windowStart ? windowStart - nowTotal : 0) / 10))}%`, background: '#c9a84c' }} />
             </div>
           </>
         ) : null}
 
-        {state === 'EVENING_OPEN' ? (
+        {nowTotal >= windowStart && nowTotal <= windowEnd ? (
           <>
             <p style={{ color: '#efe8ff', marginBottom: 8 }}>Your planting window is open.</p>
             <p style={{ color: '#cdbde7', marginBottom: 12 }}>{minutesRemaining} minutes remaining</p>
-            <Link className="btn-gold" href="/evening">Plant Tonight's Seed</Link>
+            <button className="btn-gold" onClick={() => router.push('/evening')}>Plant Tonight's Seed</button>
           </>
         ) : null}
 
-        {state === 'SEED_PLANTED' && todaySeed ? (
+        {nowTotal > windowEnd ? (
           <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Seed planted for tonight.</p>
-            <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', color: '#d9c8f2', marginBottom: 8 }}>&quot;{todaySeed.seed_text}&quot;</p>
-            <p style={{ color: '#cdbde7' }}>Morning window opens at {formatClock(wake.hour, wake.minute)}</p>
-          </>
-        ) : null}
-
-        {state === 'MORNING_OPEN' ? (
-          <>
-            <p style={{ color: '#efe8ff', marginBottom: 8 }}>Your dream window is open.</p>
-            <p style={{ color: '#cdbde7', marginBottom: 12 }}>{morningWindow.minutesRemaining} minutes remaining</p>
-            <Link className="btn-gold" href="/morning">Capture Now</Link>
-          </>
-        ) : null}
-
-        {state === 'MORNING_CONFIRMED' && yesterdaySeed ? (
-          <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>{formatClock(wake.hour, wake.minute)} - confirmed</p>
-            <p style={{ color: '#d9c8f2', marginBottom: 2 }}>Seed: {yesterdaySeed.seed_text}</p>
-            <p style={{ color: '#cdbde7' }}>{yesterdaySeed.was_dreamed ? 'appeared' : yesterdaySeed.was_dreamed === false ? "didn't appear" : 'no recall'}</p>
+            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Tonight's window opened at {windowStartFormatted} and has closed.</p>
+            <p style={{ color: '#cdbde7' }}>Opens again tomorrow at {windowStartFormatted}.</p>
           </>
         ) : null}
       </section>
