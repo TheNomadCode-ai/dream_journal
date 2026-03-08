@@ -146,7 +146,14 @@ export default function DreamCycleDashboard({
       ) : null}
 
       <section style={{ border: '1px solid #2a1f45', borderRadius: 14, background: '#100a22', padding: 18, marginBottom: 18 }}>
-        {nowTotal < windowStart ? (
+        {todaySeed ? (
+          <>
+            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Tonight's seed is planted.</p>
+            <p style={{ color: '#cdbde7' }}>Morning window opens at {formatTime(wake.hour * 60 + wake.minute)}.</p>
+          </>
+        ) : null}
+
+        {!todaySeed && nowTotal < windowStart ? (
           <>
             <p style={{ color: '#efe8ff', marginBottom: 8 }}>Tonight's planting window opens at {windowStartFormatted}</p>
             <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
@@ -155,7 +162,7 @@ export default function DreamCycleDashboard({
           </>
         ) : null}
 
-        {nowTotal >= windowStart && nowTotal <= windowEnd ? (
+        {!todaySeed && nowTotal >= windowStart && nowTotal <= windowEnd ? (
           <>
             <p style={{ color: '#efe8ff', marginBottom: 8 }}>Your planting window is open.</p>
             <p style={{ color: '#cdbde7', marginBottom: 12 }}>{minutesRemaining} minutes remaining</p>
@@ -163,7 +170,7 @@ export default function DreamCycleDashboard({
           </>
         ) : null}
 
-        {nowTotal > windowEnd ? (
+        {!todaySeed && nowTotal > windowEnd ? (
           <>
             <p style={{ color: '#efe8ff', marginBottom: 6 }}>Tonight's window opened at {windowStartFormatted} and has closed.</p>
             <p style={{ color: '#cdbde7' }}>Opens again tomorrow at {windowStartFormatted}.</p>

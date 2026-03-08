@@ -59,7 +59,7 @@ const SUGGESTIONS_40 = [
   'A room full of future possibilities',
 ]
 
-type Stage = 'upcoming' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted' | 'upgrade'
+type Stage = 'upcoming' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted' | 'upgrade' | 'already-planted'
 
 function shuffle<T>(values: T[]): T[] {
   const clone = [...values]
@@ -84,34 +84,34 @@ function getDescriptiveness(text: string) {
 
   if (wordCount <= 2) {
     return {
-      message: 'Be more specific - who, what, or where?',
+      message: 'Be more specific',
       color: 'rgba(255,100,100,0.7)',
     }
   }
 
   if (wordCount <= 5) {
     return {
-      message: 'Add more detail - a feeling, a place, a name.',
+      message: 'Add more detail',
       color: 'rgba(255,160,60,0.7)',
     }
   }
 
   if (wordCount <= 10) {
     return {
-      message: 'Getting vivid. Keep going if you can.',
+      message: 'Getting vivid',
       color: 'rgba(255,210,80,0.7)',
     }
   }
 
   if (wordCount <= 20) {
     return {
-      message: 'Good. Specific enough to work with.',
+      message: 'Good detail',
       color: 'rgba(120,220,140,0.7)',
     }
   }
 
   return {
-    message: 'Very detailed. Your subconscious has a lot to work with.',
+    message: 'Very detailed',
     color: 'rgba(100,200,255,0.7)',
   }
 }
@@ -146,6 +146,7 @@ export default function EveningPage() {
   const [windowExpiresAt, setWindowExpiresAt] = useState<Date | null>(null)
   const [minutesUntilWindow, setMinutesUntilWindow] = useState(0)
   const [initialSeconds, setInitialSeconds] = useState(0)
+  const [existingSeedToday, setExistingSeedToday] = useState<SeedRow | null>(null)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [seedText, setSeedText] = useState('')
   const [shownSuggestions, setShownSuggestions] = useState<string[]>([])
@@ -228,6 +229,20 @@ export default function EveningPage() {
 
       if (!canPlantSeeds) {
         setStage('upgrade')
+        return
+      }
+
+      const today = new Date().toISOString().split('T')[0]
+      const { data: existingSeed } = await freshSupabase
+        .from('dream_seeds')
+        .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at')
+        .eq('user_id', user.id)
+        .eq('seed_date', today)
+        .maybeSingle()
+
+      if (existingSeed) {
+        setExistingSeedToday(existingSeed as SeedRow)
+        setStage('already-planted')
         return
       }
 
@@ -315,6 +330,11 @@ export default function EveningPage() {
   async function plantSeed() {
     if (!userId || !windowOpenedAt || !seedText.trim()) return
     if (saving) return
+
+    if (wordCount > 500) {
+      setError('500 word maximum')
+      return
+    }
 
     setSaving(true)
     setError(null)
@@ -543,6 +563,50 @@ export default function EveningPage() {
     )
   }
 
+  if (stage === 'already-planted') {
+    return (
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <section style={{ width: 'min(700px, 100%)', textAlign: 'center' }}>
+          <div style={{ display: 'grid', placeItems: 'center', marginBottom: 18 }}>
+            <svg width="62" height="62" viewBox="0 0 100 100" style={{ opacity: 0.55 }} aria-hidden>
+              <defs>
+                <radialGradient id="mg-evening-locked" cx="32%" cy="30%" r="65%">
+                  <stop offset="0%" stopColor="rgba(220,200,250,0.6)" />
+                  <stop offset="100%" stopColor="rgba(120,90,180,0.35)" />
+                </radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="42" fill="url(#mg-evening-locked)" />
+              <circle cx="66" cy="44" r="35" fill="#06040f" />
+            </svg>
+          </div>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 54, marginBottom: 10 }}>Already planted.</h1>
+          <p style={{ color: '#bca7de', fontStyle: 'italic', marginBottom: 10 }}>You planted tonight's seed.</p>
+
+          <div
+            style={{
+              border: '1px solid rgba(255,255,255,0.08)',
+              padding: 24,
+              borderRadius: 8,
+              fontFamily: 'Georgia, serif',
+              fontStyle: 'italic',
+              fontSize: 18,
+              color: 'rgba(255,255,255,0.70)',
+              maxWidth: 320,
+              margin: '24px auto',
+            }}
+          >
+            {existingSeedToday?.seed_text}
+          </div>
+
+          <p style={{ color: '#9f8abb', marginBottom: 18 }}>Your morning window opens at {openTime}</p>
+          <button className="btn-ghost-gold" onClick={() => { window.location.href = '/dashboard' }}>
+            Go to dashboard
+          </button>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
@@ -598,7 +662,7 @@ export default function EveningPage() {
             <p style={{ color: '#9f8abb', marginBottom: 8 }}>OR</p>
             <textarea
               value={seedText}
-              onChange={(event) => setSeedText(event.target.value.slice(0, 300))}
+              onChange={(event) => setSeedText(event.target.value)}
               placeholder="Write your own intention..."
               style={{
                 width: '100%',
@@ -626,9 +690,10 @@ export default function EveningPage() {
                 {descriptiveness.message}
               </p>
             ) : null}
-            {seedText.length > 0 ? <p style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} words</p> : null}
+            {seedText.length > 0 ? <p style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} / 500 words</p> : null}
+            {wordCount > 500 ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>500 word maximum</p> : null}
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
-            <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim()}>
+            <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim() || wordCount > 500}>
               {saving ? 'Planting...' : 'Plant this seed'}
             </button>
           </div>
