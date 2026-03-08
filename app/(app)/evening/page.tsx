@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import CountdownTimer from '@/components/ui/CountdownTimer'
-import { addMinutes, dateKeyLocal, formatClock, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
+import { addMinutes, dateKeyLocal, formatClock, getEveningWindowState, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
 type SeedRow = {
@@ -59,7 +59,7 @@ const SUGGESTIONS_40 = [
   'A room full of future possibilities',
 ]
 
-type Stage = 'loading' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted' | 'upgrade'
+type Stage = 'loading' | 'upcoming' | 'closed' | 'confirm' | 'journal-prompt' | 'plant' | 'planted' | 'upgrade'
 
 function shuffle<T>(values: T[]): T[] {
   const clone = [...values]
@@ -99,6 +99,7 @@ export default function EveningPage() {
   const [sleepTime, setSleepTime] = useState('23:00:00')
   const [windowOpenedAt, setWindowOpenedAt] = useState<Date | null>(null)
   const [windowExpiresAt, setWindowExpiresAt] = useState<Date | null>(null)
+  const [minutesUntilWindow, setMinutesUntilWindow] = useState(0)
   const [initialSeconds, setInitialSeconds] = useState(0)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [seedText, setSeedText] = useState('')
@@ -149,16 +150,20 @@ export default function EveningPage() {
       const sleepParts = parseTime(sleep, '23:00:00')
       const notif = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
       const windowState = windowForToday(notif.hour, notif.minute, 10)
+      const eveningState = getEveningWindowState(sleep, new Date(), 10)
       const seconds = Math.max(0, Math.ceil((windowState.expiresAt.getTime() - Date.now()) / 1000))
 
       console.log('[Evening] Window check:', {
-        now: new Date().toISOString(),
-        windowOpen: windowState.isOpen,
-        secondsRemaining: seconds,
+        nowMinutes: eveningState.nowMinutes,
+        windowStart: eveningState.windowStartMinutes,
+        windowEnd: eveningState.windowEndMinutes,
+        windowOpen: eveningState.windowOpen,
+        minutesUntilWindow: eveningState.minutesUntilWindow,
       })
 
       setWindowOpenedAt(windowState.openedAt)
       setWindowExpiresAt(windowState.expiresAt)
+      setMinutesUntilWindow(Math.max(0, eveningState.minutesUntilWindow))
       setInitialSeconds(seconds)
 
       if (!canPlantSeeds) {
@@ -166,7 +171,12 @@ export default function EveningPage() {
         return
       }
 
-      if (!windowState.isOpen) {
+      if (eveningState.windowOpen) {
+        // continue
+      } else if (eveningState.minutesUntilWindow > 0) {
+        setStage('upcoming')
+        return
+      } else if (eveningState.hasPassed) {
         setStage('closed')
         return
       }
@@ -306,6 +316,18 @@ export default function EveningPage() {
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 50, marginBottom: 12 }}>The planting window has closed.</h1>
           <p style={{ color: '#bca7de', marginBottom: 8 }}>Tonight's window was at {formatClock(eveningParts.hour, eveningParts.minute)}.</p>
           <p style={{ color: '#bca7de', marginBottom: 20 }}>It opens again tomorrow at {formatClock(eveningParts.hour, eveningParts.minute)}.</p>
+          <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
+        </section>
+      </main>
+    )
+  }
+
+  if (stage === 'upcoming') {
+    return (
+      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 50, marginBottom: 12 }}>Tonight's window opens at {formatClock(eveningParts.hour, eveningParts.minute)}.</h1>
+          <p style={{ color: '#bca7de', marginBottom: 20 }}>Opens in {minutesUntilWindow} minute{minutesUntilWindow === 1 ? '' : 's'}.</p>
           <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
         </section>
       </main>

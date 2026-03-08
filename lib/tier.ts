@@ -26,9 +26,13 @@ export async function getUserTier(userId: string): Promise<EffectiveTier> {
     .eq('id', userId)
     .single()
 
+  console.log('[Tier] Profile data:', data)
+
   if (data?.trial_ends_at) {
     const trialEnd = new Date(data.trial_ends_at)
-    if (trialEnd > new Date()) {
+    const now = new Date()
+    console.log('[Tier] Trial ends:', trialEnd, 'Now:', now, 'Active:', trialEnd > now)
+    if (trialEnd > now) {
       return 'pro'
     }
   }

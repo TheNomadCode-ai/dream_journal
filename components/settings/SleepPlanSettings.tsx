@@ -10,20 +10,22 @@ type Props = {
   initialWakeTime: string
   initialSleepTime: string
   tier: string
+  isTrial: boolean
+  trialDaysRemaining: number
 }
 
 function toInput(value: string) {
   return value.slice(0, 5)
 }
 
-export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, tier }: Props) {
+export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, tier, isTrial, trialDaysRemaining }: Props) {
   const supabase = useMemo(() => createClient(), [])
   const [wakeTime, setWakeTime] = useState(toInput(initialWakeTime || '07:00:00'))
   const [sleepTime, setSleepTime] = useState(toInput(initialSleepTime || '23:00:00'))
   const [message, setMessage] = useState<string | null>(null)
 
   async function saveSchedule(nextWake: string, nextSleep: string) {
-    setMessage('Saved')
+    setMessage(null)
 
     const { data } = await supabase.auth.getUser()
     const user = data.user
@@ -34,13 +36,18 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
       target_sleep_time: `${nextSleep}:00`,
     }
 
-    void supabase
+    const { error } = await supabase
       .from('profiles')
       .update(updatedFields)
       .eq('id', user.id)
-      .then(() => {
-        console.log('[Profile] Saved:', updatedFields)
-      })
+
+    if (error) {
+      setMessage('Could not save. Try again.')
+      return
+    }
+
+    console.log('[Profile] Saved:', updatedFields)
+    setMessage('Saved')
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       const permission = Notification.permission === 'default'
@@ -53,6 +60,8 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         void scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
       }
     }
+
+    window.location.href = '/dashboard'
   }
 
   return (
@@ -92,8 +101,15 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
 
       <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
         <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Plan</p>
-        <p style={{ color: '#efe8ff', marginBottom: 8 }}>Current: {tier === 'pro' ? 'Pro' : 'Free'}</p>
-        {tier === 'pro' ? (
+        <p style={{ color: '#efe8ff', marginBottom: 8 }}>
+          Current: {isTrial ? 'Pro (trial)' : tier === 'pro' ? 'Pro' : 'Free'}
+        </p>
+        {isTrial ? (
+          <>
+            <p style={{ color: '#cbb7e4', marginBottom: 8 }}>{trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining</p>
+            <p style={{ color: '#cbb7e4' }}>Pro features unlocked during your trial.</p>
+          </>
+        ) : tier === 'pro' ? (
           <p style={{ color: '#cbb7e4' }}>Pro features unlocked.</p>
         ) : (
           <>

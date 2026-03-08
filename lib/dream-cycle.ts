@@ -5,6 +5,16 @@ export type DreamSeedLite = {
   morning_confirmed_at: string | null
 }
 
+export type EveningWindowState = {
+  nowMinutes: number
+  sleepMinutes: number
+  windowStartMinutes: number
+  windowEndMinutes: number
+  windowOpen: boolean
+  minutesUntilWindow: number
+  hasPassed: boolean
+}
+
 export function parseTime(value: string | null | undefined, fallback = '07:00:00'): TimeParts {
   const source = (value ?? fallback).slice(0, 5)
   const [hourRaw, minuteRaw] = source.split(':')
@@ -48,6 +58,27 @@ export function windowForToday(hour: number, minute: number, durationMinutes = 5
     isOpen,
     minutesRemaining,
     minutesUntilOpen,
+  }
+}
+
+export function getEveningWindowState(targetSleepTime: string, now = new Date(), leadMinutes = 10): EveningWindowState {
+  const sleep = parseTime(targetSleepTime, '23:00:00')
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const sleepMinutes = sleep.hour * 60 + sleep.minute
+  const windowStartMinutes = sleepMinutes - leadMinutes
+  const windowEndMinutes = sleepMinutes
+  const windowOpen = nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes
+  const minutesUntilWindow = windowStartMinutes - nowMinutes
+  const hasPassed = nowMinutes > windowEndMinutes
+
+  return {
+    nowMinutes,
+    sleepMinutes,
+    windowStartMinutes,
+    windowEndMinutes,
+    windowOpen,
+    minutesUntilWindow,
+    hasPassed,
   }
 }
 
