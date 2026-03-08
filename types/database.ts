@@ -20,6 +20,10 @@ export interface Database {
           auto_pattern_insight: string | null
           auto_pattern_generated_at: string | null
           wake_time: string | null
+          target_wake_time: string | null
+          target_sleep_time: string | null
+          chronotype: string | null
+          home_screen_installed: boolean
           wake_timezone: string
           timezone: string
           push_enabled: boolean
@@ -42,6 +46,10 @@ export interface Database {
           auto_pattern_insight?: string | null
           auto_pattern_generated_at?: string | null
           wake_time?: string | null
+          target_wake_time?: string | null
+          target_sleep_time?: string | null
+          chronotype?: string | null
+          home_screen_installed?: boolean
           wake_timezone?: string
           timezone?: string
           push_enabled?: boolean
@@ -64,6 +72,10 @@ export interface Database {
           auto_pattern_insight?: string | null
           auto_pattern_generated_at?: string | null
           wake_time?: string | null
+          target_wake_time?: string | null
+          target_sleep_time?: string | null
+          chronotype?: string | null
+          home_screen_installed?: boolean
           wake_timezone?: string
           timezone?: string
           push_enabled?: boolean
@@ -74,81 +86,32 @@ export interface Database {
         }
         Relationships: []
       }
-      alarms: {
+      wake_logs: {
         Row: {
           id: string
           user_id: string
-          alarm_time: string
-          enabled: boolean
-          days_of_week: number[]
-          snooze_seconds: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          alarm_time: string
-          enabled?: boolean
-          days_of_week?: number[]
-          snooze_seconds?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          alarm_time?: string
-          enabled?: boolean
-          days_of_week?: number[]
-          snooze_seconds?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      entry_windows: {
-        Row: {
-          id: string
-          user_id: string
-          window_date: string
-          window_opened_at: string
-          window_expires_at: string
-          entry_started: boolean
-          entry_id: string | null
-          locked: boolean
+          log_date: string
+          actual_wake_time: string
+          actual_sleep_time: string | null
+          sleep_quality: number | null
+          minutes_from_target: number | null
           created_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          window_date: string
-          window_opened_at: string
-          window_expires_at: string
-          entry_started?: boolean
-          entry_id?: string | null
-          locked?: boolean
+          log_date?: string
+          actual_wake_time: string
+          actual_sleep_time?: string | null
+          sleep_quality?: number | null
+          minutes_from_target?: number | null
           created_at?: string
         }
         Update: {
-          entry_started?: boolean
-          entry_id?: string | null
-          locked?: boolean
-        }
-        Relationships: []
-      }
-      push_subscriptions: {
-        Row: {
-          id: string
-          user_id: string
-          subscription: Json
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          subscription: Json
-          created_at?: string
-        }
-        Update: {
-          subscription?: Json
+          actual_wake_time?: string
+          actual_sleep_time?: string | null
+          sleep_quality?: number | null
+          minutes_from_target?: number | null
         }
         Relationships: []
       }

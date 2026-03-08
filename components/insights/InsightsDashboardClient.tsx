@@ -360,7 +360,7 @@ export default function InsightsDashboardClient({ tier, isPro }: InsightsDashboa
             <p style={{ color: 'rgba(255,255,255,0.50)', fontSize: 15, marginBottom: 26 }}>
               Capture your first dream to start seeing patterns.
             </p>
-            <Link href="/settings/alarm" className="btn-gold">Set your alarm</Link>
+            <Link href="/settings" className="btn-gold">Set your schedule</Link>
           </div>
         </section>
       </div>

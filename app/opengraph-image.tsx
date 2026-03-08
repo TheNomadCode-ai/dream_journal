@@ -53,7 +53,7 @@ export default function OGImage() {
             fontStyle: 'italic',
           }}
         >
-          The journal that locks 2 minutes after your alarm fires.
+          Train your biological clock and wake naturally.
         </div>
         <div
           style={{

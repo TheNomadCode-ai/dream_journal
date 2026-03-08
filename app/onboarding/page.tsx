@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-import OnboardingAlarmSetup from '@/components/onboarding/OnboardingAlarmSetup'
+import OnboardingFlow from '@/components/onboarding/OnboardingFlow'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function OnboardingPage() {
@@ -13,24 +13,18 @@ export default async function OnboardingPage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('onboarding_complete')
+    .select('onboarding_complete, target_wake_time, target_sleep_time')
     .eq('id', user.id)
     .maybeSingle()
 
   if (profile?.onboarding_complete) {
-    redirect('/dashboard')
+    redirect('/install')
   }
 
-  const { data: alarm } = await supabase
-    .from('alarms')
-    .select('id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle()
-
-  if (alarm) {
-    redirect('/dashboard')
-  }
-
-  return <OnboardingAlarmSetup />
+  return (
+    <OnboardingFlow
+      initialWakeTime={profile?.target_wake_time ?? '07:00:00'}
+      initialSleepTime={profile?.target_sleep_time ?? '23:00:00'}
+    />
+  )
 }

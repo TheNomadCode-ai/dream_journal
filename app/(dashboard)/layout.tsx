@@ -18,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('wake_time, wake_timezone, push_enabled')
+    .select('home_screen_installed')
     .eq('id', user.id)
     .single()
 
@@ -30,9 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       userEmail={user.email?.split('@')[0] ?? 'user'}
       initials={initials}
       moon={moon}
-      wakeTime={profile?.wake_time ?? null}
-      wakeTimezone={profile?.wake_timezone ?? 'UTC'}
-      pushEnabled={profile?.push_enabled ?? false}
+      homeScreenInstalled={Boolean(profile?.home_screen_installed)}
     >
       {children}
     </DashboardShell>

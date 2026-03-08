@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
-import InstallPrompt from '@/components/pwa/InstallPrompt'
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
 import '../styles/globals.css'
@@ -11,20 +10,21 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 export const metadata: Metadata = {
   metadataBase: new URL('https://somniavault.me'),
   title: {
-    default: 'Somnia — Dream Journal That Locks After 2 Minutes',
+    default: 'Somnia — Train Your Biological Clock',
     template: '%s | Somnia',
   },
   description:
-    'The only dream journal built around the 2-minute window you have before your dreams fade. Set your alarm, write before it locks. Privacy-first, no ads.',
+    'Wake up naturally without an alarm. Somnia tracks your morning patterns, records your dreams, and trains your biological clock in 30 days.',
   keywords: [
+    'biological clock',
+    'wake up naturally',
+    'no alarm clock',
+    'sleep training',
     'dream journal',
-    'dream journaling',
-    'lucid dreaming',
-    'dream diary',
-    'best dream journal app',
-    'how to remember dreams',
-    'sleep journal',
-    'dream tracking',
+    'circadian rhythm',
+    'sleep tracker',
+    'wake time tracker',
+    'biohacking',
   ],
   authors: [{ name: 'Sushank Khanal' }],
   creator: 'Sushank Khanal',
@@ -33,23 +33,23 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://somniavault.me',
     siteName: 'Somnia',
-    title: 'Somnia — Dream Journal That Locks After 2 Minutes',
+    title: 'Somnia — Train Your Biological Clock',
     description:
-      'The only dream journal built around the 2-minute window you have before your dreams fade.',
+      'Wake up naturally without an alarm. Somnia tracks your morning patterns, records your dreams, and trains your biological clock in 30 days.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'Somnia — Dream Journal That Locks After 2 Minutes',
+        alt: 'Somnia — Train Your Biological Clock',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Somnia — Dream Journal That Locks After 2 Minutes',
+    title: 'Somnia — Train Your Biological Clock',
     description:
-      'The only dream journal built around the 2-minute window you have before your dreams fade.',
+      'Wake up naturally without an alarm. Somnia tracks your morning patterns, records your dreams, and trains your biological clock in 30 days.',
     images: ['/opengraph-image'],
     creator: '@sirberialo007',
   },
@@ -99,7 +99,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistrar />
         <TouchFeedback />
         {children}
-        <InstallPrompt />
       </body>
     </html>
   )

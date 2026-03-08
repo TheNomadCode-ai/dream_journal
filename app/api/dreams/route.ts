@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json<ApiError>(
-    { error: 'Manual dream creation is disabled. Use the timed capture window.' },
+    { error: 'Manual dream creation is disabled. Use the morning journal window.' },
     { status: 403 }
   )
 

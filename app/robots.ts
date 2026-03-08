@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/dashboard', '/capture', '/api/', '/settings', '/notebooks'],
+      disallow: ['/dashboard', '/api/', '/settings', '/notebooks'],
     },
     sitemap: 'https://somniavault.me/sitemap.xml',
   }

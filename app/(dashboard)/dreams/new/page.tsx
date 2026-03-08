@@ -20,5 +20,5 @@ export default async function DreamsNewPage({ searchParams }: DreamsNewPageProps
   }
 
   const suffix = target.toString()
-  redirect(suffix ? `/capture?${suffix}` : '/capture')
+  redirect(suffix ? `/journal/new?${suffix}` : '/journal/new')
 }

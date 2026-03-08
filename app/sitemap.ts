@@ -43,6 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     },
+    {
+      url: 'https://somniavault.me/blog/train-biological-clock',
+      lastModified: new Date('2026-03-08'),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
     ...blogUrls,
   ]
 }

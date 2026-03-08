@@ -1,20 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-import PushOnboarding from '@/components/push/PushOnboarding'
 import { DASHBOARD_NAV_ITEMS } from '@/components/navigation/nav-items'
 
 type DashboardShellProps = {
   userEmail: string
   initials: string
   moon: string
-  wakeTime: string | null
-  wakeTimezone: string
-  pushEnabled: boolean
+  homeScreenInstalled: boolean
   children: React.ReactNode
 }
 
@@ -22,26 +19,31 @@ export default function DashboardShell({
   userEmail,
   initials,
   moon,
-  wakeTime,
-  wakeTimezone,
-  pushEnabled,
+  homeScreenInstalled,
   children,
 }: DashboardShellProps) {
   const pathname = usePathname()
   const [isMobile, setIsMobile] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const [isStandalone, setIsStandalone] = useState(false)
   const hasSidebarHistoryEntry = useRef(false)
   const closeFromHistoryBack = useRef(false)
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 1023px)')
+    const standaloneMatch = window.matchMedia('(display-mode: standalone)').matches
+    const iosStandalone = (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+    setIsStandalone(standaloneMatch || iosStandalone)
+  }, [])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
 
     const syncIsMobile = () => {
       const mobile = mediaQuery.matches
       setIsMobile(mobile)
       if (!mobile) {
-        setIsOpen(false)
+        setSidebarOpen(false)
         hasSidebarHistoryEntry.current = false
       }
     }
@@ -58,7 +60,7 @@ export default function DashboardShell({
   }, [])
 
   const closeDrawer = useCallback((syncHistory = true) => {
-    setIsOpen(false)
+    setSidebarOpen(false)
     if (isMobile && hasSidebarHistoryEntry.current && syncHistory) {
       closeFromHistoryBack.current = true
       hasSidebarHistoryEntry.current = false
@@ -69,15 +71,25 @@ export default function DashboardShell({
   }, [isMobile])
 
   const openDrawer = useCallback(() => {
-    setIsOpen(true)
-  }, [])
+    if (!isMobile) return
+    setSidebarOpen(true)
+  }, [isMobile])
+
+  const toggleSidebar = useCallback(() => {
+    if (!isMobile) return
+    if (sidebarOpen) {
+      closeDrawer()
+      return
+    }
+    openDrawer()
+  }, [closeDrawer, isMobile, openDrawer, sidebarOpen])
 
   useEffect(() => {
-    if (!isMobile || !isOpen || hasSidebarHistoryEntry.current) return
+    if (!isMobile || !sidebarOpen || hasSidebarHistoryEntry.current) return
 
     window.history.pushState({ dashboardDrawer: true }, '')
     hasSidebarHistoryEntry.current = true
-  }, [isMobile, isOpen])
+  }, [isMobile, sidebarOpen])
 
   useEffect(() => {
     const onPopState = () => {
@@ -86,26 +98,28 @@ export default function DashboardShell({
         return
       }
 
-      if (isMobile && isOpen) {
+      if (isMobile && sidebarOpen) {
         hasSidebarHistoryEntry.current = false
-        setIsOpen(false)
+        setSidebarOpen(false)
       }
     }
 
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [isMobile, isOpen])
+  }, [isMobile, sidebarOpen])
 
   const onNavClick = () => {
     if (isMobile) closeDrawer(false)
   }
+
+  const showInstallBanner = useMemo(() => !homeScreenInstalled && !isStandalone, [homeScreenInstalled, isStandalone])
 
   const onTouchStart = (event: React.TouchEvent<HTMLElement>) => {
     setTouchStartX(event.touches[0]?.clientX ?? null)
   }
 
   const onTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
-    if (!isMobile || !isOpen || touchStartX === null) return
+    if (!isMobile || !sidebarOpen || touchStartX === null) return
 
     const endX = event.changedTouches[0]?.clientX ?? touchStartX
     const deltaX = endX - touchStartX
@@ -117,62 +131,28 @@ export default function DashboardShell({
     setTouchStartX(null)
   }
 
-  const drawerTransform = isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)'
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0A0B12' }}>
-      {isMobile && (
-        <>
-          <button
-            type="button"
-            onClick={openDrawer}
-            aria-label="Open navigation menu"
-            style={{
-              position: 'fixed',
-              top: 16,
-              left: 16,
-              zIndex: 90,
-              width: 44,
-              height: 44,
-              border: '1px solid #1E2235',
-              background: 'rgba(13,14,24,0.96)',
-              color: '#E8E4D9',
-              display: 'grid',
-              placeItems: 'center',
-              borderRadius: 10,
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>≡</span>
-          </button>
+    <div className="dashboard-shell" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0A0B12' }}>
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        className="dashboard-mobile-menu-btn"
+      >
+        <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>{sidebarOpen ? '✕' : '☰'}</span>
+      </button>
 
-          <button
-            type="button"
-            aria-label="Close navigation menu"
-            onClick={() => closeDrawer()}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.5)',
-              zIndex: 69,
-              opacity: isOpen ? 1 : 0,
-              pointerEvents: isOpen ? 'auto' : 'none',
-              transition: 'opacity 220ms ease',
-              border: 'none',
-              padding: 0,
-            }}
-          />
-        </>
-      )}
+      <button
+        type="button"
+        aria-label="Close navigation menu"
+        onClick={() => closeDrawer()}
+        className={`dashboard-mobile-overlay${sidebarOpen ? ' open' : ''}`}
+      />
 
       <aside
-        className="sidebar"
+        className={`sidebar${sidebarOpen ? ' sidebar-mobile-open' : ''}`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        style={{
-          transform: drawerTransform,
-          transition: isMobile ? 'transform 240ms ease' : undefined,
-          zIndex: isMobile ? 70 : 40,
-        }}
       >
         <div style={{ padding: '28px 22px 20px', borderBottom: '1px solid #1E2235' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -298,20 +278,22 @@ export default function DashboardShell({
       </aside>
 
       <main
+        className="dashboard-main"
         style={{
           flex: 1,
-          marginLeft: isMobile ? 0 : '220px',
           minHeight: '100vh',
-          paddingTop: isMobile ? 72 : 0,
         }}
       >
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 40px' }}>
-          <PushOnboarding
-            wakeTime={wakeTime}
-            wakeTimezone={wakeTimezone}
-            pushEnabled={pushEnabled}
-          />
-        </div>
+        {showInstallBanner ? (
+          <div style={{ maxWidth: '720px', margin: '16px auto 0', padding: '0 40px' }}>
+            <Link
+              href="/install"
+              style={{ display: 'block', border: '1px solid rgba(180,130,255,0.38)', background: 'rgba(180,130,255,0.1)', color: '#f0e7ff', padding: '12px 14px', borderRadius: 10 }}
+            >
+              🌙 Add Somnia to your home screen for morning notifications →
+            </Link>
+          </div>
+        ) : null}
         {children}
       </main>
     </div>

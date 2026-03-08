@@ -141,12 +141,12 @@ a:active {
 
 @keyframes moonPulse {
   0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(180,130,255,0.4));
+    filter: drop-shadow(0 0 8px rgba(180,130,255,0.4));
     transform: scale(1);
   }
   50% {
-    filter: drop-shadow(0 0 12px rgba(180,130,255,0.9));
-    transform: scale(1.1);
+    filter: drop-shadow(0 0 20px rgba(180,130,255,0.8));
+    transform: scale(1.08);
   }
 }
 
