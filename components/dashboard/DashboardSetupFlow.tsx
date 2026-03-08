@@ -94,6 +94,18 @@ export default function DashboardSetupFlow({ userId, initialWakeTime, initialSle
       const [wakeHour, wakeMinute] = wakeTime.split(':').map(Number)
       const [sleepHour, sleepMinute] = sleepTime.split(':').map(Number)
       await scheduleNotifications(wakeHour, wakeMinute, sleepHour, sleepMinute)
+
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready
+        await registration.showNotification('Welcome to Somnia.', {
+          body: 'Your morning and evening windows are set. Sleep well tonight.',
+          icon: '/icons/icon-192x192.png',
+          tag: 'welcome',
+          requireInteraction: false,
+          vibrate: [100, 50, 100],
+          data: { url: '/dashboard' },
+        } as NotificationOptions)
+      }
     }
 
     setNotifDone(true)
