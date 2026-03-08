@@ -1,11 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function NotifyPage() {
-  const router = useRouter()
-
   const [status, setStatus] = useState<'idle' | 'requesting'>('idle')
 
   useEffect(() => {
@@ -15,14 +12,14 @@ export default function NotifyPage() {
       if (Notification.permission === 'granted' || Notification.permission === 'denied') {
         console.log('[Notify] Permission resolved:', Notification.permission)
         clearInterval(interval)
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     }, 500)
 
     return () => {
       clearInterval(interval)
     }
-  }, [router])
+  }, [])
 
   const handleAllow = async () => {
     setStatus('requesting')
@@ -33,7 +30,7 @@ export default function NotifyPage() {
       console.log(error)
     } finally {
       // No matter what happens above, always go to dashboard.
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     }
   }
 
@@ -58,6 +55,24 @@ export default function NotifyPage() {
 
         <button className={`btn-gold ${status === 'requesting' ? 'btn-loading' : ''}`} style={{ minHeight: 54 }} onClick={() => void handleAllow()}>
           {status === 'requesting' ? 'Requesting...' : 'Allow Notifications ->'}
+        </button>
+
+        <button
+          onClick={() => {
+            window.location.href = '/dashboard'
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontFamily: 'Georgia, serif',
+            fontSize: '13px',
+            fontStyle: 'italic',
+            color: 'rgba(255,255,255,0.25)',
+            cursor: 'pointer',
+            marginTop: '24px',
+          }}
+        >
+          continue -&gt;
         </button>
       </section>
     </main>
