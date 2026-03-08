@@ -56,7 +56,7 @@ export async function middleware(request: NextRequest) {
   const onboardingComplete = Boolean(profile?.onboarding_complete)
 
   if (!onboardingComplete) {
-    const allowedIncompletePaths = ['/install', '/onboarding', '/notify']
+    const allowedIncompletePaths = ['/install', '/onboarding']
     if (!allowedIncompletePaths.includes(pathname)) {
       return NextResponse.redirect(new URL('/install', request.url))
     }

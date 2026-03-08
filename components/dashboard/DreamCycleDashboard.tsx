@@ -122,9 +122,7 @@ export default function DreamCycleDashboard({
       {showNotificationReminderBanner ? (
         <section style={{ border: '1px solid rgba(201,168,76,0.45)', borderRadius: 12, background: 'rgba(201,168,76,0.06)', padding: 14, marginBottom: 12 }}>
           <p style={{ color: '#e9defa', marginBottom: 6 }}>Notifications are still off.</p>
-          <Link href="/notify" style={{ color: '#c9a84c' }}>
-            {'Enable notifications ->'}
-          </Link>
+          <p style={{ color: '#c9a84c' }}>Use your browser settings to enable notifications.</p>
         </section>
       ) : null}
 

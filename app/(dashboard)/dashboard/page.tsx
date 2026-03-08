@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 
+import { NotificationBanner } from '@/components/NotificationBanner'
 import DreamCycleDashboard from '@/components/dashboard/DreamCycleDashboard'
 import { dateKeyLocal } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/server'
@@ -73,18 +74,21 @@ export default async function DashboardPage() {
   const showNotificationReminderBanner = profile?.notification_permission_granted === false
 
   return (
-    <DreamCycleDashboard
-      wakeTime={profile.target_wake_time ?? '07:00:00'}
-      sleepTime={profile.target_sleep_time ?? '23:00:00'}
-      todaySeed={todaySeedResult.data as any}
-      yesterdaySeed={yesterdaySeedResult.data as any}
-      recentSeeds={(recentSeedsResult.data ?? []) as any}
-      dreams={dreams as any}
-      archiveSeeds={archiveSeeds as any}
-      totalSeedsPlanted={profile.total_seeds_planted ?? 0}
-      totalSeedsDreamed={profile.total_seeds_dreamed ?? 0}
-      trialDaysRemaining={trialDaysRemaining}
-      showNotificationReminderBanner={showNotificationReminderBanner}
-    />
+    <>
+      <NotificationBanner />
+      <DreamCycleDashboard
+        wakeTime={profile.target_wake_time ?? '07:00:00'}
+        sleepTime={profile.target_sleep_time ?? '23:00:00'}
+        todaySeed={todaySeedResult.data as any}
+        yesterdaySeed={yesterdaySeedResult.data as any}
+        recentSeeds={(recentSeedsResult.data ?? []) as any}
+        dreams={dreams as any}
+        archiveSeeds={archiveSeeds as any}
+        totalSeedsPlanted={profile.total_seeds_planted ?? 0}
+        totalSeedsDreamed={profile.total_seeds_dreamed ?? 0}
+        trialDaysRemaining={trialDaysRemaining}
+        showNotificationReminderBanner={showNotificationReminderBanner}
+      />
+    </>
   )
 }
