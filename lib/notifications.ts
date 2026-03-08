@@ -27,3 +27,17 @@ export async function cancelWakeNotification() {
   const registration = await navigator.serviceWorker.ready
   registration.active?.postMessage({ type: 'CANCEL_ALARM' })
 }
+
+export async function scheduleWeeklyDigestNotification(data: {
+  morningsLogged: number
+  streak: number
+  minutesCloser: number
+}) {
+  if (typeof window === 'undefined') return
+  if (!('serviceWorker' in navigator)) return
+  const registration = await navigator.serviceWorker.ready
+  registration.active?.postMessage({
+    type: 'SCHEDULE_WEEKLY_DIGEST',
+    ...data,
+  })
+}

@@ -17,6 +17,8 @@ export interface Database {
           onboarded_at: string | null
           last_logged_date: string | null
           current_streak: number
+          streak_freezes_remaining: number
+          streak_freezes_reset_date: string | null
           auto_pattern_insight: string | null
           auto_pattern_generated_at: string | null
           wake_time: string | null
@@ -43,6 +45,8 @@ export interface Database {
           onboarded_at?: string | null
           last_logged_date?: string | null
           current_streak?: number
+          streak_freezes_remaining?: number
+          streak_freezes_reset_date?: string | null
           auto_pattern_insight?: string | null
           auto_pattern_generated_at?: string | null
           wake_time?: string | null
@@ -69,6 +73,8 @@ export interface Database {
           onboarded_at?: string | null
           last_logged_date?: string | null
           current_streak?: number
+          streak_freezes_remaining?: number
+          streak_freezes_reset_date?: string | null
           auto_pattern_insight?: string | null
           auto_pattern_generated_at?: string | null
           wake_time?: string | null
