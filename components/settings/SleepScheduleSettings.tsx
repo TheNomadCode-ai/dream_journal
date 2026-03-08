@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
+import TimeWheelPicker from '@/components/TimeWheelPicker'
 import { createClient } from '@/lib/supabase/client'
 import { cancelWakeNotification, requestNotificationPermission, scheduleWakeNotification, scheduleWindDownNotification } from '../../lib/notifications'
 
@@ -104,11 +105,13 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
     <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
       <p style={{ color: '#f2eaff', marginBottom: 14, fontSize: 20 }}>Sleep Schedule</p>
 
-      <label style={{ display: 'block', marginBottom: 8 }}>TARGET WAKE TIME</label>
-      <input type="time" value={wakeTime} onChange={(event) => void updateWakeTime(event.target.value)} style={{ width: '100%', minHeight: 46, borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: '#120d24', color: '#fff', padding: '0 10px', marginBottom: 16 }} />
+      <div style={{ marginBottom: 16 }}>
+        <TimeWheelPicker value={wakeTime} onChange={(time) => void updateWakeTime(time)} label="TARGET WAKE TIME" />
+      </div>
 
-      <label style={{ display: 'block', marginBottom: 8 }}>TARGET BEDTIME</label>
-      <input type="time" value={bedtime} onChange={(event) => void updateBedtime(event.target.value)} style={{ width: '100%', minHeight: 46, borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: '#120d24', color: '#fff', padding: '0 10px', marginBottom: 8 }} />
+      <div style={{ marginBottom: 8 }}>
+        <TimeWheelPicker value={bedtime} onChange={(time) => void updateBedtime(time)} label="TARGET BEDTIME" />
+      </div>
       <p style={{ color: '#bca7de', marginBottom: 16 }}>Aim for 8 hours between these times.</p>
 
       <label style={{ display: 'block', marginBottom: 8 }}>CHRONOTYPE</label>

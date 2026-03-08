@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
+import TimeWheelPicker from '@/components/TimeWheelPicker'
 import { scheduleNotifications } from '@/lib/notifications'
 import { createClient } from '@/lib/supabase/client'
 
@@ -133,10 +134,12 @@ export default function DashboardSetupFlow({ userId, initialWakeTime, initialSle
       {!scheduleDone ? (
         <div style={{ border: '1px solid rgba(200,160,80,0.25)', borderRadius: 14, background: '#100a22', padding: 16 }}>
           <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Set your sleep schedule</p>
-          <label style={{ display: 'block', marginBottom: 6, color: '#d5c8eb' }}>When do you want to wake up?</label>
-          <input className="time-picker" type="time" value={wakeTime} onChange={(event) => setWakeTime(event.target.value)} style={{ marginBottom: 12 }} />
-          <label style={{ display: 'block', marginBottom: 6, color: '#d5c8eb' }}>When do you go to sleep?</label>
-          <input className="time-picker" type="time" value={sleepTime} onChange={(event) => setSleepTime(event.target.value)} style={{ marginBottom: 12 }} />
+          <div style={{ marginBottom: 12 }}>
+            <TimeWheelPicker value={wakeTime} onChange={setWakeTime} label="When do you want to wake up?" />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <TimeWheelPicker value={sleepTime} onChange={setSleepTime} label="When do you go to sleep?" />
+          </div>
           {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
           <button className={`btn-gold ${loading ? 'btn-loading' : ''}`} onClick={() => void saveSchedule()} disabled={loading}>
             {loading ? 'Saving...' : 'Save Schedule ->'}

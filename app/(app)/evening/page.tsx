@@ -89,6 +89,21 @@ function seedGuidance(text: string) {
   return { tone: 'strong', color: '#9be2ff', message: 'Excellent depth. Keep this focused intention for sleep.', words }
 }
 
+function EveningSkeleton() {
+  return (
+    <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+      <section style={{ width: 'min(760px, 100%)', margin: '0 auto' }}>
+        <div style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', marginBottom: 16, animation: 'pulse 1.5s infinite' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+          {[1, 2, 3].map((item) => (
+            <div key={item} style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
+          ))}
+        </div>
+      </section>
+    </main>
+  )
+}
+
 export default function EveningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -306,12 +321,12 @@ export default function EveningPage() {
   const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
 
   if (stage === 'loading') {
-    return <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
+    return <EveningSkeleton />
   }
 
   if (stage === 'closed') {
     return (
-      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 50, marginBottom: 12 }}>The planting window has closed.</h1>
           <p style={{ color: '#bca7de', marginBottom: 8 }}>Tonight's window was at {formatClock(eveningParts.hour, eveningParts.minute)}.</p>
@@ -324,7 +339,7 @@ export default function EveningPage() {
 
   if (stage === 'upcoming') {
     return (
-      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 50, marginBottom: 12 }}>Tonight's window opens at {formatClock(eveningParts.hour, eveningParts.minute)}.</h1>
           <p style={{ color: '#bca7de', marginBottom: 20 }}>Opens in {minutesUntilWindow} minute{minutesUntilWindow === 1 ? '' : 's'}.</p>
@@ -336,7 +351,7 @@ export default function EveningPage() {
 
   if (stage === 'upgrade') {
     return (
-      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 24, display: 'grid', placeItems: 'center' }}>
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 24, display: 'grid', placeItems: 'center' }}>
         <section style={{ width: 'min(760px, 100%)' }}>
           <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>
             {trialEnded ? 'Your trial has ended' : 'Pro feature'}
@@ -382,7 +397,7 @@ export default function EveningPage() {
   }
 
   return (
-    <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+    <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
         {hasSeedAccess && windowExpiresAt ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
 

@@ -35,6 +35,21 @@ function journalGuidance(text: string) {
   return { color: '#9be2ff', message: 'Excellent depth. This is highly useful dream data.', words }
 }
 
+function MorningSkeleton() {
+  return (
+    <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+      <section style={{ width: 'min(760px, 100%)', margin: '0 auto' }}>
+        <div style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', marginBottom: 16, animation: 'pulse 1.5s infinite' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+          {[1, 2, 3].map((item) => (
+            <div key={item} style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
+          ))}
+        </div>
+      </section>
+    </main>
+  )
+}
+
 export default function MorningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -225,12 +240,12 @@ export default function MorningPage() {
   const guidance = journalGuidance(body)
 
   if (stage === 'loading') {
-    return <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center' }}>Loading...</main>
+    return <MorningSkeleton />
   }
 
   if (stage === 'closed') {
     return (
-      <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Your morning window has passed.</h1>
           <p style={{ color: '#bca7de', marginBottom: 8 }}>It opens again tomorrow at {formatClock(parseTime(wakeTime).hour, parseTime(wakeTime).minute)}.</p>
@@ -246,7 +261,7 @@ export default function MorningPage() {
   }
 
   return (
-    <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
+    <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
         {windowExpiresAt ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
 

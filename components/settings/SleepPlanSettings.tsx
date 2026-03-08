@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
+import TimeWheelPicker from '@/components/TimeWheelPicker'
 import { parseTime } from '@/lib/dream-cycle'
 import { scheduleNotifications } from '@/lib/notifications'
 import { createClient } from '@/lib/supabase/client'
@@ -69,30 +70,23 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
       <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
         <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Sleep schedule</p>
 
-        <label style={{ display: 'block', marginBottom: 8, color: '#cfbde7' }}>Wake time</label>
-        <input
-          className="time-picker"
-          type="time"
-          step={900}
-          value={wakeTime}
-          onChange={(event) => {
-            const next = event.target.value
-            setWakeTime(next)
-            void saveSchedule(next, sleepTime)
-          }}
-          style={{ marginBottom: 16 }}
-        />
+        <div style={{ marginBottom: 16 }}>
+          <TimeWheelPicker
+            value={wakeTime}
+            label="Wake time"
+            onChange={(time) => {
+              setWakeTime(time)
+              void saveSchedule(time, sleepTime)
+            }}
+          />
+        </div>
 
-        <label style={{ display: 'block', marginBottom: 8, color: '#cfbde7' }}>Sleep time</label>
-        <input
-          className="time-picker"
-          type="time"
-          step={900}
+        <TimeWheelPicker
           value={sleepTime}
-          onChange={(event) => {
-            const next = event.target.value
-            setSleepTime(next)
-            void saveSchedule(wakeTime, next)
+          label="Sleep time"
+          onChange={(time) => {
+            setSleepTime(time)
+            void saveSchedule(wakeTime, time)
           }}
         />
 

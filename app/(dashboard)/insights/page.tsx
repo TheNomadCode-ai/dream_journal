@@ -25,5 +25,9 @@ export default async function InsightsPage() {
       .limit(180),
   ])
 
-  return <SeedInsightsClient tier={profileResult.data?.tier ?? 'free'} seeds={(seedsResult.data ?? []) as any} />
+  return (
+    <div className="page-content">
+      <SeedInsightsClient tier={profileResult.data?.tier ?? 'free'} seeds={(seedsResult.data ?? []) as any} />
+    </div>
+  )
 }

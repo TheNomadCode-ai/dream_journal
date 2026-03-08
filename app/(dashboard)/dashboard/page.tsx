@@ -74,7 +74,7 @@ export default async function DashboardPage() {
   const totalSeedsDreamed = profile?.total_seeds_dreamed ?? 0
 
   return (
-    <>
+    <div className="page-content">
       {trialDaysRemaining > 0 ? (
         <section style={{ background: 'rgba(20,10,40,0.95)', borderBottom: '1px solid rgba(200,160,80,0.15)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <p style={{ color: 'rgba(255,255,255,0.68)', fontSize: 12 }}>Pro trial - {trialDaysRemaining} days remaining</p>
@@ -96,6 +96,6 @@ export default async function DashboardPage() {
         totalSeedsDreamed={totalSeedsDreamed}
         showNotificationReminderBanner={showNotificationReminderBanner}
       />
-    </>
+    </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import TimeWheelPicker from '@/components/TimeWheelPicker'
 import { useProfile } from '@/lib/ProfileContext'
 import { createClient } from '@/lib/supabase/client'
 
@@ -68,25 +69,9 @@ export default function WakeTargetSettings({ initialWakeTime }: Props) {
 
   return (
     <section style={{ border: '1px solid #2f2250', background: '#100a22', borderRadius: 12, padding: 16 }}>
-      <label style={{ display: 'block', color: '#cdbde7', marginBottom: 10 }}>Wake target</label>
-      <input
-        className="time-picker"
-        type="time"
-        step={900}
-        value={wakeTime}
-        onChange={(event) => setWakeTime(event.target.value)}
-        style={{
-          width: '100%',
-          minHeight: 52,
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.2)',
-          background: '#0f0a1d',
-          color: '#fff',
-          fontSize: 22,
-          padding: '0 10px',
-          marginBottom: 12,
-        }}
-      />
+      <div style={{ marginBottom: 12 }}>
+        <TimeWheelPicker value={wakeTime} onChange={setWakeTime} label="Wake target" />
+      </div>
       <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} onClick={saveWakeTarget} disabled={saving} style={{ minHeight: 44 }}>
         {saving ? 'Saving...' : 'Save'}
       </button>
