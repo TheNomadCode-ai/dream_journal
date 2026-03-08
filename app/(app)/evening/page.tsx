@@ -366,6 +366,21 @@ export default function EveningPage() {
   const sleepParts = parseTime(loaded ? sleepTime : `${profile.target_sleep_time}:00`, '23:00:00')
   const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
 
+  const wakeParts = parseTime(wakeTime, '07:00:00')
+  function formatTime(h: number, m: number) {
+    const hour24 = ((h % 24) + 24) % 24
+    const minute = ((m % 60) + 60) % 60
+    const period = hour24 >= 12 ? 'PM' : 'AM'
+    const displayH = hour24 > 12 ? hour24 - 12 : hour24 === 0 ? 12 : hour24
+    const displayM = minute.toString().padStart(2, '0')
+    return `${displayH}:${displayM} ${period}`
+  }
+  const openTime = formatTime(wakeParts.hour, wakeParts.minute)
+  const closeTotalMins = wakeParts.hour * 60 + wakeParts.minute + 10
+  const closeH = Math.floor(closeTotalMins / 60)
+  const closeM = closeTotalMins % 60
+  const closeTime = formatTime(closeH, closeM)
+
   if (!loaded) {
     return (
       <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
@@ -445,6 +460,84 @@ export default function EveningPage() {
             </a>
             <button className="btn-ghost-gold" onClick={() => router.push('/dashboard')}>{'Continue with free ->'}</button>
           </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (stage === 'planted') {
+    return (
+      <main
+        className="page-content"
+        style={{
+          minHeight: '100vh',
+          background: '#06040f',
+          color: '#efe8ff',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '32px 24px 44px',
+          animation: 'fadeIn 400ms ease forwards',
+        }}
+      >
+        <div />
+
+        <section style={{ textAlign: 'center', width: 'min(760px, 100%)', margin: '0 auto' }}>
+          <div style={{ display: 'grid', placeItems: 'center', marginBottom: 20 }}>
+            <svg width="72" height="72" viewBox="0 0 100 100" style={{ filter: 'drop-shadow(0 0 16px rgba(180,130,255,0.8))' }} aria-hidden>
+              <defs>
+                <radialGradient id="mg-evening-planted" cx="32%" cy="30%" r="65%">
+                  <stop offset="0%" stopColor="rgba(240,225,255,1)" />
+                  <stop offset="100%" stopColor="rgba(140,80,255,0.6)" />
+                </radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="42" fill="url(#mg-evening-planted)" />
+              <circle cx="66" cy="44" r="35" fill="#06040f" />
+            </svg>
+          </div>
+
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 58, marginBottom: 10 }}>Planted.</h1>
+          <p style={{ color: '#bca7de', fontStyle: 'italic', marginBottom: 28 }}>
+            Your subconscious will work on this while you sleep.
+          </p>
+
+          <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,0.08)', margin: '32px auto' }} />
+
+          <p style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', marginBottom: 16 }}>
+            Morning Window
+          </p>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, marginBottom: 14 }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: 'rgba(255,255,255,0.90)', marginBottom: 6 }}>{openTime}</p>
+              <p style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase' }}>opens</p>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>-</span>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: 'rgba(255,255,255,0.90)', marginBottom: 6 }}>{closeTime}</p>
+              <p style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase' }}>closes</p>
+            </div>
+          </div>
+
+          <p style={{ color: '#9f8abb', fontStyle: 'italic', maxWidth: 420, margin: '0 auto' }}>
+            Open Somnia tomorrow between these times to capture what you dreamed.
+          </p>
+        </section>
+
+        <section style={{ width: 'min(760px, 100%)', margin: '0 auto', textAlign: 'center' }}>
+          <button
+            className="btn-gold"
+            style={{ width: '100%', justifyContent: 'center', minHeight: 54 }}
+            onClick={() => {
+              window.close()
+              window.setTimeout(() => {
+                window.location.href = '/dashboard'
+              }, 220)
+            }}
+          >
+            Close Somnia
+          </button>
+          <p style={{ marginTop: 10, fontSize: 10, color: 'rgba(255,255,255,0.28)' }}>Sleep well.</p>
         </section>
       </main>
     )
@@ -541,18 +634,6 @@ export default function EveningPage() {
           </div>
         ) : null}
 
-        {stage === 'planted' ? (
-          <div style={{ textAlign: 'center', paddingTop: 60 }}>
-            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 58, marginBottom: 8 }}>Planted.</h1>
-            <p style={{ color: '#c3b2df', maxWidth: 540, margin: '0 auto 10px' }}>
-              Hold this thought as you fall asleep. Your morning window opens at {formatClock(parseTime(wakeTime).hour, parseTime(wakeTime).minute)}.
-            </p>
-            <p style={{ color: '#9f8abb', marginBottom: 16 }}>
-              Dream incubation works best when the intention is the last thing you think about before sleeping.
-            </p>
-            <Link className="btn-gold" href="/dashboard">Go to sleep</Link>
-          </div>
-        ) : null}
       </section>
     </main>
   )
