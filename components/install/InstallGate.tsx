@@ -42,7 +42,7 @@ export default function InstallGate({ targetWakeTime, targetSleepTime, homeScree
         const { data } = await supabase.auth.getUser()
         const userId = data.user?.id
         if (userId) {
-          await supabase.from('user_profiles').update({ home_screen_installed: true }).eq('id', userId)
+          await supabase.from('profiles').update({ home_screen_installed: true }).eq('id', userId)
         }
         router.replace('/dashboard')
       })()
@@ -92,7 +92,7 @@ export default function InstallGate({ targetWakeTime, targetSleepTime, homeScree
     const { data } = await supabase.auth.getUser()
     const userId = data.user?.id
     if (userId) {
-      await supabase.from('user_profiles').update({ home_screen_installed: true }).eq('id', userId)
+      await supabase.from('profiles').update({ home_screen_installed: true }).eq('id', userId)
     }
 
     router.replace('/dashboard')

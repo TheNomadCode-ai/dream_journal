@@ -29,7 +29,7 @@ export default function WakeTargetSettings({ initialWakeTime }: Props) {
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: user.id, target_wake_time: `${wakeTime}:00` })
+      .upsert({ id: user.id, target_wake_time: `${wakeTime}:00` }, { onConflict: 'id' })
 
     if (error) {
       setStatus('Could not save your wake target.')

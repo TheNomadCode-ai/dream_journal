@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
-    .from('user_profiles')
+    .from('profiles')
     .select('home_screen_installed')
     .eq('id', user.id)
     .single()

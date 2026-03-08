@@ -37,7 +37,7 @@ export default async function JournalNewPage() {
   }
 
   const { data: profile } = await supabase
-    .from('user_profiles')
+    .from('profiles')
     .select('target_wake_time')
     .eq('id', user.id)
     .maybeSingle()

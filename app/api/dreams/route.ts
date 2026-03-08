@@ -77,12 +77,12 @@ export async function POST(request: Request) {
   // Legacy path retained below for future migration reference.
 
   const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('tier, plan')
+    .from('profiles')
+    .select('tier')
     .eq('id', user.id)
     .maybeSingle()
 
-  const tier = normalizeTier(profile?.tier ?? profile?.plan)
+  const tier = normalizeTier(profile?.tier)
 
   if (tier === 'free') {
     const { count, error: countError } = await supabase

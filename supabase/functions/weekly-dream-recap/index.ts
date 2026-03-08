@@ -10,9 +10,8 @@ const SUBJECT = "Your dreams this week — here's what we noticed."
 
 type ProfileRow = {
   id: string
-  display_name: string | null
-  auto_pattern_insight: string | null
-  last_logged_date: string | null
+  full_name: string | null
+  updated_at: string | null
 }
 
 type DreamRow = {
@@ -79,12 +78,12 @@ Deno.serve(async (req) => {
         if (!email) continue
 
         const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('id, display_name, auto_pattern_insight, last_logged_date')
+          .from('profiles')
+          .select('id, full_name, updated_at')
           .eq('id', user.id)
           .single<ProfileRow>()
 
-        if (!profile?.last_logged_date || profile.last_logged_date < activeCutoffISO) {
+        if (!profile?.updated_at || profile.updated_at.slice(0, 10) < activeCutoffISO) {
           continue
         }
 
@@ -115,8 +114,8 @@ Deno.serve(async (req) => {
           }
         })
 
-        const pattern = profile.auto_pattern_insight ?? 'A new personal pattern is forming across your entries.'
-        const greetingName = profile.display_name ?? email.split('@')[0]
+        const pattern = 'A new personal pattern is forming across your entries.'
+        const greetingName = profile.full_name ?? email.split('@')[0]
 
         const html = `
           <div style="font-family: Georgia, serif; color: #1a1a1a; line-height: 1.6; max-width: 620px; margin: 0 auto;">

@@ -13,21 +13,21 @@ export async function getUserTier(): Promise<Tier> {
   if (!user) return 'free'
 
   const { data } = await supabase
-    .from('user_profiles')
-    .select('tier, plan')
+    .from('profiles')
+    .select('tier')
     .eq('id', user.id)
     .maybeSingle()
 
-  return normalizeTier(data?.tier ?? data?.plan)
+  return normalizeTier(data?.tier)
 }
 
 export async function getUserTierForUserId(userId: string): Promise<Tier> {
   const supabase = await createClient()
   const { data } = await supabase
-    .from('user_profiles')
-    .select('tier, plan')
+    .from('profiles')
+    .select('tier')
     .eq('id', userId)
     .maybeSingle()
 
-  return normalizeTier(data?.tier ?? data?.plan)
+  return normalizeTier(data?.tier)
 }

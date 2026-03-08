@@ -9,22 +9,43 @@ export interface Database {
       profiles: {
         Row: {
           id: string
+          full_name: string | null
           target_wake_time: string | null
+          target_sleep_time: string | null
           onboarding_complete: boolean
+          home_screen_installed: boolean
+          tier: 'free' | 'pro' | 'lifetime'
+          chronotype: string | null
+          streak_freezes_remaining: number
+          streak_freeze_reset_date: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id: string
+          full_name?: string | null
           target_wake_time?: string | null
+          target_sleep_time?: string | null
           onboarding_complete?: boolean
+          home_screen_installed?: boolean
+          tier?: 'free' | 'pro' | 'lifetime'
+          chronotype?: string | null
+          streak_freezes_remaining?: number
+          streak_freeze_reset_date?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
+          full_name?: string | null
           target_wake_time?: string | null
+          target_sleep_time?: string | null
           onboarding_complete?: boolean
+          home_screen_installed?: boolean
+          tier?: 'free' | 'pro' | 'lifetime'
+          chronotype?: string | null
+          streak_freezes_remaining?: number
+          streak_freeze_reset_date?: string | null
           updated_at?: string
         }
         Relationships: []

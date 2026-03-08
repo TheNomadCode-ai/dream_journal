@@ -41,7 +41,7 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
       return
     }
 
-    await supabase.from('user_profiles').update(values).eq('id', data.user.id)
+    await supabase.from('profiles').update(values).eq('id', data.user.id)
     setSaving(false)
     setMessage('Saved')
   }
@@ -80,14 +80,14 @@ export default function SleepScheduleSettings({ initialWakeTime, initialBedtime,
         await scheduleWakeNotification(hour, minute)
         await scheduleWindDownNotification(sleepHour, sleepMinute)
         setNotificationsEnabled(true)
-        await saveField({ push_enabled: true }, 'Loading...')
+        setMessage('Saved')
       }
       return
     }
 
     await cancelWakeNotification()
     setNotificationsEnabled(false)
-    await saveField({ push_enabled: false }, 'Saving...')
+    setMessage('Saved')
   }
 
   return (

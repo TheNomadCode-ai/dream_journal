@@ -5,10 +5,16 @@ import { createServiceClient } from '@/lib/supabase/server'
 export async function POST(request: Request) {
   const form = await request.formData()
 
+  const sellerId = String(form.get('seller_id') ?? '').trim()
+  const expectedSellerId = String(process.env.GUMROAD_SELLER_ID ?? '').trim()
   const saleEmail = String(form.get('email') ?? '').trim().toLowerCase()
   const productPermalink = String(form.get('permalink') ?? '').trim()
   const refunded = form.get('refunded') === 'true'
   const cancelled = form.get('cancelled') === 'true'
+
+  if (!expectedSellerId || sellerId !== expectedSellerId) {
+    return NextResponse.json({ ok: false, error: 'invalid_seller' }, { status: 401 })
+  }
 
   // Ignore unrelated Gumroad products.
   if (productPermalink !== 'somniavault') {
@@ -38,8 +44,8 @@ export async function POST(request: Request) {
   }
 
   const { error } = await supabase
-    .from('user_profiles')
-    .update({ tier: nextTier, plan: nextTier })
+    .from('profiles')
+    .update({ tier: nextTier })
     .eq('id', matchedUser.id)
 
   if (error) {

@@ -3,10 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.2'
 
 type PushProfile = {
   id: string
-  wake_time: string | null
-  wake_timezone: string | null
-  push_subscription: webpush.PushSubscription | null
-  last_push_sent_at: string | null
+  target_wake_time: string | null
 }
 
 function getTimeParts(now: Date, timeZone: string) {
@@ -45,64 +42,20 @@ Deno.serve(async () => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
     const { data: profiles, error } = await supabase
-      .from('user_profiles')
-      .select('id, wake_time, wake_timezone, push_subscription, last_push_sent_at')
-      .eq('push_enabled', true)
-      .not('wake_time', 'is', null)
-      .not('push_subscription', 'is', null)
+      .from('profiles')
+      .select('id, target_wake_time')
+      .not('target_wake_time', 'is', null)
 
     if (error) {
       throw error
     }
 
     const now = new Date()
-    let sent = 0
+    // Push subscriptions are no longer stored server-side; wake notifications are local via service worker.
+    const sent = 0
 
     for (const profile of (profiles ?? []) as PushProfile[]) {
-      if (!profile.wake_time || !profile.push_subscription) continue
-
-      const zone = profile.wake_timezone || 'UTC'
-      const localNow = getTimeParts(now, zone)
-      const wakeTime = profile.wake_time.slice(0, 5)
-
-      if (wakeTime !== localNow.time) {
-        continue
-      }
-
-      if (profile.last_push_sent_at) {
-        const lastDate = getTimeParts(new Date(profile.last_push_sent_at), zone).date
-        if (lastDate === localNow.date) {
-          continue
-        }
-      }
-
-      const payload = JSON.stringify({
-        title: 'Somnia',
-        body: 'Your dreams are fading. You have 60 seconds.',
-        url: '/capture?from=notification',
-      })
-
-      try {
-        await webpush.sendNotification(profile.push_subscription, payload)
-
-        await supabase
-          .from('user_profiles')
-          .update({
-            last_push_sent_at: now.toISOString(),
-            updated_at: now.toISOString(),
-          })
-          .eq('id', profile.id)
-
-        sent += 1
-      } catch {
-        await supabase
-          .from('user_profiles')
-          .update({
-            push_enabled: false,
-            updated_at: now.toISOString(),
-          })
-          .eq('id', profile.id)
-      }
+      void profile
     }
 
     return new Response(JSON.stringify({ ok: true, sent }), {

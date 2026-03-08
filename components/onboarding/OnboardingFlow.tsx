@@ -66,7 +66,7 @@ export default function OnboardingFlow({ initialWakeTime }: Props) {
     }
 
     const { error: updateError } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .update({
         target_wake_time: toWakeTimeWithSeconds(wakeTime),
         target_sleep_time: bedtimeTime,

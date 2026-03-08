@@ -31,7 +31,7 @@ export default function OnboardingPage() {
         id: user.id,
         target_wake_time: `${wakeTime}:00`,
         onboarding_complete: true,
-      })
+      }, { onConflict: 'id' })
 
     if (upsertError) {
       setError('Could not save your wake target. Please try again.')

@@ -46,7 +46,7 @@ export default async function LandingPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { count } = await supabase
-    .from('user_profiles')
+    .from('profiles')
     .select('id', { count: 'exact', head: true })
 
   const userCount = count ?? 0

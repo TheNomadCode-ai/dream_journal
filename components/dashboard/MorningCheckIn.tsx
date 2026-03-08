@@ -132,12 +132,10 @@ export default function MorningCheckIn({
 
     if (!error) {
       await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
-          current_streak: nextStreak,
-          last_logged_date: today,
           streak_freezes_remaining: activeFreezes,
-          streak_freezes_reset_date: thisMonday,
+          streak_freeze_reset_date: thisMonday,
         })
         .eq('id', userId)
 

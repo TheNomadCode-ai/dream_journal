@@ -12,7 +12,7 @@ export default async function InstallPage() {
   }
 
   const { data: profile } = await supabase
-    .from('user_profiles')
+    .from('profiles')
     .select('target_wake_time, target_sleep_time, home_screen_installed')
     .eq('id', user.id)
     .maybeSingle()
