@@ -1,13 +1,17 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import { Inter } from 'next/font/google'
 
 import InstalledAppBanner from '@/components/pwa/InstalledAppBanner'
 import RoutePrefetcher from '@/components/navigation/RoutePrefetcher'
-import SmartOpenRedirect from '@/components/navigation/SmartOpenRedirect'
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
 import { ProfileProvider } from '@/lib/ProfileContext'
 import '../styles/globals.css'
+
+const SmartOpenRedirect = dynamic(() => import('@/components/navigation/SmartOpenRedirect'), {
+  ssr: false,
+})
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 

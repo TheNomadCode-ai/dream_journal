@@ -8,6 +8,9 @@ type LoaderState =
   | 'default'
 
 function getLoaderState(): LoaderState {
+  // Guard browser-only APIs during prerender/SSR.
+  if (typeof window === 'undefined') return 'default'
+
   const now = new Date()
   const h = now.getHours()
   const m = now.getMinutes()

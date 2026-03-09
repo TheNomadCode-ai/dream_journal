@@ -1,10 +1,15 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import { ContextualLoader } from '@/components/ContextualLoader'
 import { cacheProfile, getCachedProfile } from '@/lib/profile-cache'
 import { createClient } from '@/lib/supabase/client'
+
+const ContextualLoader = dynamic(
+  () => import('@/components/ContextualLoader').then((m) => ({ default: m.ContextualLoader })),
+  { ssr: false }
+)
 
 export type AppProfile = {
   id: string

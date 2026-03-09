@@ -16,6 +16,8 @@ type CachedProfile = {
 }
 
 export default function SmartOpenRedirect() {
+  if (typeof window === 'undefined') return null
+
   const pathname = usePathname()
   const checkedRef = useRef(false)
   const { profile } = useApp()
