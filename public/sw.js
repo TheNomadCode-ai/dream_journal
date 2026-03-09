@@ -1,12 +1,13 @@
 const DB_NAME = 'somnia-sw'
 const DB_VERSION = 1
 const STORE_NAME = 'schedule'
-const STATIC_CACHE = 'somnia-v1'
+const STATIC_CACHE = 'somnia-v2'
 const PRECACHE_URLS = [
   '/',
   '/dashboard',
   '/evening',
   '/morning',
+  '/settings',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
 ]
@@ -210,11 +211,18 @@ self.addEventListener('install', e => {
 
 self.addEventListener('fetch', e => {
   const { request } = e
+  const url = new URL(request.url)
+
+  if (url.pathname.startsWith('/api')) {
+    e.respondWith(fetch(request))
+    return
+  }
 
   if (
     request.destination === 'script' ||
     request.destination === 'style' ||
-    request.destination === 'image'
+    request.destination === 'image' ||
+    request.destination === 'font'
   ) {
     e.respondWith((async () => {
       const cached = await caches.match(request)
@@ -230,5 +238,9 @@ self.addEventListener('fetch', e => {
 
 self.addEventListener('activate', e => {
   console.log('[SW] Activated')
-  e.waitUntil(clients.claim())
+  e.waitUntil((async () => {
+    const keys = await caches.keys()
+    await Promise.all(keys.filter((key) => key !== STATIC_CACHE).map((key) => caches.delete(key)))
+    await clients.claim()
+  })())
 })

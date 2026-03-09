@@ -11,7 +11,11 @@ const pwa = withPWA({
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
   experimental: {
+    optimizeCss: true,
     serverComponentsExternalPackages: ['@node-rs/argon2'],
   },
   images: {

@@ -1,20 +1,23 @@
 'use client'
 
-import { EditorContent, useEditor } from '@tiptap/react'
-import Document from '@tiptap/extension-document'
-import Paragraph from '@tiptap/extension-paragraph'
-import Text from '@tiptap/extension-text'
-import Italic from '@tiptap/extension-italic'
-import History from '@tiptap/extension-history'
-import Placeholder from '@tiptap/extension-placeholder'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 
 import CountdownTimer from '@/components/ui/CountdownTimer'
 import { useApp } from '@/context/AppContext'
 import { dateKeyLocal, formatClock, getMorningWindowState, parseTime } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
+
+const MorningRichEditor = dynamic(() => import('@/components/morning/MorningRichEditor'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ minHeight: 280, borderRadius: 12, border: '1px solid rgba(201,168,76,0.35)', background: '#0f0a1d', padding: 14, color: '#8e80a8' }}>
+      Preparing your journal...
+    </div>
+  ),
+})
 
 type SeedRow = {
   id: string
@@ -33,12 +36,8 @@ function MorningSkeleton() {
   return (
     <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto' }}>
-        <div style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', marginBottom: 16, animation: 'pulse 1.5s infinite' }} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-          {[1, 2, 3].map((item) => (
-            <div key={item} style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
-          ))}
-        </div>
+        <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontSize: 46, marginBottom: 10 }}>Opening your morning window...</h1>
+        <p style={{ color: '#bca7de' }}>Loading your schedule and today&apos;s capture status.</p>
       </section>
     </main>
   )
@@ -68,6 +67,11 @@ export default function MorningPage() {
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const draftKey = useMemo(() => {
+    if (!userId || stage !== 'write') return null
+    return `somnia-morning-draft:${userId}:${dateKeyLocal(-1)}`
+  }, [stage, userId])
+
   function handleFirstKey() {
     if (timerStartedRef.current) return
 
@@ -75,39 +79,6 @@ export default function MorningPage() {
     setTimerStarted(true)
     console.log('[Morning] Timer started')
   }
-
-  const editor = useEditor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Italic,
-      History,
-      Placeholder.configure({
-        placeholder: 'I was somewhere...',
-      }),
-    ],
-    content: {
-      type: 'doc',
-      content: [{ type: 'paragraph' }],
-    },
-    editorProps: {
-      attributes: {
-        style: 'min-height: 280px; color: #f6f2ff; outline: none; line-height: 1.7; white-space: pre-wrap;',
-      },
-      handleDOMEvents: {
-        keydown: () => {
-          handleFirstKey()
-          return false
-        },
-      },
-    },
-    onUpdate({ editor: current }) {
-      const text = current.getText().trim()
-      setBodyText(text)
-      setBodyJson(current.getJSON() as Record<string, unknown>)
-    },
-  })
 
   const words = useMemo(() => {
     const trimmed = bodyText.trim()
@@ -220,33 +191,6 @@ export default function MorningPage() {
   }, [appLoading, appProfile, appUser, router, setAppProfile, supabase])
 
   useEffect(() => {
-    if (!editor || !userId || stage !== 'write') return
-
-    const key = `somnia-morning-draft:${userId}:${dateKeyLocal(-1)}`
-    const stored = localStorage.getItem(key)
-
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as { body_json?: Record<string, unknown> }
-        if (parsed.body_json) {
-          editor.commands.setContent(parsed.body_json)
-          setBodyJson(parsed.body_json)
-          setBodyText(editor.getText().trim())
-        }
-      } catch {
-        // Ignore malformed local drafts.
-      }
-    }
-
-    const autosave = window.setInterval(() => {
-      const json = editor.getJSON() as Record<string, unknown>
-      localStorage.setItem(key, JSON.stringify({ body_json: json }))
-    }, 5000)
-
-    return () => window.clearInterval(autosave)
-  }, [editor, stage, userId])
-
-  useEffect(() => {
     if (stage !== 'reveal') return
 
     setShowSeedText(false)
@@ -262,13 +206,13 @@ export default function MorningPage() {
   }, [stage])
 
   async function handleWriteComplete() {
-    if (!userId || !editor || saving || words < 20) return
+    if (!userId || saving || words < 20) return
 
     setSaving(true)
     setError(null)
 
-    const textToSave = editor.getText().trim()
-    const jsonToSave = (editor.getJSON() as Record<string, unknown>) ?? bodyJson
+    const textToSave = bodyText.trim()
+    const jsonToSave = bodyJson
 
     const { data, error: insertError } = await supabase
       .from('dreams')
@@ -311,6 +255,8 @@ export default function MorningPage() {
       const key = `somnia-morning-draft:${userId}:${dateKeyLocal(-1)}`
       localStorage.removeItem(key)
     }
+
+    localStorage.setItem('somnia_morning_entry_date', dateKeyLocal(0))
 
     if (yesterdaySeed) {
       setYesterdaySeed({
@@ -360,6 +306,11 @@ export default function MorningPage() {
         .from('profiles')
         .update({ total_seeds_dreamed: nextDreamed })
         .eq('id', userId)
+
+      setAppProfile((current) => {
+        if (!current) return current
+        return { ...current, total_seeds_dreamed: nextDreamed }
+      })
 
       nextSuccessRate = planted > 0 ? Math.round((nextDreamed / planted) * 100) : 0
     }
@@ -475,7 +426,14 @@ export default function MorningPage() {
             ) : null}
 
             <div style={{ border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, background: '#0f0a1d', padding: 14, minHeight: 320, marginBottom: 10 }}>
-              <EditorContent editor={editor} />
+              <MorningRichEditor
+                draftKey={draftKey}
+                onFirstKey={handleFirstKey}
+                onChange={(text, json) => {
+                  setBodyText(text)
+                  setBodyJson(json)
+                }}
+              />
             </div>
 
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}

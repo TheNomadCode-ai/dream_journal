@@ -1,7 +1,7 @@
 'use client'
 
 const PROFILE_CACHE_KEY = 'somnia_profile'
-const PROFILE_CACHE_TTL_MS = 60 * 60 * 1000
+const PROFILE_CACHE_TTL_MS = 30 * 60 * 1000
 
 type CachedProfile<T> = {
   data: T

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 
 import InstalledAppBanner from '@/components/pwa/InstalledAppBanner'
 import RoutePrefetcher from '@/components/navigation/RoutePrefetcher'
+import SmartOpenRedirect from '@/components/navigation/SmartOpenRedirect'
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
 import { ProfileProvider } from '@/lib/ProfileContext'
@@ -99,7 +100,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistrar />
         <RoutePrefetcher />
         <TouchFeedback />
-        <ProfileProvider>{children}</ProfileProvider>
+        <ProfileProvider>
+          <SmartOpenRedirect />
+          {children}
+        </ProfileProvider>
       </body>
     </html>
   )

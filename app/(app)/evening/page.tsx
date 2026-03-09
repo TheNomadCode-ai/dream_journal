@@ -119,14 +119,9 @@ function getDescriptiveness(text: string) {
 
 function EveningSkeleton() {
   return (
-    <div>
-      <div style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', marginBottom: 16, animation: 'pulse 1.5s infinite' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-        {[1, 2, 3].map((item) => (
-          <div key={item} style={{ height: 80, borderRadius: 12, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
-        ))}
-      </div>
-    </div>
+    <section style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, background: '#100a22', padding: 16 }}>
+      <p style={{ color: '#bca7de' }}>Loading tonight&apos;s window and your seed status...</p>
+    </section>
   )
 }
 
@@ -387,8 +382,18 @@ export default function EveningPage() {
       })
       .eq('id', userId)
 
+    setAppProfile((current) => {
+      if (!current) return current
+      return {
+        ...current,
+        last_seed_date: today,
+        total_seeds_planted: (current.total_seeds_planted ?? 0) + 1,
+      }
+    })
+
     const draftKey = `somnia-evening-draft:${userId}:${dateKeyLocal(0)}`
     localStorage.removeItem(draftKey)
+    localStorage.setItem('somnia_seed_planted_date', dateKeyLocal(0))
 
     console.log('[Evening] Seed planted:', seedText.trim())
 
