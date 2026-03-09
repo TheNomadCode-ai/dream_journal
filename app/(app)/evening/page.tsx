@@ -373,11 +373,12 @@ export default function EveningPage() {
     const displayM = minute.toString().padStart(2, '0')
     return `${displayH}:${displayM} ${period}`
   }
-  const openTime = formatTime(wakeParts.hour, wakeParts.minute)
-  const closeTotalMins = wakeParts.hour * 60 + wakeParts.minute + 10
-  const closeH = Math.floor(closeTotalMins / 60)
-  const closeM = closeTotalMins % 60
-  const closeTime = formatTime(closeH, closeM)
+  const wakeTotal = wakeParts.hour * 60 + wakeParts.minute
+  const windowStartTotal = wakeTotal - 120
+  const windowStartHour = Math.floor(windowStartTotal / 60)
+  const windowStartMinute = windowStartTotal % 60
+  const openTime = formatTime(windowStartHour, windowStartMinute)
+  const closeTime = formatTime(wakeParts.hour, wakeParts.minute)
 
   if (!loaded) {
     return (
@@ -576,7 +577,8 @@ export default function EveningPage() {
             {existingSeedToday?.seedText}
           </div>
 
-          <p style={{ color: '#9f8abb', marginBottom: 18 }}>Your morning window opens at {openTime}</p>
+          <p style={{ color: '#9f8abb', marginBottom: 8 }}>Morning window: {openTime} - {closeTime}</p>
+          <p style={{ color: '#9f8abb', marginBottom: 18 }}>You have until {closeTime} to capture.</p>
           <button className="btn-ghost-gold" onClick={() => { window.location.href = '/dashboard' }}>
             Go to dashboard
           </button>

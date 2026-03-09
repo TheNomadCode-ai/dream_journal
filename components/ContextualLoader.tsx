@@ -39,6 +39,7 @@ function isWithinWindow(current: number, start: number, end: number) {
 type LoaderContext = {
   state: LoaderState
   morningStartLabel: string
+  morningEndLabel: string
   eveningStartLabel: string
 }
 
@@ -48,6 +49,7 @@ function getLoaderContext(): LoaderContext {
     return {
       state: 'default',
       morningStartLabel: '',
+      morningEndLabel: '',
       eveningStartLabel: '',
     }
   }
@@ -58,6 +60,7 @@ function getLoaderContext(): LoaderContext {
   const nowTotal = h * 60 + m
 
   let morningStartLabel = ''
+  let morningEndLabel = ''
   let eveningStartLabel = ''
 
   try {
@@ -82,6 +85,7 @@ function getLoaderContext(): LoaderContext {
       const morningStart = wakeTotal - 120
       const eveningStart = sleepTotal - 10
       morningStartLabel = formatTime(morningStart)
+      morningEndLabel = formatTime(wakeTotal)
       eveningStartLabel = formatTime(eveningStart)
 
       const inMorningWindow = isWithinWindow(nowTotal, morningStart, wakeTotal)
@@ -95,27 +99,27 @@ function getLoaderContext(): LoaderContext {
       const morningDone = localStorage.getItem('somnia_morning_entry_date') === today
 
       if (inMorningWindow && seedPlanted && !morningDone) {
-        return { state: 'morning_after_seed', morningStartLabel, eveningStartLabel }
+        return { state: 'morning_after_seed', morningStartLabel, morningEndLabel, eveningStartLabel }
       }
 
       if (inMorningWindow && !morningDone) {
-        return { state: 'morning_no_seed', morningStartLabel, eveningStartLabel }
+        return { state: 'morning_no_seed', morningStartLabel, morningEndLabel, eveningStartLabel }
       }
 
       if (inEveningWindow && seedPlanted) {
-        return { state: 'evening_seed_planted', morningStartLabel, eveningStartLabel }
+        return { state: 'evening_seed_planted', morningStartLabel, morningEndLabel, eveningStartLabel }
       }
 
       if (inEveningWindow && !seedPlanted) {
-        return { state: 'evening_window', morningStartLabel, eveningStartLabel }
+        return { state: 'evening_window', morningStartLabel, morningEndLabel, eveningStartLabel }
       }
 
       if (!inMorningWindow && !inEveningWindow && seedPlanted && !morningDone) {
-        return { state: 'seed_planted_waiting', morningStartLabel, eveningStartLabel }
+        return { state: 'seed_planted_waiting', morningStartLabel, morningEndLabel, eveningStartLabel }
       }
 
       if (nowNorm > morningEndNorm && nowNorm < eveningStartNorm && !seedPlanted) {
-        return { state: 'daytime', morningStartLabel, eveningStartLabel }
+        return { state: 'daytime', morningStartLabel, morningEndLabel, eveningStartLabel }
       }
     }
   } catch {
@@ -125,6 +129,7 @@ function getLoaderContext(): LoaderContext {
   return {
     state: 'default',
     morningStartLabel,
+    morningEndLabel,
     eveningStartLabel,
   }
 }
@@ -157,7 +162,7 @@ const MESSAGES: Record<LoaderState, { heading: string; body: string; sub: string
   },
   seed_planted_waiting: {
     heading: 'Seed planted.',
-    body: 'Morning window opens\nat {morningStart}.',
+    body: 'Morning window:\n{morningStart} - {morningEnd}.',
     sub: 'Sleep well. Let it work.',
   },
   default: {
@@ -168,12 +173,13 @@ const MESSAGES: Record<LoaderState, { heading: string; body: string; sub: string
 }
 
 export function ContextualLoader() {
-  const { state, morningStartLabel, eveningStartLabel } = getLoaderContext()
+  const { state, morningStartLabel, morningEndLabel, eveningStartLabel } = getLoaderContext()
   const raw = MESSAGES[state]
   const msg = {
     ...raw,
     body: raw.body
       .replace('{morningStart}', morningStartLabel)
+      .replace('{morningEnd}', morningEndLabel)
       .replace('{eveningStart}', eveningStartLabel),
   }
 

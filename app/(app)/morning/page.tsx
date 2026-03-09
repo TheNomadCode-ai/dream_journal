@@ -292,7 +292,7 @@ export default function MorningPage() {
       <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Too early for morning capture.</h1>
-          <p style={{ color: '#bca7de', marginBottom: 8 }}>Morning window opens at {formatClock(windowStartHour, windowStartMinute)}.</p>
+          <p style={{ color: '#bca7de', marginBottom: 8 }}>Morning window: {formatClock(windowStartHour, windowStartMinute)} - {formatClock(wakeParts.hour, wakeParts.minute)}.</p>
           <p style={{ color: '#bca7de', marginBottom: 20 }}>Opens in {minutesUntilWindow} minute{minutesUntilWindow === 1 ? '' : 's'}.</p>
           <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
         </section>
@@ -310,7 +310,7 @@ export default function MorningPage() {
       <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Your morning window has passed.</h1>
-          <p style={{ color: '#bca7de', marginBottom: 8 }}>It opens again tomorrow at {formatClock(tomorrowStartHour, tomorrowStartMinute)}.</p>
+          <p style={{ color: '#bca7de', marginBottom: 8 }}>Tomorrow&apos;s window: {formatClock(tomorrowStartHour, tomorrowStartMinute)} - {formatClock(wakeParts.hour, wakeParts.minute)}.</p>
           {yesterdaySeed?.wasDreamed !== null ? (
             <p style={{ color: '#bca7de', marginBottom: 18 }}>
               Yesterday: {yesterdaySeed?.wasDreamed === true ? 'appeared' : 'did not appear'}

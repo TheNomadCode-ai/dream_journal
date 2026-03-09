@@ -87,6 +87,7 @@ export default function DreamCycleDashboard({
 
   const eveningWindowStartFormatted = formatTime(eveningWindowStart)
   const morningWindowStartFormatted = formatTime(morningWindowStart)
+  const morningWindowEndFormatted = formatTime(morningWindowEnd)
 
   useEffect(() => {
     if (!MILESTONES.has(streak)) return
@@ -155,7 +156,7 @@ export default function DreamCycleDashboard({
   } else if (!inMorningWindow && !inEveningWindow && seedPlanted && !morningDone) {
     windowCard = {
       title: "Tonight's seed is planted.",
-      subtitle: `Morning window opens at ${morningWindowStartFormatted}`,
+      subtitle: `Morning window: ${morningWindowStartFormatted} - ${morningWindowEndFormatted}`,
       muted: 'Sleep well.',
     }
   } else if (!inMorningWindow && !morningDone && nowNorm > normalizeMinutes(morningWindowEnd) && nowNorm < eveningStartNorm && !seedPlanted) {
