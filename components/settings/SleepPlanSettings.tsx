@@ -195,11 +195,11 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            zIndex: 9999,
+            background: 'rgba(0,0,0,0.85)',
             padding: '24px',
           }}
         >
@@ -209,8 +209,10 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '12px',
               padding: '32px 24px',
-              maxWidth: '320px',
+              maxHeight: '80vh',
+              overflowY: 'auto',
               width: '100%',
+              maxWidth: '340px',
             }}
           >
             <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>
