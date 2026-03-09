@@ -123,7 +123,7 @@ export default function NotebooksPage() {
   }
 
   return (
-    <div style={{ maxWidth: 940, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
+    <div className="page-enter" style={{ maxWidth: 940, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 24 }}>
         <div>
           <p style={{ fontFamily: "'Josefin Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: 10, color: '#6B6F85', marginBottom: 12 }}>

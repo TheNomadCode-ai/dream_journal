@@ -182,7 +182,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="search-page-shell">
+    <div className="search-page-shell page-enter">
       <header className="search-top-nav" role="navigation" aria-label="Dashboard navigation">
         <div className="search-top-nav-inner">
           <span className="search-brand">Somnia</span>

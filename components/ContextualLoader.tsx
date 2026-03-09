@@ -132,7 +132,7 @@ export function ContextualLoader() {
 
       <div
         style={{
-          fontFamily: 'monospace',
+          fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
           fontSize: '9px',
           letterSpacing: '0.3em',
           color: 'rgba(180,130,255,0.4)',
@@ -176,7 +176,7 @@ export function ContextualLoader() {
       {msg.sub && (
         <div
           style={{
-            fontFamily: 'monospace',
+            fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
             fontSize: '10px',
             letterSpacing: '0.15em',
             color: 'rgba(255,255,255,0.18)',

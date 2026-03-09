@@ -36,7 +36,7 @@ export default function InstalledAppBanner() {
               setShowHint(true)
               window.location.href = OPEN_APP_URL
             }}
-            style={{ background: 'transparent', border: '1px solid rgba(200,160,80,0.5)', borderRadius: 4, fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(200,160,80,0.9)', textTransform: 'uppercase', padding: '8px 16px', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: '1px solid rgba(200,160,80,0.5)', borderRadius: 4, fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(200,160,80,0.9)', textTransform: 'uppercase', padding: '8px 16px', cursor: 'pointer' }}
           >
             Open App
           </button>

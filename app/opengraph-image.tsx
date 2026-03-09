@@ -27,7 +27,7 @@ export default function OGImage() {
             letterSpacing: '0.3em',
             textTransform: 'uppercase',
             marginBottom: 24,
-            fontFamily: 'monospace',
+            fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
           }}
         >
           Dream Journal
@@ -62,7 +62,7 @@ export default function OGImage() {
             color: 'rgba(255,255,255,0.20)',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
-            fontFamily: 'monospace',
+            fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
           }}
         >
           somniavault.me

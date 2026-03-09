@@ -171,7 +171,7 @@ export default function NotebookDetailPage({ params }: NotebookDetailPageProps) 
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
+      <div className="page-enter" style={{ maxWidth: 900, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
         <div className="shimmer" style={{ height: 120, borderRadius: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
       </div>
     )
@@ -179,7 +179,7 @@ export default function NotebookDetailPage({ params }: NotebookDetailPageProps) 
 
   if (!notebook) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
+      <div className="page-enter" style={{ maxWidth: 900, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
         <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 14 }}>Notebook not found.</p>
         <Link href="/notebooks" className="btn-ghost-gold">Back to notebooks</Link>
       </div>
@@ -187,7 +187,7 @@ export default function NotebookDetailPage({ params }: NotebookDetailPageProps) 
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
+    <div className="page-enter" style={{ maxWidth: 900, margin: '0 auto', padding: '54px clamp(16px, 4vw, 40px) 120px' }}>
       <header style={{ marginBottom: 24 }}>
         <Link href="/notebooks" className="btn-ghost-gold" style={{ marginBottom: 16 }}>← Back</Link>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>

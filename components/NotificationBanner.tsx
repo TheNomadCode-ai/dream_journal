@@ -80,7 +80,7 @@ export function NotificationBanner() {
           background: 'transparent',
           border: '1px solid rgba(200,160,80,0.50)',
           borderRadius: '4px',
-          fontFamily: 'monospace',
+          fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
           fontSize: '10px',
           letterSpacing: '0.15em',
           color: 'rgba(200,160,80,0.90)',

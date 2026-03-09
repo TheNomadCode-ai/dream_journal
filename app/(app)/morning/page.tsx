@@ -413,7 +413,7 @@ export default function MorningPage() {
             {!timerStarted ? (
               <div
                 style={{
-                  fontFamily: 'monospace',
+                  fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
                   fontSize: 11,
                   letterSpacing: '0.15em',
                   color: 'rgba(255,255,255,0.25)',

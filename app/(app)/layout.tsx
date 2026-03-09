@@ -8,5 +8,15 @@ export const metadata: Metadata = {
 }
 
 export default function AppAuthPagesLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <main
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        minHeight: '100dvh',
+      }}
+    >
+      {children}
+    </main>
+  )
 }

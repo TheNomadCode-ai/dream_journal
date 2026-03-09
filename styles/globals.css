@@ -424,7 +424,7 @@ button {
 }
 
 .auth-loading-message {
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace;
   font-size: 12px;
   letter-spacing: 0.15em;
   color: rgba(180,130,255,0.7);
@@ -1498,7 +1498,7 @@ button:disabled {
 
 .float-btn {
   position: fixed;
-  bottom: 36px; right: 36px;
+  bottom: calc(36px + env(safe-area-inset-bottom)); right: 36px;
   width: 54px; height: 54px;
   border-radius: 50%;
   background: #C9A84C;
@@ -2678,3 +2678,90 @@ button:disabled {
     min-height: 48px;
   }
 }
+
+  /* Prevent white flash on load */
+  html,
+  body {
+    background-color: #06040f;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+
+  /* No text selection on UI */
+  button,
+  a,
+  nav,
+  header,
+  [role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Allow selection in text areas */
+  input,
+  textarea,
+  [contenteditable] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* Remove tap highlight */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Touch feedback */
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    cursor: pointer;
+    transition: transform 80ms ease, opacity 80ms ease;
+  }
+
+  button:active,
+  [role="button"]:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+  }
+
+  /* Smooth scrolling */
+  * {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Prevent layout jump when keyboard opens on iPhone */
+  html {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Page transitions */
+  @keyframes pageIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-enter {
+    animation: pageIn 180ms ease forwards;
+  }

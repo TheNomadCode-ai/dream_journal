@@ -543,19 +543,19 @@ export default function EveningPage() {
 
           <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,0.08)', margin: '32px auto' }} />
 
-          <p style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', marginBottom: 16 }}>
             Morning Window
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, marginBottom: 14 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: 'rgba(255,255,255,0.90)', marginBottom: 6 }}>{openTime}</p>
-              <p style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase' }}>opens</p>
+              <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase' }}>opens</p>
             </div>
             <span style={{ color: 'rgba(255,255,255,0.15)' }}>-</span>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: 'rgba(255,255,255,0.90)', marginBottom: 6 }}>{closeTime}</p>
-              <p style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase' }}>closes</p>
+              <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase' }}>closes</p>
             </div>
           </div>
 
@@ -698,7 +698,7 @@ export default function EveningPage() {
             {seedText.length > 0 && descriptiveness ? (
               <p
                 style={{
-                  fontFamily: 'monospace',
+                  fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
                   fontSize: '11px',
                   letterSpacing: '0.1em',
                   marginTop: '8px',
@@ -710,7 +710,7 @@ export default function EveningPage() {
                 {descriptiveness.message}
               </p>
             ) : null}
-            {seedText.length > 0 ? <p style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} / 500 words</p> : null}
+            {seedText.length > 0 ? <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} / 500 words</p> : null}
             {wordCount > 500 ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>500 word maximum</p> : null}
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
             <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim() || wordCount > 500}>

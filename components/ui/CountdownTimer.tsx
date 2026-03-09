@@ -49,7 +49,7 @@ export default function CountdownTimer({ totalSeconds, onExpire }: Props) {
     <div
       className={pulseClass}
       style={{
-        fontFamily: 'monospace',
+        fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
         fontSize: 14,
         letterSpacing: '0.1em',
         color,

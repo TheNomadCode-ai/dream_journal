@@ -59,7 +59,7 @@ function UpgradePromptCard({
           marginBottom: 16,
           color: 'rgba(180,130,255,0.7)',
           fontSize: 12,
-          fontFamily: "'Courier New', monospace",
+          fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
         }}

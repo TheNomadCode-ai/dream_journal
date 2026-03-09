@@ -79,7 +79,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <div className="blog-page-shell">
+    <div className="blog-page-shell page-enter">
       <main className="blog-post-main">
         <header className="blog-post-header">
           <p className="blog-kicker">The Somnia Journal</p>

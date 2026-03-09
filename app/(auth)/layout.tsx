@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="auth-shell flex min-h-screen flex-col items-center justify-center px-4 py-12">
+    <div className="page-enter auth-shell flex min-h-screen flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
       <a href="/" className="auth-logo mb-8 flex items-center gap-2 text-foreground hover:opacity-80">
         <span className="text-2xl" aria-hidden="true">🌙</span>

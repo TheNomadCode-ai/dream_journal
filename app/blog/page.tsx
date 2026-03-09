@@ -16,7 +16,7 @@ export default async function BlogIndexPage() {
   const posts = await getAllBlogPostsMeta()
 
   return (
-    <div className="blog-page-shell">
+    <div className="blog-page-shell page-enter">
       <main className="blog-page-main">
         <header className="blog-index-header">
           <p className="blog-kicker">Journal</p>

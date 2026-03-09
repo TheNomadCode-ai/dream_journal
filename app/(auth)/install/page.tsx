@@ -94,7 +94,7 @@ export default function InstallPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+    <main className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
       <section style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
         <svg width="56" height="56" viewBox="0 0 100 100" style={{ margin: '0 auto 24px', filter: 'drop-shadow(0 0 20px rgba(180,130,255,0.6))' }}>
           <defs>

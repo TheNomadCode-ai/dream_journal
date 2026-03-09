@@ -20,9 +20,11 @@ export default async function JournalNewPage() {
     .maybeSingle()
 
   return (
-    <JournalWindowClient
-      userId={user.id}
-      targetWakeTime={profile?.target_wake_time ?? '07:00:00'}
-    />
+    <div className="page-enter">
+      <JournalWindowClient
+        userId={user.id}
+        targetWakeTime={profile?.target_wake_time ?? '07:00:00'}
+      />
+    </div>
   )
 }

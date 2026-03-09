@@ -114,7 +114,7 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
             background: 'transparent',
             border: '1px solid rgba(200,160,80,0.5)',
             borderRadius: '4px',
-            fontFamily: 'monospace',
+            fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
             fontSize: '11px',
             letterSpacing: '0.2em',
             color: 'rgba(200,160,80,0.9)',
@@ -149,7 +149,7 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
               padding: '32px 24px',
             }}
           >
-            <p style={{ fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>
+            <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>
               Changing your sleep schedule
             </p>
             <h3 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 42, marginBottom: 10 }}>Are you sure?</h3>
