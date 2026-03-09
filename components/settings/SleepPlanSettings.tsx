@@ -86,7 +86,8 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
   }
 
   return (
-    <div style={{ display: 'grid', gap: 22 }}>
+    <>
+      <div style={{ display: 'grid', gap: 22 }}>
       <div
         style={{
           display: 'flex',
@@ -166,25 +167,50 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         {message ? <p style={{ color: '#cfbde7', marginTop: 10 }}>{message}</p> : null}
       </section>
 
+      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
+        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Plan</p>
+        <p style={{ color: '#efe8ff', marginBottom: 8 }}>
+          Current: {isTrial ? 'Pro (trial)' : tier === 'pro' ? 'Pro' : 'Free'}
+        </p>
+        {isTrial ? (
+          <>
+            <p style={{ color: '#cbb7e4', marginBottom: 8 }}>{trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining</p>
+            <p style={{ color: '#cbb7e4' }}>Pro features unlocked during your trial.</p>
+          </>
+        ) : tier === 'pro' ? (
+          <p style={{ color: '#cbb7e4' }}>Pro features unlocked.</p>
+        ) : (
+          <>
+            <p style={{ color: '#cbb7e4', marginBottom: 12 }}>Free includes unlimited dream journaling and archive.</p>
+            <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" className="btn-gold">
+              Upgrade to Pro - $4.99/mo
+            </a>
+          </>
+        )}
+      </section>
+      </div>
+
       {showConfirmModal ? (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            display: 'grid',
-            placeItems: 'center',
-            padding: 20,
-            zIndex: 80,
+            background: 'rgba(0,0,0,0.85)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
           }}
         >
           <div
             style={{
-              width: 'min(320px, 100%)',
               background: '#0e0a1f',
               border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 12,
+              borderRadius: '12px',
               padding: '32px 24px',
+              maxWidth: '320px',
+              width: '100%',
             }}
           >
             <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>
@@ -217,28 +243,6 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
           </div>
         </div>
       ) : null}
-
-      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
-        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Plan</p>
-        <p style={{ color: '#efe8ff', marginBottom: 8 }}>
-          Current: {isTrial ? 'Pro (trial)' : tier === 'pro' ? 'Pro' : 'Free'}
-        </p>
-        {isTrial ? (
-          <>
-            <p style={{ color: '#cbb7e4', marginBottom: 8 }}>{trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining</p>
-            <p style={{ color: '#cbb7e4' }}>Pro features unlocked during your trial.</p>
-          </>
-        ) : tier === 'pro' ? (
-          <p style={{ color: '#cbb7e4' }}>Pro features unlocked.</p>
-        ) : (
-          <>
-            <p style={{ color: '#cbb7e4', marginBottom: 12 }}>Free includes unlimited dream journaling and archive.</p>
-            <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" className="btn-gold">
-              Upgrade to Pro - $4.99/mo
-            </a>
-          </>
-        )}
-      </section>
-    </div>
+    </>
   )
 }
