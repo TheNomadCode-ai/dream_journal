@@ -58,15 +58,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     ),
   },
   {
-    href: '/insights',
-    label: 'Insights',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-        <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16" />
-      </svg>
-    ),
-  },
-  {
     href: '/settings',
     label: 'Settings',
     icon: (

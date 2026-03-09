@@ -28,8 +28,7 @@ export default function SmartOpenRedirect() {
     if (
       pathname === '/morning' ||
       pathname === '/evening' ||
-      pathname === '/settings' ||
-      pathname === '/insights'
+      pathname === '/settings'
     ) {
       checkedRef.current = false
       return

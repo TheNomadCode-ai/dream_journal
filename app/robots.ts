@@ -11,7 +11,6 @@ export default function robots(): MetadataRoute.Robots {
           '/morning',
           '/evening',
           '/settings',
-          '/insights',
           '/install',
           '/onboarding',
           '/signup',
