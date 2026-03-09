@@ -83,7 +83,8 @@ export default function DreamCycleDashboard({
   const morningWindowStart = wakeTotal - 120
   const morningWindowEnd = wakeTotal
   const morningWindowAvailable = nowTotal >= morningWindowStart && nowTotal <= morningWindowEnd
-  const morningEntryWritten = Boolean(yesterdaySeed?.morning_entry_written)
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const morningEntryWritten = Boolean(yesterdaySeed?.morning_entry_written) || dreams.some((dream) => dream.date_of_dream === todayKey)
 
   function formatTime(totalMins: number) {
     let h = Math.floor(totalMins / 60)
@@ -143,13 +144,13 @@ export default function DreamCycleDashboard({
           <>
             <p style={{ color: '#efe8ff', marginBottom: 6 }}>Your morning window is open.</p>
             <p style={{ color: '#cdbde7', marginBottom: 12 }}>Capture your dream before it fades.</p>
-            <button className="btn-gold" onClick={() => router.push('/morning')}>Capture Now -&gt;</button>
+            <button className="btn-gold" onClick={() => router.push('/morning')}>Capture your dream -&gt;</button>
           </>
         ) : null}
 
         {morningEntryWritten ? (
           <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Dream captured.</p>
+            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Dream captured today.</p>
             <p style={{ color: '#cdbde7' }}>Tonight&apos;s window opens at {eveningWindowStartFormatted}.</p>
           </>
         ) : null}

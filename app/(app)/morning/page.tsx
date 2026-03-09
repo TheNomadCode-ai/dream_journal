@@ -26,7 +26,7 @@ type SeedRow = {
   dream_entry_id: string | null
 }
 
-type Stage = 'loading' | 'closed' | 'write' | 'reveal' | 'result'
+type Stage = 'loading' | 'too-early' | 'passed' | 'time-up' | 'already-captured' | 'write' | 'reveal' | 'saved' | 'result'
 type ResultState = 'yes' | 'no' | null
 
 function MorningSkeleton() {
@@ -48,7 +48,7 @@ export default function MorningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const timerExpiredRef = useRef(false)
-  const pageLoadedAtRef = useRef(Date.now())
+  const timerStartedRef = useRef(false)
   const { profile: appProfile, user: appUser, loading: appLoading, setProfile: setAppProfile } = useApp()
 
   const [stage, setStage] = useState<Stage>('loading')
@@ -56,9 +56,9 @@ export default function MorningPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [wakeTime, setWakeTime] = useState('07:00:00')
   const [timerStarted, setTimerStarted] = useState(false)
-  const [initialSeconds, setInitialSeconds] = useState(300)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [successRate, setSuccessRate] = useState(0)
+  const [minutesUntilWindow, setMinutesUntilWindow] = useState(0)
   const [bodyText, setBodyText] = useState('')
   const [bodyJson, setBodyJson] = useState<Record<string, unknown> | null>(null)
   const [writeFadingOut, setWriteFadingOut] = useState(false)
@@ -67,6 +67,14 @@ export default function MorningPage() {
   const [saving, setSaving] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function handleFirstKey() {
+    if (timerStartedRef.current) return
+
+    timerStartedRef.current = true
+    setTimerStarted(true)
+    console.log('[Morning] Timer started')
+  }
 
   const editor = useEditor({
     extensions: [
@@ -87,6 +95,12 @@ export default function MorningPage() {
       attributes: {
         style: 'min-height: 280px; color: #f6f2ff; outline: none; line-height: 1.7; white-space: pre-wrap;',
       },
+      handleDOMEvents: {
+        keydown: () => {
+          handleFirstKey()
+          return false
+        },
+      },
     },
     onUpdate({ editor: current }) {
       const text = current.getText().trim()
@@ -101,11 +115,6 @@ export default function MorningPage() {
   }, [bodyText])
 
   const canReveal = words >= 20 && !saving
-
-  useEffect(() => {
-    // Timer starts when the user opens this page, not when the window opens.
-    setTimerStarted(true)
-  }, [])
 
   useEffect(() => {
     let active = true
@@ -148,40 +157,59 @@ export default function MorningPage() {
       setSuccessRate(planted > 0 ? Math.round((dreamed / planted) * 100) : 0)
 
       const windowState = getMorningWindowState(wake)
-      const elapsedSeconds = Math.floor((Date.now() - pageLoadedAtRef.current) / 1000)
-      const seconds = Math.max(0, 300 - elapsedSeconds)
+      const today = dateKeyLocal(0)
 
       console.log('[Morning] Window check:', {
         now: new Date().toISOString(),
         windowAvailable: windowState.windowAvailable,
-        secondsRemaining: seconds,
+        nowMinutes: windowState.nowMinutes,
+        windowStart: windowState.windowStartMinutes,
+        windowEnd: windowState.windowEndMinutes,
       })
 
-      setInitialSeconds(seconds)
-
       const yesterday = dateKeyLocal(-1)
-      const { data: seed } = await supabase
-        .from('dream_seeds')
-        .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, morning_entry_written, dream_entry_id')
-        .eq('user_id', user.id)
-        .eq('seed_date', yesterday)
-        .maybeSingle()
+      const [seedResult, todayDreamResult] = await Promise.all([
+        supabase
+          .from('dream_seeds')
+          .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, morning_entry_written, dream_entry_id')
+          .eq('user_id', user.id)
+          .eq('seed_date', yesterday)
+          .maybeSingle(),
+        supabase
+          .from('dreams')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('date_of_dream', today)
+          .maybeSingle(),
+      ])
 
       if (!active) return
 
-      setYesterdaySeed(seed as SeedRow | null)
+      const seed = seedResult.data as SeedRow | null
+      setYesterdaySeed(seed)
 
-      if (!windowState.windowAvailable || seconds <= 0) {
-        setStage('closed')
+      const hasEntryToday = Boolean(todayDreamResult.data) || Boolean(seed?.morning_entry_written)
+      const nowTotal = windowState.nowMinutes
+      const windowStart = windowState.windowStartMinutes
+      const windowEnd = windowState.windowEndMinutes
+
+      if (hasEntryToday) {
+        setStage('already-captured')
         return
       }
 
-      if (!seed) {
-        setStage('closed')
+      if (nowTotal >= windowStart && nowTotal <= windowEnd) {
+        setStage('write')
         return
       }
 
-      setStage('write')
+      if (nowTotal > windowEnd) {
+        setStage('passed')
+        return
+      }
+
+      setMinutesUntilWindow(Math.max(0, windowStart - nowTotal))
+      setStage('too-early')
     }
 
     void load()
@@ -234,7 +262,7 @@ export default function MorningPage() {
   }, [stage])
 
   async function handleWriteComplete() {
-    if (!userId || !yesterdaySeed || !editor || saving || words < 20) return
+    if (!userId || !editor || saving || words < 20) return
 
     setSaving(true)
     setError(null)
@@ -252,7 +280,7 @@ export default function MorningPage() {
           type: 'doc',
           content: [{ type: 'paragraph', content: [{ type: 'text', text: textToSave }] }],
         },
-        date_of_dream: dateKeyLocal(-1),
+        date_of_dream: dateKeyLocal(0),
       })
       .select('id')
       .single()
@@ -263,18 +291,20 @@ export default function MorningPage() {
       return
     }
 
-    const { error: seedUpdateError } = await supabase
-      .from('dream_seeds')
-      .update({
-        dream_entry_id: data.id,
-        morning_entry_written: true,
-      })
-      .eq('id', yesterdaySeed.id)
+    if (yesterdaySeed) {
+      const { error: seedUpdateError } = await supabase
+        .from('dream_seeds')
+        .update({
+          dream_entry_id: data.id,
+          morning_entry_written: true,
+        })
+        .eq('id', yesterdaySeed.id)
 
-    if (seedUpdateError) {
-      setError('Entry was saved, but seed reveal could not be unlocked. Try again.')
-      setSaving(false)
-      return
+      if (seedUpdateError) {
+        setError('Entry was saved, but seed reveal could not be unlocked. Try again.')
+        setSaving(false)
+        return
+      }
     }
 
     if (userId) {
@@ -282,17 +312,21 @@ export default function MorningPage() {
       localStorage.removeItem(key)
     }
 
-    setYesterdaySeed({
-      ...yesterdaySeed,
-      dream_entry_id: data.id,
-      morning_entry_written: true,
-    })
+    if (yesterdaySeed) {
+      setYesterdaySeed({
+        ...yesterdaySeed,
+        dream_entry_id: data.id,
+        morning_entry_written: true,
+      })
 
-    setWriteFadingOut(true)
-    window.setTimeout(() => {
-      setStage('reveal')
-      setWriteFadingOut(false)
-    }, 600)
+      setWriteFadingOut(true)
+      window.setTimeout(() => {
+        setStage('reveal')
+        setWriteFadingOut(false)
+      }, 600)
+    } else {
+      setStage('saved')
+    }
 
     setSaving(false)
   }
@@ -341,14 +375,44 @@ export default function MorningPage() {
     if (timerExpiredRef.current) return
     timerExpiredRef.current = true
 
-    setStage('closed')
+    setStage('time-up')
   }
+  if (stage === 'time-up') {
+    return (
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Time is up for this capture.</h1>
+          <p style={{ color: '#bca7de', marginBottom: 20 }}>Return to your dashboard and try again in your next morning window.</p>
+          <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
+        </section>
+      </main>
+    )
+  }
+
 
   if (stage === 'loading') {
     return <MorningSkeleton />
   }
 
-  if (stage === 'closed') {
+  if (stage === 'too-early') {
+    const wakeParts = parseTime(wakeTime)
+    const windowStartTotal = wakeParts.hour * 60 + wakeParts.minute - 120
+    const windowStartHour = ((Math.floor(windowStartTotal / 60) % 24) + 24) % 24
+    const windowStartMinute = ((windowStartTotal % 60) + 60) % 60
+
+    return (
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Too early for morning capture.</h1>
+          <p style={{ color: '#bca7de', marginBottom: 8 }}>Morning window opens at {formatClock(windowStartHour, windowStartMinute)}.</p>
+          <p style={{ color: '#bca7de', marginBottom: 20 }}>Opens in {minutesUntilWindow} minute{minutesUntilWindow === 1 ? '' : 's'}.</p>
+          <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
+        </section>
+      </main>
+    )
+  }
+
+  if (stage === 'passed') {
     const wakeParts = parseTime(wakeTime)
     const tomorrowStartTotal = wakeParts.hour * 60 + wakeParts.minute - 120
     const tomorrowStartHour = ((Math.floor(tomorrowStartTotal / 60) % 24) + 24) % 24
@@ -370,10 +434,22 @@ export default function MorningPage() {
     )
   }
 
+  if (stage === 'already-captured') {
+    return (
+      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
+          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Dream captured today.</h1>
+          <p style={{ color: '#bca7de', marginBottom: 20 }}>You can review it in your dashboard archive.</p>
+          <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
-        {stage === 'write' && timerStarted ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
+        {stage === 'write' && timerStarted ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={300} onExpire={onTimeout} /></div> : null}
 
         {stage === 'write' ? (
           <div style={{ opacity: writeFadingOut ? 0 : 1, transition: 'opacity 600ms ease' }}>
@@ -382,6 +458,21 @@ export default function MorningPage() {
             <p style={{ color: '#bca7de', fontStyle: 'italic', marginBottom: 16 }}>
               Write everything you remember before it fades. Don&apos;t think. Just write.
             </p>
+
+            {!timerStarted ? (
+              <div
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  letterSpacing: '0.15em',
+                  color: 'rgba(255,255,255,0.25)',
+                  textAlign: 'right',
+                  marginBottom: 10,
+                }}
+              >
+                Timer starts when you begin writing
+              </div>
+            ) : null}
 
             <div style={{ border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, background: '#0f0a1d', padding: 14, minHeight: 320, marginBottom: 10 }}>
               <EditorContent editor={editor} />
@@ -393,6 +484,16 @@ export default function MorningPage() {
             <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} onClick={() => void handleWriteComplete()} disabled={!canReveal}>
               {saving ? 'Saving...' : "I've written everything I remember"}
             </button>
+          </div>
+        ) : null}
+
+        {stage === 'saved' ? (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontSize: 58, marginBottom: 10 }}>Dream captured today.</h1>
+            <p style={{ color: '#c8bbdf', fontStyle: 'italic', marginBottom: 20 }}>
+              Nice work. Keep the morning streak alive.
+            </p>
+            <Link href="/dashboard" className="btn-gold">Go to dashboard</Link>
           </div>
         ) : null}
 
