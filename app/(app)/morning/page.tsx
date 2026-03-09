@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import CountdownTimer from '@/components/ui/CountdownTimer'
-import { dateKeyLocal, formatClock, parseTime, windowForToday } from '@/lib/dream-cycle'
+import { dateKeyLocal, formatClock, getMorningWindowState, parseTime } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
 type SeedRow = {
@@ -47,13 +47,14 @@ export default function MorningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const timerExpiredRef = useRef(false)
+  const pageLoadedAtRef = useRef(Date.now())
 
   const [stage, setStage] = useState<Stage>('loading')
   const [result, setResult] = useState<ResultState>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [wakeTime, setWakeTime] = useState('07:00:00')
-  const [windowExpiresAt, setWindowExpiresAt] = useState<Date | null>(null)
-  const [initialSeconds, setInitialSeconds] = useState(0)
+  const [timerStarted, setTimerStarted] = useState(false)
+  const [initialSeconds, setInitialSeconds] = useState(300)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
   const [successRate, setSuccessRate] = useState(0)
   const [bodyText, setBodyText] = useState('')
@@ -100,6 +101,11 @@ export default function MorningPage() {
   const canReveal = words >= 20 && !saving
 
   useEffect(() => {
+    // Timer starts when the user opens this page, not when the window opens.
+    setTimerStarted(true)
+  }, [])
+
+  useEffect(() => {
     let active = true
 
     async function load() {
@@ -125,17 +131,16 @@ export default function MorningPage() {
       const dreamed = profile?.total_seeds_dreamed ?? 0
       setSuccessRate(planted > 0 ? Math.round((dreamed / planted) * 100) : 0)
 
-      const wakeParts = parseTime(wake, '07:00:00')
-      const windowState = windowForToday(wakeParts.hour, wakeParts.minute, 5)
-      const seconds = Math.max(0, Math.ceil((windowState.expiresAt.getTime() - Date.now()) / 1000))
+      const windowState = getMorningWindowState(wake)
+      const elapsedSeconds = Math.floor((Date.now() - pageLoadedAtRef.current) / 1000)
+      const seconds = Math.max(0, 300 - elapsedSeconds)
 
       console.log('[Morning] Window check:', {
         now: new Date().toISOString(),
-        windowOpen: windowState.isOpen,
+        windowAvailable: windowState.windowAvailable,
         secondsRemaining: seconds,
       })
 
-      setWindowExpiresAt(windowState.expiresAt)
       setInitialSeconds(seconds)
 
       const yesterday = dateKeyLocal(-1)
@@ -150,7 +155,7 @@ export default function MorningPage() {
 
       setYesterdaySeed(seed as SeedRow | null)
 
-      if (!windowState.isOpen) {
+      if (!windowState.windowAvailable || seconds <= 0) {
         setStage('closed')
         return
       }
@@ -328,11 +333,16 @@ export default function MorningPage() {
   }
 
   if (stage === 'closed') {
+    const wakeParts = parseTime(wakeTime)
+    const tomorrowStartTotal = wakeParts.hour * 60 + wakeParts.minute - 120
+    const tomorrowStartHour = ((Math.floor(tomorrowStartTotal / 60) % 24) + 24) % 24
+    const tomorrowStartMinute = ((tomorrowStartTotal % 60) + 60) % 60
+
     return (
       <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Your morning window has passed.</h1>
-          <p style={{ color: '#bca7de', marginBottom: 8 }}>It opens again tomorrow at {formatClock(parseTime(wakeTime).hour, parseTime(wakeTime).minute)}.</p>
+          <p style={{ color: '#bca7de', marginBottom: 8 }}>It opens again tomorrow at {formatClock(tomorrowStartHour, tomorrowStartMinute)}.</p>
           {yesterdaySeed?.morning_confirmed_at ? (
             <p style={{ color: '#bca7de', marginBottom: 18 }}>
               Yesterday: {yesterdaySeed.was_dreamed === true ? 'appeared' : 'did not appear'}
@@ -347,7 +357,7 @@ export default function MorningPage() {
   return (
     <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
       <section style={{ width: 'min(760px, 100%)', margin: '0 auto', position: 'relative' }}>
-        {windowExpiresAt ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
+        {stage === 'write' && timerStarted ? <div style={{ position: 'absolute', right: 0, top: 0 }}><CountdownTimer totalSeconds={initialSeconds} onExpire={onTimeout} /></div> : null}
 
         {stage === 'write' ? (
           <div style={{ opacity: writeFadingOut ? 0 : 1, transition: 'opacity 600ms ease' }}>

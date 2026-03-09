@@ -15,6 +15,14 @@ export type EveningWindowState = {
   hasPassed: boolean
 }
 
+export type MorningWindowState = {
+  nowMinutes: number
+  wakeMinutes: number
+  windowStartMinutes: number
+  windowEndMinutes: number
+  windowAvailable: boolean
+}
+
 export function parseTime(value: string | null | undefined, fallback = '07:00:00'): TimeParts {
   const source = (value ?? fallback).slice(0, 5)
   const [hourRaw, minuteRaw] = source.split(':')
@@ -79,6 +87,23 @@ export function getEveningWindowState(targetSleepTime: string, now = new Date(),
     windowOpen,
     minutesUntilWindow,
     hasPassed,
+  }
+}
+
+export function getMorningWindowState(targetWakeTime: string, now = new Date(), leadMinutes = 120): MorningWindowState {
+  const wake = parseTime(targetWakeTime, '07:00:00')
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const wakeMinutes = wake.hour * 60 + wake.minute
+  const windowStartMinutes = wakeMinutes - leadMinutes
+  const windowEndMinutes = wakeMinutes
+  const windowAvailable = nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes
+
+  return {
+    nowMinutes,
+    wakeMinutes,
+    windowStartMinutes,
+    windowEndMinutes,
+    windowAvailable,
   }
 }
 
