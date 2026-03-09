@@ -1,10 +1,18 @@
 import { redirect } from 'next/navigation'
 import { unstable_noStore as noStore } from 'next/cache'
+import type { Metadata } from 'next'
 
 import DashboardSetupFlow from '@/components/dashboard/DashboardSetupFlow'
 import DreamCycleDashboard from '@/components/dashboard/DreamCycleDashboard'
 import { dateKeyLocal } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function DashboardPage() {
   noStore()

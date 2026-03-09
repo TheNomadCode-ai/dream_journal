@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -8,6 +7,6 @@ export const metadata: Metadata = {
   },
 }
 
-export default function OnboardingRedirectPage() {
-  redirect('/dashboard')
+export default function AppAuthPagesLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
 }

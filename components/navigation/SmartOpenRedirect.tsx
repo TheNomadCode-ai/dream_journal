@@ -18,9 +18,11 @@ type CachedProfile = {
 export default function SmartOpenRedirect() {
   const pathname = usePathname()
   const checkedRef = useRef(false)
-  const { profile, user } = useApp()
+  const { profile } = useApp()
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     if (
       pathname === '/morning' ||
       pathname === '/evening' ||
@@ -37,46 +39,52 @@ export default function SmartOpenRedirect() {
 
     checkedRef.current = true
 
-    const now = new Date()
-    const nowTotal = now.getHours() * 60 + now.getMinutes()
-    const cachedProfile = getCachedProfile<CachedProfile>()
-    const sourceProfile = cachedProfile ?? profile
-
-    const wake = sourceProfile?.target_wake_time ?? '07:00:00'
-    const sleep = sourceProfile?.target_sleep_time ?? '23:00:00'
-    const [wakeH, wakeM] = wake.split(':').map(Number)
-    const [sleepH, sleepM] = sleep.split(':').map(Number)
-
-    const wakeTotal = wakeH * 60 + wakeM
-    const sleepTotal = sleepH * 60 + sleepM
-    const morningStart = wakeTotal - 120
-    const morningEnd = wakeTotal
-    const eveningStart = sleepTotal - 10
-    const eveningEnd = sleepTotal
-
-    const today = dateKeyLocal(0)
-    const localMorningDone = localStorage.getItem('somnia_morning_entry_date') === today
-    const localSeedPlanted = localStorage.getItem('somnia_seed_planted_date') === today
-
-    const trialActive = Boolean(sourceProfile?.trial_ends_at) && new Date(sourceProfile?.trial_ends_at ?? '').getTime() > Date.now()
-    const userIsPro = sourceProfile?.tier === 'pro' || trialActive
-
-    // Fast-path redirect using local cache and local completion flags.
-    if (nowTotal >= morningStart && nowTotal <= morningEnd && !localMorningDone) {
-      window.location.href = '/morning'
-      return
-    }
-
-    if (nowTotal >= eveningStart && nowTotal <= eveningEnd && userIsPro && !localSeedPlanted) {
-      window.location.href = '/evening'
-      return
-    }
-
-    if (!user?.id) return
-
-    // Fallback verification against fresh DB state if local flags are missing or stale.
     const supabase = createClient()
-    void Promise.all([
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      // Never redirect crawlers/guests or unauthenticated sessions.
+      if (!user) return
+
+      const now = new Date()
+      const nowTotal = now.getHours() * 60 + now.getMinutes()
+      const cachedProfile = getCachedProfile<CachedProfile>()
+      const sourceProfile = cachedProfile ?? profile
+
+      const wake = sourceProfile?.target_wake_time ?? '07:00:00'
+      const sleep = sourceProfile?.target_sleep_time ?? '23:00:00'
+      const [wakeH, wakeM] = wake.split(':').map(Number)
+      const [sleepH, sleepM] = sleep.split(':').map(Number)
+
+      const wakeTotal = wakeH * 60 + wakeM
+      const sleepTotal = sleepH * 60 + sleepM
+      const morningStart = wakeTotal - 120
+      const morningEnd = wakeTotal
+      const eveningStart = sleepTotal - 10
+      const eveningEnd = sleepTotal
+
+      const today = dateKeyLocal(0)
+      const localMorningDone = localStorage.getItem('somnia_morning_entry_date') === today
+      const localSeedPlanted = localStorage.getItem('somnia_seed_planted_date') === today
+
+      const trialActive = Boolean(sourceProfile?.trial_ends_at) && new Date(sourceProfile?.trial_ends_at ?? '').getTime() > Date.now()
+      const userIsPro = sourceProfile?.tier === 'pro' || trialActive
+
+      // Fast-path redirect using local cache and local completion flags.
+      if (nowTotal >= morningStart && nowTotal <= morningEnd && !localMorningDone) {
+        window.location.href = '/morning'
+        return
+      }
+
+      if (nowTotal >= eveningStart && nowTotal <= eveningEnd && userIsPro && !localSeedPlanted) {
+        window.location.href = '/evening'
+        return
+      }
+
+      // Fallback verification against fresh DB state if local flags are missing or stale.
+      const [dreamResult, seedResult] = await Promise.all([
       supabase
         .from('dreams')
         .select('id')
@@ -89,7 +97,8 @@ export default function SmartOpenRedirect() {
         .eq('user_id', user.id)
         .eq('seed_date', today)
         .maybeSingle(),
-    ]).then(([dreamResult, seedResult]) => {
+      ])
+
       const morningEntryDoneToday = Boolean(dreamResult.data)
       const seedPlantedToday = Boolean(seedResult.data)
 
@@ -108,8 +117,8 @@ export default function SmartOpenRedirect() {
       if (nowTotal >= eveningStart && nowTotal <= eveningEnd && userIsPro && !seedPlantedToday) {
         window.location.href = '/evening'
       }
-    })
-  }, [pathname, profile, user])
+    })()
+  }, [pathname, profile])
 
   return null
 }

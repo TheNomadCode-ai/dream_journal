@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /privacy
+Allow: /terms
+Disallow: /dashboard
+Disallow: /morning
+Disallow: /evening
+Disallow: /settings
+Disallow: /insights
+Disallow: /install
+Disallow: /onboarding
+Disallow: /signup
+Disallow: /login
+Disallow: /api
+
+Sitemap: https://www.somniavault.me/sitemap.xml
