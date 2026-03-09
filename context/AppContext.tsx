@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import { ContextualLoader } from '@/components/ContextualLoader'
 import { cacheProfile, getCachedProfile } from '@/lib/profile-cache'
 import { createClient } from '@/lib/supabase/client'
 
@@ -88,6 +89,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [refreshProfile])
 
   const value = useMemo(() => ({ profile, user, loading, refreshProfile, setProfile }), [loading, profile, refreshProfile, setProfile, user])
+
+  if (loading) {
+    return <ContextualLoader />
+  }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
