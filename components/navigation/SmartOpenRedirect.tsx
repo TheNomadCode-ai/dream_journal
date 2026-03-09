@@ -21,6 +21,17 @@ export default function SmartOpenRedirect() {
   const { profile, user } = useApp()
 
   useEffect(() => {
+    if (
+      pathname === '/morning' ||
+      pathname === '/evening' ||
+      pathname === '/settings' ||
+      pathname === '/insights'
+    ) {
+      checkedRef.current = false
+      return
+    }
+
+    // Only run redirect logic from the dashboard route.
     if (pathname !== '/dashboard') return
     if (checkedRef.current) return
 
