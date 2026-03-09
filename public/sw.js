@@ -1,6 +1,15 @@
 const DB_NAME = 'somnia-sw'
 const DB_VERSION = 1
 const STORE_NAME = 'schedule'
+const STATIC_CACHE = 'somnia-v1'
+const PRECACHE_URLS = [
+  '/',
+  '/dashboard',
+  '/evening',
+  '/morning',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+]
 
 // Open IndexedDB
 function openDB() {
@@ -184,7 +193,39 @@ self.addEventListener(
 
 self.addEventListener('install', e => {
   console.log('[SW] Installing')
+  e.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE)
+    await Promise.all(
+      PRECACHE_URLS.map(async (url) => {
+        try {
+          await cache.add(url)
+        } catch {
+          // Ignore cache misses for optional paths.
+        }
+      })
+    )
+  })())
   self.skipWaiting()
+})
+
+self.addEventListener('fetch', e => {
+  const { request } = e
+
+  if (
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    request.destination === 'image'
+  ) {
+    e.respondWith((async () => {
+      const cached = await caches.match(request)
+      if (cached) return cached
+
+      const response = await fetch(request)
+      const cache = await caches.open(STATIC_CACHE)
+      cache.put(request, response.clone())
+      return response
+    })())
+  }
 })
 
 self.addEventListener('activate', e => {

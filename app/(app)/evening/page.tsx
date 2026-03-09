@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import CountdownTimer from '@/components/ui/CountdownTimer'
+import { useApp } from '@/context/AppContext'
 import { addMinutes, dateKeyLocal, formatClock, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
@@ -132,6 +133,7 @@ function EveningSkeleton() {
 export default function EveningPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
+  const { profile: appProfile, user: appUser, loading: appLoading, setProfile: setAppProfile } = useApp()
 
   const [profile, setProfile] = useState({
     target_sleep_time: '23:00',
@@ -163,9 +165,17 @@ export default function EveningPage() {
     let active = true
 
     async function load() {
-      const freshSupabase = createClient()
-      const { data: authData } = await freshSupabase.auth.getUser()
-      const user = authData.user
+      if (appLoading) return
+
+      let user = appUser
+      if (!user) {
+        const { data: authData } = await supabase.auth.getUser()
+        user = authData.user
+          ? (authData.user.email
+            ? { id: authData.user.id, email: authData.user.email }
+            : { id: authData.user.id })
+          : null
+      }
 
       if (!user) {
         router.replace('/login?redirectedFrom=%2Fevening')
@@ -176,11 +186,16 @@ export default function EveningPage() {
 
       setUserId(user.id)
 
-      const { data: freshProfile } = await freshSupabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      let freshProfile = appProfile
+      if (!freshProfile) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+        freshProfile = data
+        if (data) setAppProfile(data)
+      }
 
       console.log('[Evening] Fresh profile:', freshProfile?.target_sleep_time)
       setProfile({
@@ -233,7 +248,7 @@ export default function EveningPage() {
       }
 
       const today = new Date().toISOString().split('T')[0]
-      const { data: existingSeed } = await freshSupabase
+      const { data: existingSeed } = await supabase
         .from('dream_seeds')
         .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at')
         .eq('user_id', user.id)
@@ -287,7 +302,7 @@ export default function EveningPage() {
     return () => {
       active = false
     }
-  }, [router, supabase])
+  }, [appLoading, appProfile, appUser, router, setAppProfile, supabase])
 
   useEffect(() => {
     if (!userId || stage !== 'plant') return

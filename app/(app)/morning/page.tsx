@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import CountdownTimer from '@/components/ui/CountdownTimer'
+import { useApp } from '@/context/AppContext'
 import { dateKeyLocal, formatClock, getMorningWindowState, parseTime } from '@/lib/dream-cycle'
 import { createClient } from '@/lib/supabase/client'
 
@@ -48,6 +49,7 @@ export default function MorningPage() {
   const router = useRouter()
   const timerExpiredRef = useRef(false)
   const pageLoadedAtRef = useRef(Date.now())
+  const { profile: appProfile, user: appUser, loading: appLoading, setProfile: setAppProfile } = useApp()
 
   const [stage, setStage] = useState<Stage>('loading')
   const [result, setResult] = useState<ResultState>(null)
@@ -109,8 +111,17 @@ export default function MorningPage() {
     let active = true
 
     async function load() {
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData.user
+      if (appLoading) return
+
+      let user = appUser
+      if (!user) {
+        const { data: authData } = await supabase.auth.getUser()
+        user = authData.user
+          ? (authData.user.email
+            ? { id: authData.user.id, email: authData.user.email }
+            : { id: authData.user.id })
+          : null
+      }
 
       if (!user) {
         router.replace('/login?redirectedFrom=%2Fmorning')
@@ -119,11 +130,16 @@ export default function MorningPage() {
 
       setUserId(user.id)
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('target_wake_time, total_seeds_planted, total_seeds_dreamed')
-        .eq('id', user.id)
-        .maybeSingle()
+      let profile = appProfile
+      if (!profile) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+        profile = data
+        if (data) setAppProfile(data)
+      }
 
       const wake = profile?.target_wake_time ?? '07:00:00'
       setWakeTime(wake)
@@ -173,7 +189,7 @@ export default function MorningPage() {
     return () => {
       active = false
     }
-  }, [router, supabase])
+  }, [appLoading, appProfile, appUser, router, setAppProfile, supabase])
 
   useEffect(() => {
     if (!editor || !userId || stage !== 'write') return
