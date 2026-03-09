@@ -379,6 +379,9 @@ export default function EveningPage() {
   const windowStartMinute = windowStartTotal % 60
   const openTime = formatTime(windowStartHour, windowStartMinute)
   const closeTime = formatTime(wakeParts.hour, wakeParts.minute)
+  const nowTotal = new Date().getHours() * 60 + new Date().getMinutes()
+  const eveningOpenTotal = eveningParts.hour * 60 + eveningParts.minute
+  const morningWindowPassed = nowTotal > wakeTotal && nowTotal < eveningOpenTotal
 
   if (!loaded) {
     return (
@@ -577,11 +580,22 @@ export default function EveningPage() {
             {existingSeedToday?.seedText}
           </div>
 
-          <p style={{ color: '#9f8abb', marginBottom: 8 }}>Morning window: {openTime} - {closeTime}</p>
-          <p style={{ color: '#9f8abb', marginBottom: 18 }}>You have until {closeTime} to capture.</p>
-          <button className="btn-ghost-gold" onClick={() => { window.location.href = '/dashboard' }}>
-            Go to dashboard
-          </button>
+          {morningWindowPassed ? (
+            <>
+              <p style={{ color: '#9f8abb', marginBottom: 8 }}>Morning window has closed.</p>
+              <p style={{ color: '#9f8abb', marginBottom: 18 }}>Tonight&apos;s window opens at {formatClock(eveningParts.hour, eveningParts.minute)}.</p>
+            </>
+          ) : (
+            <>
+              <p style={{ color: '#9f8abb', marginBottom: 8 }}>Morning window: {openTime} - {closeTime}</p>
+              <p style={{ color: '#9f8abb', marginBottom: 18 }}>You have until {closeTime} to capture.</p>
+            </>
+          )}
+          {!morningWindowPassed ? (
+            <button className="btn-ghost-gold" onClick={() => { window.location.href = '/dashboard' }}>
+              Go to dashboard
+            </button>
+          ) : null}
         </section>
       </main>
     )
