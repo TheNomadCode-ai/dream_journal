@@ -72,6 +72,8 @@ export default function DreamCycleDashboard({
   const router = useRouter()
   const [showMilestone, setShowMilestone] = useState(false)
   const [now, setNow] = useState(new Date())
+  const [morningDone, setMorningDone] = useState(false)
+  const [seedPlanted, setSeedPlanted] = useState(false)
 
   const nowTotal = now.getHours() * 60 + now.getMinutes()
   const [sleepH, sleepM] = sleepTime.split(':').map(Number)
@@ -82,9 +84,25 @@ export default function DreamCycleDashboard({
   const wakeTotal = wakeH * 60 + wakeM
   const morningWindowStart = wakeTotal - 120
   const morningWindowEnd = wakeTotal
-  const morningWindowAvailable = nowTotal >= morningWindowStart && nowTotal <= morningWindowEnd
-  const todayKey = new Date().toISOString().slice(0, 10)
-  const morningEntryWritten = Boolean(yesterdaySeed?.morning_entry_written) || dreams.some((dream) => dream.date_of_dream === todayKey)
+  const eveningWindowEnd = sleepTotal
+
+  function normalizeMinutes(total: number) {
+    const day = 24 * 60
+    return ((total % day) + day) % day
+  }
+
+  function isWithinWindow(current: number, start: number, end: number) {
+    const currentNorm = normalizeMinutes(current)
+    const startNorm = normalizeMinutes(start)
+    const endNorm = normalizeMinutes(end)
+    if (startNorm <= endNorm) {
+      return currentNorm >= startNorm && currentNorm <= endNorm
+    }
+    return currentNorm >= startNorm || currentNorm <= endNorm
+  }
+
+  const inMorningWindow = isWithinWindow(nowTotal, morningWindowStart, morningWindowEnd)
+  const inEveningWindow = isWithinWindow(nowTotal, eveningWindowStart, eveningWindowEnd)
 
   function formatTime(totalMins: number) {
     let h = Math.floor(totalMins / 60)
@@ -121,6 +139,101 @@ export default function DreamCycleDashboard({
     return () => window.clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const refreshStatus = () => {
+      const today = new Date().toISOString().split('T')[0]
+      const localMorningDone = localStorage.getItem('somnia_morning_entry_date') === today
+      const localSeedPlanted = localStorage.getItem('somnia_seed_planted_date') === today
+
+      const serverMorningDone = Boolean(yesterdaySeed?.morning_entry_written)
+      setMorningDone(localMorningDone || serverMorningDone)
+      setSeedPlanted(localSeedPlanted)
+    }
+
+    refreshStatus()
+
+    const interval = window.setInterval(refreshStatus, 30000)
+    const onFocus = () => refreshStatus()
+    const onStorage = () => refreshStatus()
+
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [yesterdaySeed?.morning_entry_written])
+
+  type WindowCardState = {
+    title: string
+    subtitle?: string
+    muted?: string
+    cta?: {
+      label: string
+      href: '/morning' | '/evening'
+    }
+  }
+
+  const nowNorm = normalizeMinutes(nowTotal)
+  const eveningStartNorm = normalizeMinutes(eveningWindowStart)
+
+  let windowCard: WindowCardState
+
+  // STATE 6: Seed planted, morning not done yet, and morning window open.
+  if (seedPlanted && !morningDone && inMorningWindow) {
+    windowCard = {
+      title: 'Your morning window is open.',
+      subtitle: "Time to capture last night's dream.",
+      cta: { label: 'Capture Dream ->', href: '/morning' },
+    }
+  } else if (inMorningWindow && !morningDone) {
+    // STATE 1: Morning window open.
+    windowCard = {
+      title: 'Morning window is open.',
+      subtitle: 'Capture your dream now.',
+      cta: { label: 'Capture Dream ->', href: '/morning' },
+    }
+  } else if (inEveningWindow && !seedPlanted) {
+    // STATE 3: Evening window open.
+    const minutesRemaining = Math.max(0, eveningWindowEnd - nowTotal)
+    windowCard = {
+      title: 'Your planting window is open.',
+      subtitle: `${minutesRemaining} minutes remaining`,
+      cta: { label: "Plant Tonight's Seed ->", href: '/evening' },
+    }
+  } else if (morningDone && nowNorm < eveningStartNorm && !seedPlanted) {
+    // STATE 2: Morning done, before evening window.
+    const minsUntilEvening = eveningStartNorm - nowNorm
+    const hoursUntil = Math.floor(minsUntilEvening / 60)
+    const minsUntil = minsUntilEvening % 60
+    windowCard = {
+      title: 'Dream captured.',
+      subtitle: `Evening window opens at ${eveningWindowStartFormatted}`,
+      muted: hoursUntil > 0 ? `in ${hoursUntil}h ${minsUntil}m` : `in ${minsUntil} minutes`,
+    }
+  } else if (!inMorningWindow && !inEveningWindow && seedPlanted && !morningDone) {
+    // STATE 4: Seed planted, waiting for morning.
+    windowCard = {
+      title: "Tonight's seed is planted.",
+      subtitle: `Morning window opens at ${morningWindowStartFormatted}`,
+      muted: 'Sleep well.',
+    }
+  } else if (!inMorningWindow && !morningDone && nowNorm > normalizeMinutes(morningWindowEnd) && nowNorm < eveningStartNorm && !seedPlanted) {
+    // STATE 5: Morning closed, no entry, before evening.
+    windowCard = {
+      title: 'Morning window has closed.',
+      subtitle: `Evening window opens at ${eveningWindowStartFormatted}`,
+    }
+  } else {
+    // Fallback: always show next action.
+    windowCard = {
+      title: 'Tonight\'s next step is waiting.',
+      subtitle: `Evening window opens at ${eveningWindowStartFormatted}`,
+    }
+  }
+
   const archiveByDream = new Map(archiveSeeds.map((item) => [item.dream_entry_id, item]))
 
   return (
@@ -133,33 +246,11 @@ export default function DreamCycleDashboard({
       ) : null}
 
       <section style={{ border: '1px solid #2a1f45', borderRadius: 14, background: '#100a22', padding: 18, marginBottom: 18 }}>
-        {!morningEntryWritten && nowTotal < morningWindowStart ? (
-          <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Morning window opens at {morningWindowStartFormatted}</p>
-            <p style={{ color: '#cdbde7' }}>Capture opens 2 hours before your wake time.</p>
-          </>
-        ) : null}
-
-        {!morningEntryWritten && morningWindowAvailable ? (
-          <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Your morning window is open.</p>
-            <p style={{ color: '#cdbde7', marginBottom: 12 }}>Capture your dream before it fades.</p>
-            <button className="btn-gold" onClick={() => router.push('/morning')}>Capture your dream -&gt;</button>
-          </>
-        ) : null}
-
-        {morningEntryWritten ? (
-          <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Dream captured today.</p>
-            <p style={{ color: '#cdbde7' }}>Tonight&apos;s window opens at {eveningWindowStartFormatted}.</p>
-          </>
-        ) : null}
-
-        {!morningEntryWritten && nowTotal > morningWindowEnd ? (
-          <>
-            <p style={{ color: '#efe8ff', marginBottom: 6 }}>Morning window has closed.</p>
-            <p style={{ color: '#cdbde7' }}>Try again tomorrow at {morningWindowStartFormatted}.</p>
-          </>
+        <p style={{ color: '#efe8ff', marginBottom: 6 }}>{windowCard.title}</p>
+        {windowCard.subtitle ? <p style={{ color: '#cdbde7', marginBottom: windowCard.cta ? 12 : 0 }}>{windowCard.subtitle}</p> : null}
+        {windowCard.muted ? <p style={{ color: '#9f8abb', fontSize: 13, marginTop: 8 }}>{windowCard.muted}</p> : null}
+        {windowCard.cta ? (
+          <button className="btn-gold" onClick={() => router.push(windowCard.cta!.href)}>{windowCard.cta.label}</button>
         ) : null}
       </section>
 
