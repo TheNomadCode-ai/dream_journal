@@ -1,10 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import TimeWheelPicker from '@/components/TimeWheelPicker'
-import { parseTime } from '@/lib/dream-cycle'
-import { scheduleNotifications } from '@/lib/notifications'
 import { createClient } from '@/lib/supabase/client'
 
 type Props = {
@@ -20,69 +18,33 @@ function toInput(value: string) {
 }
 
 export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, tier, isTrial, trialDaysRemaining }: Props) {
-  const supabase = useMemo(() => createClient(), [])
-  const currentWakeTime = toInput(initialWakeTime || '07:00:00')
-  const currentSleepTime = toInput(initialSleepTime || '23:00:00')
   const [wakeTime, setWakeTime] = useState(toInput(initialWakeTime || '07:00:00'))
   const [sleepTime, setSleepTime] = useState(toInput(initialSleepTime || '23:00:00'))
-  const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   async function handleSave() {
     if (saving) return
     setSaving(true)
-    setMessage(null)
 
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
+    const supabase = createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       setSaving(false)
       return
     }
 
-    const updatedFields = {
-      id: user.id,
-      target_wake_time: wakeTime,
-      target_sleep_time: sleepTime,
-    }
-
-    const { error } = await supabase
+    await supabase
       .from('profiles')
-      .upsert(updatedFields, { onConflict: 'id' })
-
-    if (error) {
-      console.error('Save failed:', error)
-      setMessage('Could not save. Try again.')
-      setSaving(false)
-      return
-    }
-
-    console.log('[Profile] Saved:', updatedFields)
-    setMessage('Saved')
-
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      const permission = Notification.permission === 'default'
-        ? await Notification.requestPermission()
-        : Notification.permission
-
-      if (permission === 'granted') {
-        const wake = parseTime(wakeTime, '07:00:00')
-        const sleep = parseTime(sleepTime, '23:00:00')
-        void scheduleNotifications(wake.hour, wake.minute, sleep.hour, sleep.minute)
-      }
-    }
+      .upsert({
+        id: user.id,
+        target_wake_time: wakeTime,
+        target_sleep_time: sleepTime,
+      })
 
     window.location.href = '/dashboard'
-  }
-
-  function onSaveClick() {
-    const timesChanged = wakeTime !== currentWakeTime || sleepTime !== currentSleepTime
-    if (timesChanged) {
-      setShowConfirmModal(true)
-      return
-    }
-    void handleSave()
   }
 
   return (
@@ -123,7 +85,7 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         </div>
 
         <button
-          onClick={onSaveClick}
+          onClick={() => void handleSave()}
           disabled={saving}
           style={{
             marginTop: '8px',
@@ -163,8 +125,6 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
           label="Sleep time"
           onChange={setSleepTime}
         />
-
-        {message ? <p style={{ color: '#cfbde7', marginTop: 10 }}>{message}</p> : null}
       </section>
 
       <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
@@ -189,62 +149,6 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         )}
       </section>
       </div>
-
-      {showConfirmModal ? (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            background: 'rgba(0,0,0,0.85)',
-            padding: '24px',
-          }}
-        >
-          <div
-            style={{
-              background: '#0e0a1f',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px',
-              padding: '32px 24px',
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              width: '100%',
-              maxWidth: '340px',
-            }}
-          >
-            <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>
-              Changing your sleep schedule
-            </p>
-            <h3 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 42, marginBottom: 10 }}>Are you sure?</h3>
-            <p style={{ color: '#bca7de', lineHeight: 1.7, marginBottom: 18 }}>
-              Your dream windows are built around your sleep rhythm. Changing your times frequently makes it harder to build the habit.
-              <br /><br />
-              Sleep at consistent times. Your subconscious responds to rhythm.
-            </p>
-
-            <button
-              className="btn-gold"
-              style={{ width: '100%', justifyContent: 'center', marginBottom: 8 }}
-              onClick={() => setShowConfirmModal(false)}
-            >
-              Keep my current times
-            </button>
-            <button
-              className="btn-ghost-gold"
-              style={{ width: '100%', justifyContent: 'center', color: 'rgba(255,255,255,0.55)' }}
-              onClick={() => {
-                setShowConfirmModal(false)
-                void handleSave()
-              }}
-            >
-              Yes, update my schedule
-            </button>
-          </div>
-        </div>
-      ) : null}
     </>
   )
 }
