@@ -7,15 +7,10 @@ import { useRouter } from 'next/navigation'
 import CountdownTimer from '@/components/ui/CountdownTimer'
 import { useApp } from '@/context/AppContext'
 import { addMinutes, dateKeyLocal, formatClock, minusMinutes, parseTime, windowForToday } from '@/lib/dream-cycle'
+import { getSeedByDate, saveSeed, updateSeed, type SeedEntry } from '@/lib/local-db'
 import { createClient } from '@/lib/supabase/client'
 
-type SeedRow = {
-  id: string
-  seed_text: string
-  seed_date: string
-  was_dreamed: boolean | null
-  morning_confirmed_at: string | null
-}
+type SeedRow = SeedEntry
 
 const SUGGESTIONS_40 = [
   'A place where you felt completely safe',
@@ -242,16 +237,11 @@ export default function EveningPage() {
         return
       }
 
-      const today = new Date().toISOString().split('T')[0]
-      const { data: existingSeed } = await supabase
-        .from('dream_seeds')
-        .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at')
-        .eq('user_id', user.id)
-        .eq('seed_date', today)
-        .maybeSingle()
+      const today = dateKeyLocal(0)
+      const existingSeed = await getSeedByDate(today)
 
       if (existingSeed) {
-        setExistingSeedToday(existingSeed as SeedRow)
+        setExistingSeedToday(existingSeed)
         setStage('already-planted')
         return
       }
@@ -267,16 +257,11 @@ export default function EveningPage() {
       }
 
       const yesterday = dateKeyLocal(-1)
-      const { data: priorSeed } = await supabase
-        .from('dream_seeds')
-        .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at')
-        .eq('user_id', user.id)
-        .eq('seed_date', yesterday)
-        .maybeSingle()
+      const priorSeed = await getSeedByDate(yesterday)
 
       if (!active) return
 
-      setYesterdaySeed(priorSeed as SeedRow | null)
+      setYesterdaySeed(priorSeed)
 
       const draftKey = `somnia-evening-draft:${user.id}:${dateKeyLocal(0)}`
       const storedDraft = localStorage.getItem(draftKey)
@@ -284,7 +269,7 @@ export default function EveningPage() {
         setSeedText(storedDraft)
       }
 
-      if (priorSeed && !priorSeed.morning_confirmed_at) {
+      if (priorSeed && priorSeed.wasDreamed === null) {
         setStage('confirm')
         return
       }
@@ -325,15 +310,11 @@ export default function EveningPage() {
       return
     }
 
-    await supabase
-      .from('dream_seeds')
-      .update({
-        was_dreamed: value,
-        morning_confirmed_at: new Date().toISOString(),
-      })
-      .eq('id', yesterdaySeed.id)
+    await updateSeed(yesterdaySeed.date, {
+      wasDreamed: value,
+    })
 
-    setYesterdaySeed({ ...yesterdaySeed, was_dreamed: value, morning_confirmed_at: new Date().toISOString() })
+    setYesterdaySeed({ ...yesterdaySeed, wasDreamed: value })
     setStage('journal-prompt')
   }
 
@@ -350,46 +331,23 @@ export default function EveningPage() {
     setError(null)
 
     const today = dateKeyLocal(0)
-    const expiresAt = addMinutes(windowOpenedAt, 10)
+    void windowOpenedAt
+    void addMinutes(windowOpenedAt, 10)
 
-    const { error: seedError } = await supabase
-      .from('dream_seeds')
-      .upsert({
-        user_id: userId,
-        seed_text: seedText.trim(),
-        seed_date: today,
-        evening_window_opened_at: windowOpenedAt.toISOString(),
-        evening_window_expires_at: expiresAt.toISOString(),
-      }, { onConflict: 'user_id,seed_date' })
-
-    if (seedError) {
+    try {
+      await saveSeed({
+        id: crypto.randomUUID(),
+        date: today,
+        seedText: seedText.trim(),
+        wasDreamed: null,
+        morningEntryWritten: false,
+        createdAt: Date.now(),
+      })
+    } catch {
       setError('Could not plant seed. Try again.')
       setSaving(false)
       return
     }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('total_seeds_planted')
-      .eq('id', userId)
-      .maybeSingle()
-
-    await supabase
-      .from('profiles')
-      .update({
-        last_seed_date: today,
-        total_seeds_planted: (profile?.total_seeds_planted ?? 0) + 1,
-      })
-      .eq('id', userId)
-
-    setAppProfile((current) => {
-      if (!current) return current
-      return {
-        ...current,
-        last_seed_date: today,
-        total_seeds_planted: (current.total_seeds_planted ?? 0) + 1,
-      }
-    })
 
     const draftKey = `somnia-evening-draft:${userId}:${dateKeyLocal(0)}`
     localStorage.removeItem(draftKey)
@@ -615,7 +573,7 @@ export default function EveningPage() {
               margin: '24px auto',
             }}
           >
-            {existingSeedToday?.seed_text}
+            {existingSeedToday?.seedText}
           </div>
 
           <p style={{ color: '#9f8abb', marginBottom: 18 }}>Your morning window opens at {openTime}</p>
@@ -636,7 +594,7 @@ export default function EveningPage() {
           <div>
             <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Before you plant tonight</p>
             <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 44, marginBottom: 10 }}>Last night you planted:</h1>
-            <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 30, marginBottom: 24 }}>&quot;{yesterdaySeed.seed_text}&quot;</p>
+            <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 30, marginBottom: 24 }}>&quot;{yesterdaySeed.seedText}&quot;</p>
             <p style={{ marginBottom: 16 }}>What happened?</p>
             <div style={{ display: 'grid', gap: 10 }}>
               <button className="btn-ghost-gold" style={{ minHeight: 54, border: '1px solid #3a2c61', borderRadius: 10, justifyContent: 'flex-start', padding: '0 14px' }} onClick={() => void confirmYesterday(true)}>

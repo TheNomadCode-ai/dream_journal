@@ -48,6 +48,14 @@ export default async function LandingPage() {
             <br />
             Just rhythm.
           </p>
+
+          <p style={{ color: '#9f8abb', fontSize: 13, maxWidth: 520, margin: '18px auto 0', lineHeight: 1.6 }}>
+            Your dreams are stored on your device.
+            <br />
+            Not our servers. Not anywhere else.
+            <br />
+            Yours forever.
+          </p>
         </div>
       </section>
 
@@ -112,6 +120,7 @@ export default async function LandingPage() {
           <article style={{ border: '1px solid rgba(180,130,255,0.22)', borderRadius: 14, background: '#100a22', padding: 18 }}>
             <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#9f8abb', fontSize: 11, marginBottom: 6 }}>Free</p>
             <p style={{ fontSize: 28, marginBottom: 10 }}>$0 forever</p>
+            <p style={{ color: '#bca7de', fontSize: 12, marginBottom: 10 }}>🔒 Dreams stored locally only</p>
             <ul style={{ color: '#c2b0df', lineHeight: 1.8, marginBottom: 12, paddingLeft: 16 }}>
               <li>Dream journal</li>
               <li>Morning capture window</li>
@@ -126,6 +135,7 @@ export default async function LandingPage() {
             <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#c9a84c', fontSize: 11, marginBottom: 6 }}>Pro</p>
             <p style={{ fontSize: 28, marginBottom: 2 }}>$4.99 / month</p>
             <p style={{ color: '#aa95cd', fontSize: 12, marginBottom: 10 }}>First 7 days free</p>
+            <p style={{ color: '#d6c57f', fontSize: 12, marginBottom: 10 }}>🔒 Dreams stored locally only</p>
             <ul style={{ color: '#c2b0df', lineHeight: 1.8, marginBottom: 12, paddingLeft: 16 }}>
               <li>Everything in free</li>
               <li>Evening seed planting</li>

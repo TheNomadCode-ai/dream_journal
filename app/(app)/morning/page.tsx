@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import CountdownTimer from '@/components/ui/CountdownTimer'
 import { useApp } from '@/context/AppContext'
 import { dateKeyLocal, formatClock, getMorningWindowState, parseTime } from '@/lib/dream-cycle'
+import { getDreamByDate, getSeedByDate, getStats, saveDream, updateSeed, type SeedEntry } from '@/lib/local-db'
 import { createClient } from '@/lib/supabase/client'
 
 const MorningRichEditor = dynamic(() => import('@/components/morning/MorningRichEditor'), {
@@ -19,15 +20,7 @@ const MorningRichEditor = dynamic(() => import('@/components/morning/MorningRich
   ),
 })
 
-type SeedRow = {
-  id: string
-  seed_text: string
-  seed_date: string
-  was_dreamed: boolean | null
-  morning_confirmed_at: string | null
-  morning_entry_written: boolean
-  dream_entry_id: string | null
-}
+type SeedRow = SeedEntry
 
 type Stage = 'loading' | 'too-early' | 'passed' | 'time-up' | 'already-captured' | 'write' | 'reveal' | 'saved' | 'result'
 type ResultState = 'yes' | 'no' | null
@@ -123,9 +116,8 @@ export default function MorningPage() {
 
       const wake = profile?.target_wake_time ?? '07:00:00'
       setWakeTime(wake)
-      const planted = profile?.total_seeds_planted ?? 0
-      const dreamed = profile?.total_seeds_dreamed ?? 0
-      setSuccessRate(planted > 0 ? Math.round((dreamed / planted) * 100) : 0)
+      const stats = await getStats()
+      setSuccessRate(stats.successRate)
 
       const windowState = getMorningWindowState(wake)
       const today = dateKeyLocal(0)
@@ -140,26 +132,16 @@ export default function MorningPage() {
 
       const yesterday = dateKeyLocal(-1)
       const [seedResult, todayDreamResult] = await Promise.all([
-        supabase
-          .from('dream_seeds')
-          .select('id, seed_text, seed_date, was_dreamed, morning_confirmed_at, morning_entry_written, dream_entry_id')
-          .eq('user_id', user.id)
-          .eq('seed_date', yesterday)
-          .maybeSingle(),
-        supabase
-          .from('dreams')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('date_of_dream', today)
-          .maybeSingle(),
+        getSeedByDate(yesterday),
+        getDreamByDate(today),
       ])
 
       if (!active) return
 
-      const seed = seedResult.data as SeedRow | null
+      const seed = seedResult
       setYesterdaySeed(seed)
 
-      const hasEntryToday = Boolean(todayDreamResult.data) || Boolean(seed?.morning_entry_written)
+      const hasEntryToday = Boolean(todayDreamResult) || Boolean(seed?.morningEntryWritten)
       const nowTotal = windowState.nowMinutes
       const windowStart = windowState.windowStartMinutes
       const windowEnd = windowState.windowEndMinutes
@@ -206,7 +188,7 @@ export default function MorningPage() {
   }, [stage])
 
   async function handleWriteComplete() {
-    if (!userId || saving || words < 20) return
+    if (saving || words < 20) return
 
     setSaving(true)
     setError(null)
@@ -214,41 +196,24 @@ export default function MorningPage() {
     const textToSave = bodyText.trim()
     const jsonToSave = bodyJson
 
-    const { data, error: insertError } = await supabase
-      .from('dreams')
-      .insert({
-        user_id: userId,
-        title: null,
-        body_text: textToSave,
-        body_json: jsonToSave ?? {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: textToSave }] }],
-        },
-        date_of_dream: dateKeyLocal(0),
+    try {
+      await saveDream({
+        id: crypto.randomUUID(),
+        date: dateKeyLocal(0),
+        content: textToSave,
+        createdAt: Date.now(),
       })
-      .select('id')
-      .single()
-
-    if (insertError) {
+    } catch {
       setError('Could not save your morning entry. Try again.')
       setSaving(false)
       return
     }
+    void jsonToSave
 
     if (yesterdaySeed) {
-      const { error: seedUpdateError } = await supabase
-        .from('dream_seeds')
-        .update({
-          dream_entry_id: data.id,
-          morning_entry_written: true,
-        })
-        .eq('id', yesterdaySeed.id)
-
-      if (seedUpdateError) {
-        setError('Entry was saved, but seed reveal could not be unlocked. Try again.')
-        setSaving(false)
-        return
-      }
+      await updateSeed(yesterdaySeed.date, {
+        morningEntryWritten: true,
+      })
     }
 
     if (userId) {
@@ -261,8 +226,7 @@ export default function MorningPage() {
     if (yesterdaySeed) {
       setYesterdaySeed({
         ...yesterdaySeed,
-        dream_entry_id: data.id,
-        morning_entry_written: true,
+        morningEntryWritten: true,
       })
 
       setWriteFadingOut(true)
@@ -278,45 +242,18 @@ export default function MorningPage() {
   }
 
   async function confirmSeedAppeared(value: boolean) {
-    if (!yesterdaySeed || !userId || confirming) return
+    if (!yesterdaySeed || confirming) return
 
     setConfirming(true)
-    const confirmedAt = new Date().toISOString()
 
-    await supabase
-      .from('dream_seeds')
-      .update({
-        was_dreamed: value,
-        morning_confirmed_at: confirmedAt,
-      })
-      .eq('id', yesterdaySeed.id)
+    await updateSeed(yesterdaySeed.date, {
+      wasDreamed: value,
+      morningEntryWritten: true,
+    })
 
-    let nextSuccessRate = successRate
-    if (value) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('total_seeds_dreamed, total_seeds_planted')
-        .eq('id', userId)
-        .maybeSingle()
-
-      const nextDreamed = (profile?.total_seeds_dreamed ?? 0) + 1
-      const planted = profile?.total_seeds_planted ?? 0
-
-      await supabase
-        .from('profiles')
-        .update({ total_seeds_dreamed: nextDreamed })
-        .eq('id', userId)
-
-      setAppProfile((current) => {
-        if (!current) return current
-        return { ...current, total_seeds_dreamed: nextDreamed }
-      })
-
-      nextSuccessRate = planted > 0 ? Math.round((nextDreamed / planted) * 100) : 0
-    }
-
-    setSuccessRate(nextSuccessRate)
-    setYesterdaySeed({ ...yesterdaySeed, was_dreamed: value, morning_confirmed_at: confirmedAt })
+    const stats = await getStats()
+    setSuccessRate(stats.successRate)
+    setYesterdaySeed({ ...yesterdaySeed, wasDreamed: value, morningEntryWritten: true })
     setResult(value ? 'yes' : 'no')
     setStage('result')
     setConfirming(false)
@@ -374,9 +311,9 @@ export default function MorningPage() {
         <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Your morning window has passed.</h1>
           <p style={{ color: '#bca7de', marginBottom: 8 }}>It opens again tomorrow at {formatClock(tomorrowStartHour, tomorrowStartMinute)}.</p>
-          {yesterdaySeed?.morning_confirmed_at ? (
+          {yesterdaySeed?.wasDreamed !== null ? (
             <p style={{ color: '#bca7de', marginBottom: 18 }}>
-              Yesterday: {yesterdaySeed.was_dreamed === true ? 'appeared' : 'did not appear'}
+              Yesterday: {yesterdaySeed?.wasDreamed === true ? 'appeared' : 'did not appear'}
             </p>
           ) : null}
           <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
@@ -471,7 +408,7 @@ export default function MorningPage() {
                   transition: 'opacity 600ms ease',
                 }}
               >
-                &quot;{yesterdaySeed.seed_text}&quot;
+                &quot;{yesterdaySeed.seedText}&quot;
               </p>
 
               <div style={{ opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>

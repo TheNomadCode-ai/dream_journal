@@ -1,50 +1,22 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { computeLoopStreak } from '@/lib/dream-cycle'
-
-type Seed = {
-  id: string
-  seed_text: string
-  seed_date: string
-  was_dreamed: boolean | null
-  morning_confirmed_at: string | null
-  morning_entry_written: boolean
-  dream_entry_id: string | null
-}
-
-type Dream = {
-  id: string
-  title: string | null
-  body_text: string | null
-  date_of_dream: string
-}
-
-type ArchiveSeed = {
-  dream_entry_id: string | null
-  seed_text: string
-  was_dreamed: boolean | null
-  morning_entry_written: boolean
-}
+import type { DreamEntry, SeedEntry } from '@/lib/local-db'
 
 type Props = {
   wakeTime: string
   sleepTime: string
-  todaySeed: Seed | null
-  yesterdaySeed: Seed | null
-  recentSeeds: Seed[]
-  dreams: Dream[]
-  archiveSeeds: ArchiveSeed[]
-  totalSeedsPlanted: number
-  totalSeedsDreamed: number
+  dreams: DreamEntry[]
+  seeds: SeedEntry[]
+  streak: number
+  successRate: number
+  totalSeeds: number
   showNotificationReminderBanner: boolean
 }
 
-function firstLine(value: string | null) {
-  if (!value) return 'No journal body.'
+function firstLine(value: string) {
   const line = value.split('\n')[0] ?? ''
   return line.trim() || 'No journal body.'
 }
@@ -61,19 +33,16 @@ const MILESTONES = new Map<number, string>([
 export default function DreamCycleDashboard({
   wakeTime,
   sleepTime,
-  yesterdaySeed,
-  recentSeeds,
   dreams,
-  archiveSeeds,
-  totalSeedsPlanted,
-  totalSeedsDreamed,
+  seeds,
+  streak,
+  successRate,
+  totalSeeds,
   showNotificationReminderBanner,
 }: Props) {
   const router = useRouter()
   const [showMilestone, setShowMilestone] = useState(false)
   const [now, setNow] = useState(new Date())
-  const [morningDone, setMorningDone] = useState(false)
-  const [seedPlanted, setSeedPlanted] = useState(false)
 
   const nowTotal = now.getHours() * 60 + now.getMinutes()
   const [sleepH, sleepM] = sleepTime.split(':').map(Number)
@@ -119,9 +88,6 @@ export default function DreamCycleDashboard({
   const eveningWindowStartFormatted = formatTime(eveningWindowStart)
   const morningWindowStartFormatted = formatTime(morningWindowStart)
 
-  const streak = computeLoopStreak(recentSeeds.map((seed) => ({ seed_date: seed.seed_date, morning_confirmed_at: seed.morning_confirmed_at })))
-  const successRate = totalSeedsPlanted > 0 ? Math.round((totalSeedsDreamed / totalSeedsPlanted) * 100) : 0
-
   useEffect(() => {
     if (!MILESTONES.has(streak)) return
     const key = `somnia-milestone:${streak}`
@@ -139,32 +105,9 @@ export default function DreamCycleDashboard({
     return () => window.clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const refreshStatus = () => {
-      const today = new Date().toISOString().split('T')[0]
-      const localMorningDone = localStorage.getItem('somnia_morning_entry_date') === today
-      const localSeedPlanted = localStorage.getItem('somnia_seed_planted_date') === today
-
-      const serverMorningDone = Boolean(yesterdaySeed?.morning_entry_written)
-      setMorningDone(localMorningDone || serverMorningDone)
-      setSeedPlanted(localSeedPlanted)
-    }
-
-    refreshStatus()
-
-    const interval = window.setInterval(refreshStatus, 30000)
-    const onFocus = () => refreshStatus()
-    const onStorage = () => refreshStatus()
-
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('storage', onStorage)
-
-    return () => {
-      window.clearInterval(interval)
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('storage', onStorage)
-    }
-  }, [yesterdaySeed?.morning_entry_written])
+  const today = new Date().toISOString().split('T')[0]
+  const morningDone = localStorage.getItem('somnia_morning_entry_date') === today
+  const seedPlanted = localStorage.getItem('somnia_seed_planted_date') === today
 
   type WindowCardState = {
     title: string
@@ -181,7 +124,6 @@ export default function DreamCycleDashboard({
 
   let windowCard: WindowCardState
 
-  // STATE 6: Seed planted, morning not done yet, and morning window open.
   if (seedPlanted && !morningDone && inMorningWindow) {
     windowCard = {
       title: 'Your morning window is open.',
@@ -189,14 +131,12 @@ export default function DreamCycleDashboard({
       cta: { label: 'Capture Dream ->', href: '/morning' },
     }
   } else if (inMorningWindow && !morningDone) {
-    // STATE 1: Morning window open.
     windowCard = {
       title: 'Morning window is open.',
       subtitle: 'Capture your dream now.',
       cta: { label: 'Capture Dream ->', href: '/morning' },
     }
   } else if (inEveningWindow && !seedPlanted) {
-    // STATE 3: Evening window open.
     const minutesRemaining = Math.max(0, eveningWindowEnd - nowTotal)
     windowCard = {
       title: 'Your planting window is open.',
@@ -204,7 +144,6 @@ export default function DreamCycleDashboard({
       cta: { label: "Plant Tonight's Seed ->", href: '/evening' },
     }
   } else if (morningDone && nowNorm < eveningStartNorm && !seedPlanted) {
-    // STATE 2: Morning done, before evening window.
     const minsUntilEvening = eveningStartNorm - nowNorm
     const hoursUntil = Math.floor(minsUntilEvening / 60)
     const minsUntil = minsUntilEvening % 60
@@ -214,27 +153,24 @@ export default function DreamCycleDashboard({
       muted: hoursUntil > 0 ? `in ${hoursUntil}h ${minsUntil}m` : `in ${minsUntil} minutes`,
     }
   } else if (!inMorningWindow && !inEveningWindow && seedPlanted && !morningDone) {
-    // STATE 4: Seed planted, waiting for morning.
     windowCard = {
       title: "Tonight's seed is planted.",
       subtitle: `Morning window opens at ${morningWindowStartFormatted}`,
       muted: 'Sleep well.',
     }
   } else if (!inMorningWindow && !morningDone && nowNorm > normalizeMinutes(morningWindowEnd) && nowNorm < eveningStartNorm && !seedPlanted) {
-    // STATE 5: Morning closed, no entry, before evening.
     windowCard = {
       title: 'Morning window has closed.',
       subtitle: `Evening window opens at ${eveningWindowStartFormatted}`,
     }
   } else {
-    // Fallback: always show next action.
     windowCard = {
       title: 'Tonight\'s next step is waiting.',
       subtitle: `Evening window opens at ${eveningWindowStartFormatted}`,
     }
   }
 
-  const archiveByDream = new Map(archiveSeeds.map((item) => [item.dream_entry_id, item]))
+  const seedByDate = new Map(seeds.map((seed) => [seed.date, seed]))
 
   return (
     <div className="page-enter" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 120px' }}>
@@ -267,7 +203,7 @@ export default function DreamCycleDashboard({
         </article>
         <article style={{ border: '1px solid #2a1f45', borderRadius: 12, background: '#100a22', padding: 14 }}>
           <p style={{ textTransform: 'uppercase', fontSize: 11, color: '#9f8abb', letterSpacing: '0.12em' }}>Seeds</p>
-          <p style={{ fontSize: 32, marginTop: 4 }}>{totalSeedsPlanted}</p>
+          <p style={{ fontSize: 32, marginTop: 4 }}>{totalSeeds}</p>
           <p style={{ color: '#bca7de', fontSize: 12 }}>planted</p>
         </article>
       </section>
@@ -282,32 +218,22 @@ export default function DreamCycleDashboard({
         ) : (
           <div style={{ border: '1px solid #2a1f45', borderRadius: 12, overflow: 'hidden' }}>
             {dreams.map((dream) => {
-              const seed = archiveByDream.get(dream.id)
-              const isLocked = seed ? !seed.morning_entry_written : false
-              const appearedText = seed?.was_dreamed === true ? 'Yes' : seed?.was_dreamed === false ? 'No' : 'Unconfirmed'
+              const seed = seedByDate.get(dream.date) ?? null
+              const appearedText = seed?.wasDreamed === true ? 'Yes' : seed?.wasDreamed === false ? 'No' : 'Unconfirmed'
               return (
-                <Link key={dream.id} href={`/dreams/${dream.id}`} style={{ display: 'block', background: '#100a22', borderBottom: '1px solid #231840', padding: 14 }}>
-                  <div>
-                    <p style={{ color: '#a993cd', fontSize: 12, marginBottom: 8 }}>{dream.date_of_dream}</p>
-                    <div style={{ height: 1, background: 'rgba(255,255,255,0.09)', marginBottom: 10 }} />
-                    {seed ? (
-                      isLocked ? (
-                        <>
-                          <p style={{ color: '#9f8abb', fontSize: 12, marginBottom: 2 }}>Seed: Seed sealed until morning entry</p>
-                          <p style={{ color: '#8d7ba8', fontSize: 12, marginBottom: 8 }}>Appeared: Locked</p>
-                        </>
-                      ) : (
-                        <>
-                          <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 2 }}>Seed: {seed.seed_text}</p>
-                          <p style={{ color: '#b9acd1', fontSize: 12, marginBottom: 8 }}>Appeared: {appearedText}</p>
-                        </>
-                      )
-                    ) : (
-                      <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 8 }}>Seed: No seed linked</p>
-                    )}
-                    <p style={{ color: '#bca7de', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{firstLine(dream.body_text)}</p>
-                  </div>
-                </Link>
+                <article key={dream.id} style={{ background: '#100a22', borderBottom: '1px solid #231840', padding: 14 }}>
+                  <p style={{ color: '#a993cd', fontSize: 12, marginBottom: 8 }}>{dream.date}</p>
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.09)', marginBottom: 10 }} />
+                  {seed ? (
+                    <>
+                      <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 2 }}>Seed: {seed.seedText}</p>
+                      <p style={{ color: '#b9acd1', fontSize: 12, marginBottom: 8 }}>Appeared: {appearedText}</p>
+                    </>
+                  ) : (
+                    <p style={{ color: '#ccb7eb', fontSize: 12, marginBottom: 8 }}>Seed: No seed linked</p>
+                  )}
+                  <p style={{ color: '#bca7de', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{firstLine(dream.content)}</p>
+                </article>
               )
             })}
           </div>
