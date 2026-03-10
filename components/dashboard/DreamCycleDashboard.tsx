@@ -149,6 +149,12 @@ export default function DreamCycleDashboard({
       subtitle: `${minutesRemaining} minutes remaining`,
       cta: { label: "Plant Tonight's Seed ->", href: '/evening' },
     }
+  } else if (!seedPlanted && nowNorm > normalizeMinutes(morningWindowEnd) && nowNorm < eveningStartNorm) {
+    windowCard = {
+      title: 'Morning window opens tomorrow',
+      subtitle: `${morningWindowStartFormatted} - ${morningWindowEndFormatted}`,
+      muted: `Don't forget to plant your seed tonight before ${eveningWindowStartFormatted}`,
+    }
   } else if (morningDone && nowNorm < eveningStartNorm && !seedPlanted) {
     const minsUntilEvening = eveningStartNorm - nowNorm
     const hoursUntil = Math.floor(minsUntilEvening / 60)
@@ -163,11 +169,6 @@ export default function DreamCycleDashboard({
       title: "Tonight's seed is planted.",
       subtitle: `Morning window: ${morningWindowStartFormatted} - ${morningWindowEndFormatted}`,
       muted: 'Sleep well.',
-    }
-  } else if (!inMorningWindow && !morningDone && nowNorm > normalizeMinutes(morningWindowEnd) && nowNorm < eveningStartNorm && !seedPlanted) {
-    windowCard = {
-      title: 'Morning window has closed.',
-      subtitle: `Evening window opens at ${eveningWindowStartFormatted}`,
     }
   } else {
     windowCard = {
