@@ -9,6 +9,8 @@ import { getCachedProfile } from '@/lib/profile-cache'
 
 type CachedProfile = {
   target_wake_time: string | null
+  tier: string | null
+  trial_ends_at: string | null
 }
 
 export default function SmartOpenRedirect() {
@@ -44,6 +46,12 @@ export default function SmartOpenRedirect() {
       const sourceProfile = cachedProfile ?? profile
 
       const wake = sourceProfile?.target_wake_time ?? '07:00:00'
+      const tier = sourceProfile?.tier ?? 'free'
+      const trialActive =
+        tier === 'free' &&
+        Boolean(sourceProfile?.trial_ends_at) &&
+        new Date(sourceProfile?.trial_ends_at ?? '').getTime() > Date.now()
+      const hasSeedAccess = tier === 'pro' || tier === 'lifetime' || trialActive
       const [wakeH, wakeM] = wake.split(':').map(Number)
 
       const wakeTotal = wakeH * 60 + wakeM
@@ -68,17 +76,23 @@ export default function SmartOpenRedirect() {
         return
       }
 
-      // Outside morning window with a planted seed, lock to /evening.
-      if (seedPlanted && !inMorningWindow) {
+      // Outside morning window with a planted seed, lock Pro/trial users to /evening.
+      if (hasSeedAccess && seedPlanted && !inMorningWindow) {
         if (pathname !== '/evening') {
           window.location.href = '/evening'
         }
         return
       }
 
+      // Free users should stay on dashboard rather than being routed to evening.
+      if (!hasSeedAccess && pathname === '/evening') {
+        window.location.href = '/dashboard'
+        return
+      }
+
       // No seed planted today: keep /morning unavailable and allow other sections.
       if (pathname === '/morning') {
-        window.location.href = '/evening'
+        window.location.href = hasSeedAccess ? '/evening' : '/dashboard'
       }
     })()
   }, [pathname, profile, user])

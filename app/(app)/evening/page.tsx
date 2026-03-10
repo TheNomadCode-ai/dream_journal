@@ -424,34 +424,32 @@ export default function EveningPage() {
     return (
       <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 24, display: 'grid', placeItems: 'center' }}>
         <section style={{ width: 'min(760px, 100%)' }}>
-          <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>
-            {trialEnded ? 'Your trial has ended' : 'Pro feature'}
-          </p>
+          <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Pro feature</p>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(40px,6vw,54px)', marginBottom: 12 }}>
-            Continue planting
-            <br />
-            dream seeds.
+            Seed planting is a Pro feature.
           </h1>
           <p style={{ color: '#c6b4e3', lineHeight: 1.7, marginBottom: 18 }}>
-            You used Somnia Pro free for 7 days. Upgrade to keep planting seeds every evening and tracking what your subconscious does with them.
+            {trialEnded
+              ? 'Your trial ended. Upgrade to continue planting evening intentions and tracking seed outcomes.'
+              : 'Start your 7-day free trial to unlock evening seed planting, streak tracking, and seed success rate.'}
           </p>
 
           <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, background: '#100a22', padding: 14, marginBottom: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#9f8abb', fontSize: 11, marginBottom: 8 }}>FREE</p>
+                <p>Morning dream capture</p>
                 <p>Dream journal</p>
-                <p>Morning window</p>
-                <p>Archive</p>
-                <p>Streak</p>
+                <p>Search</p>
+                <p>Settings</p>
               </div>
               <div>
                 <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#9f8abb', fontSize: 11, marginBottom: 8 }}>PRO</p>
                 <p>Everything in Free</p>
                 <p>+ Seed planting</p>
-                <p>+ Seed insights</p>
-                <p>+ AI suggestions</p>
-                <p>+ Weekly digest</p>
+                <p>+ Streak tracking</p>
+                <p>+ Seed success rate</p>
+                <p>+ 7-day free trial</p>
               </div>
             </div>
           </div>

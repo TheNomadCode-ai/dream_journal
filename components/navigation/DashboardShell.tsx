@@ -212,11 +212,12 @@ export default function DashboardShell({ userEmail, initials, isPro, isTrialing,
                   lineHeight: 1.8,
                 }}
               >
-                {'✓ Dream journal'}<br />
                 {'✓ Morning capture'}<br />
+                {'✓ Dream journal'}<br />
+                {'✓ Search'}<br />
                 {'✓ Seed planting'}<br />
-                {'✓ Seed insights'}<br />
-                {'✓ Success tracking'}
+                {'✓ Streak tracking'}<br />
+                {'✓ Success rate'}
               </div>
             </>
           ) : (
@@ -253,11 +254,12 @@ export default function DashboardShell({ userEmail, initials, isPro, isTrialing,
                   marginBottom: '12px',
                 }}
               >
-                {'✓ Dream journal'}<br />
                 {'✓ Morning capture'}<br />
-                {'✓ Streak tracking'}<br />
+                {'✓ Dream journal'}<br />
+                {'✓ Search'}<br />
                 {'— Seed planting (Pro)'}<br />
-                {'— Seed insights (Pro)'}
+                {'— Streak tracking (Pro)'}<br />
+                {'— Success rate (Pro)'}
               </div>
               <a
                 href="https://sushankhanal.gumroad.com/l/somniavault"

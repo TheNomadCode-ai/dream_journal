@@ -128,13 +128,12 @@ export default async function LandingPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
           <article style={{ border: '1px solid rgba(180,130,255,0.22)', borderRadius: 14, background: '#100a22', padding: 18 }}>
             <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#9f8abb', fontSize: 11, marginBottom: 6 }}>Free</p>
-            <p style={{ fontSize: 28, marginBottom: 10 }}>$0 forever</p>
+            <p style={{ fontSize: 28, marginBottom: 10 }}>$0</p>
             <p style={{ color: '#bca7de', fontSize: 12, marginBottom: 10 }}>🔒 Dreams stored locally only</p>
             <ul style={{ color: '#c2b0df', lineHeight: 1.8, marginBottom: 12, paddingLeft: 16 }}>
+              <li>Morning dream capture</li>
               <li>Dream journal</li>
-              <li>Morning capture window</li>
-              <li>Dream archive</li>
-              <li>Streak tracking</li>
+              <li>Unlimited entries</li>
               <li>Search your dreams</li>
             </ul>
             <Link href={user ? '/dashboard' : '/signup'} className="btn-gold">Start free →</Link>
@@ -147,9 +146,10 @@ export default async function LandingPage() {
             <p style={{ color: '#d6c57f', fontSize: 12, marginBottom: 10 }}>🔒 Dreams stored locally only</p>
             <ul style={{ color: '#c2b0df', lineHeight: 1.8, marginBottom: 12, paddingLeft: 16 }}>
               <li>Everything in free</li>
-              <li>Evening seed planting</li>
-              <li>Seed success tracking</li>
-              <li>Dream pattern insights</li>
+              <li>Seed planting</li>
+              <li>Streak tracking</li>
+              <li>Seed success rate</li>
+              <li>7-day free trial</li>
             </ul>
             <a href="https://sushankhanal.gumroad.com/l/somniavault?wanted=true" target="_blank" rel="noreferrer" className="btn-gold">Start free trial →</a>
             <p style={{ color: '#8f84a7', marginTop: 8, fontSize: 12 }}>Cancel anytime. No questions asked.</p>

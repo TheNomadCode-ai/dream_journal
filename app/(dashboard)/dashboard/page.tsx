@@ -49,6 +49,10 @@ export default function DashboardPage() {
   const wakeTime = profile?.target_wake_time ?? '07:00:00'
   const sleepTime = profile?.target_sleep_time ?? '23:00:00'
   const showNotificationReminderBanner = profile?.notification_permission_granted === false
+  const isProOrTrial =
+    profile?.tier === 'pro' ||
+    profile?.tier === 'lifetime' ||
+    (profile?.tier === 'free' && Boolean(profile?.trial_ends_at) && new Date(profile?.trial_ends_at ?? '').getTime() > Date.now())
 
   return (
     <div className="page-content page-enter">
@@ -69,6 +73,7 @@ export default function DashboardPage() {
         successRate={successRate}
         totalSeeds={totalSeeds}
         showNotificationReminderBanner={showNotificationReminderBanner}
+        isProOrTrial={isProOrTrial}
       />
 
       {showPrivacyNotice ? (
