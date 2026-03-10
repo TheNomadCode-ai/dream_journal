@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import type { DreamEntry, SeedEntry } from '@/lib/local-db'
+import { getAllSeeds, getDreamByDate, type DreamEntry, type SeedEntry } from '@/lib/local-db'
 
 type Props = {
   wakeTime: string
@@ -43,6 +43,9 @@ export default function DreamCycleDashboard({
   const router = useRouter()
   const [showMilestone, setShowMilestone] = useState(false)
   const [now, setNow] = useState(new Date())
+  const [showSeedHistory, setShowSeedHistory] = useState(false)
+  const [seedHistory, setSeedHistory] = useState<Array<SeedEntry & { hasDream: boolean }>>([])
+  const [seedHistoryLoading, setSeedHistoryLoading] = useState(false)
 
   const nowTotal = now.getHours() * 60 + now.getMinutes()
   const [sleepH, sleepM] = sleepTime.split(':').map(Number)
@@ -173,6 +176,38 @@ export default function DreamCycleDashboard({
 
   const seedByDate = new Map(seeds.map((seed) => [seed.date, seed]))
 
+  function formatSeedDate(value: string) {
+    const parsed = new Date(`${value}T00:00:00`)
+    if (Number.isNaN(parsed.getTime())) {
+      return value
+    }
+    return parsed.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
+  async function openSeedHistory() {
+    setShowSeedHistory(true)
+    setSeedHistoryLoading(true)
+    try {
+      const allSeeds = await getAllSeeds()
+      const rows = await Promise.all(
+        allSeeds.map(async (seed) => {
+          const dream = await getDreamByDate(seed.date)
+          return {
+            ...seed,
+            hasDream: dream !== null,
+          }
+        }),
+      )
+      setSeedHistory(rows)
+    } finally {
+      setSeedHistoryLoading(false)
+    }
+  }
+
   return (
     <div className="page-enter" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 120px' }}>
       {showNotificationReminderBanner ? (
@@ -204,7 +239,28 @@ export default function DreamCycleDashboard({
         </article>
         <article style={{ border: '1px solid #2a1f45', borderRadius: 12, background: '#100a22', padding: 14 }}>
           <p style={{ textTransform: 'uppercase', fontSize: 11, color: '#9f8abb', letterSpacing: '0.12em' }}>Seeds</p>
-          <p style={{ fontSize: 32, marginTop: 4 }}>{totalSeeds}</p>
+          <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <p style={{ fontSize: 32 }}>{totalSeeds}</p>
+            <button
+              type="button"
+              onClick={() => {
+                void openSeedHistory()
+              }}
+              style={{
+                border: '1px solid #4a3a6d',
+                background: 'transparent',
+                color: '#d6c7ef',
+                borderRadius: 999,
+                padding: '4px 10px',
+                fontSize: 12,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              View
+            </button>
+          </div>
           <p style={{ color: '#bca7de', fontSize: 12 }}>planted</p>
         </article>
       </section>
@@ -254,6 +310,84 @@ export default function DreamCycleDashboard({
             </div>
             <button className="btn-gold" onClick={() => setShowMilestone(false)}>Continue</button>
           </div>
+        </div>
+      ) : null}
+
+      {showSeedHistory ? (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 91 }}>
+          <button
+            type="button"
+            aria-label="Close seed history"
+            onClick={() => setShowSeedHistory(false)}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(5,3,13,0.82)', border: 0 }}
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Planted seeds"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              maxHeight: '86vh',
+              overflowY: 'auto',
+              background: '#0e0820',
+              borderTop: '1px solid #2a1f45',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              padding: '16px 16px 24px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <p style={{ letterSpacing: '0.12em', textTransform: 'uppercase', color: '#d7c9ee', fontSize: 12 }}>Planted seeds</p>
+              <button
+                type="button"
+                onClick={() => setShowSeedHistory(false)}
+                style={{ border: 0, background: 'transparent', color: '#bca7de', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}
+              >
+                X
+              </button>
+            </div>
+
+            {seedHistoryLoading ? (
+              <p style={{ color: '#b9acd1' }}>Loading seeds...</p>
+            ) : seedHistory.length === 0 ? (
+              <p style={{ color: '#b9acd1' }}>No seeds planted yet.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: 10 }}>
+                {seedHistory.map((seed) => (
+                  <article key={seed.id} style={{ border: '1px solid #2a1f45', borderRadius: 12, background: '#100a22', padding: 14 }}>
+                    <p style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: '#8e7cae', marginBottom: 10 }}>
+                      {formatSeedDate(seed.date)}
+                    </p>
+                    <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'rgba(255,255,255,0.7)', marginBottom: 10 }}>
+                      "{seed.seedText}"
+                    </p>
+                    {seed.morningEntryWritten ? (
+                      <p style={{ color: '#7de8ad', fontSize: 13, marginBottom: 8 }}>✓ Dream captured</p>
+                    ) : (
+                      <p style={{ color: '#8f84a5', fontSize: 13, marginBottom: 8 }}>- Dream not entered</p>
+                    )}
+
+                    {seed.wasDreamed !== null ? (
+                      <p style={{ color: '#b9acd1', fontSize: 12, marginBottom: 6 }}>
+                        Appeared in dream: {seed.wasDreamed ? 'Yes' : 'No'}
+                      </p>
+                    ) : null}
+
+                    {seed.wasDreamed === true ? (
+                      <p style={{ color: '#c9a84c', fontSize: 12 }}>Appeared ✓</p>
+                    ) : seed.wasDreamed === false ? (
+                      <p style={{ color: '#8f84a5', fontSize: 12 }}>Did not appear</p>
+                    ) : seed.hasDream ? (
+                      <p style={{ color: '#8f84a5', fontSize: 12 }}>Dream exists for this date</p>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       ) : null}
     </div>

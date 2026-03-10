@@ -47,17 +47,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     ),
   },
   {
-    href: '/notebooks',
-    label: 'Notebooks',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-        <path d="M4 4h12v16H4z" />
-        <path d="M16 6h4v14h-4" />
-        <path d="M8 8h4" />
-      </svg>
-    ),
-  },
-  {
     href: '/settings',
     label: 'Settings',
     icon: (

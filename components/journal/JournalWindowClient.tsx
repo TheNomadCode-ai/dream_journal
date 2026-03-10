@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { createClient } from '@/lib/supabase/client'
+import { saveDream } from '@/lib/local-db'
 import { isWindowOpen } from '@/lib/window'
 
 type Props = {
@@ -14,7 +14,6 @@ type Props = {
 
 export default function JournalWindowClient({ userId, targetWakeTime }: Props) {
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [secondsRemaining, setSecondsRemaining] = useState(0)
@@ -59,32 +58,24 @@ export default function JournalWindowClient({ userId, targetWakeTime }: Props) {
     return () => window.clearInterval(autosave)
   }, [body, open, title, userId])
 
-  async function saveDream() {
+  async function handleSaveDream() {
     if (saving || !body.trim()) return
     setSaving(true)
 
     const today = new Date().toISOString().slice(0, 10)
-    const { data, error } = await supabase
-      .from('dreams')
-      .insert({
-        user_id: userId,
-        title: title || null,
-        body_text: body,
-        body_json: {
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: body }] }],
-        },
-        date_of_dream: today,
+    try {
+      await saveDream({
+        id: crypto.randomUUID(),
+        date: today,
+        content: body,
+        createdAt: Date.now(),
       })
-      .select('id')
-      .single()
-
-    if (!error && data?.id) {
-      router.push(`/dreams/${data.id}`)
+      localStorage.setItem('somnia_morning_entry_date', today)
+      router.push('/dashboard')
       return
+    } catch {
+      setSaving(false)
     }
-
-    setSaving(false)
   }
 
   if (!open) {
@@ -132,7 +123,7 @@ export default function JournalWindowClient({ userId, targetWakeTime }: Props) {
         />
 
         <div style={{ marginTop: 14, display: 'flex', gap: 10 }}>
-          <button className="btn-gold" onClick={saveDream} disabled={locked || saving}>
+          <button className="btn-gold" onClick={handleSaveDream} disabled={locked || saving}>
             {saving ? 'Saving...' : 'Save Dream'}
           </button>
           <Link href="/dashboard" className="btn-ghost-gold">Cancel</Link>

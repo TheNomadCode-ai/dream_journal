@@ -25,7 +25,6 @@ export default function SmartOpenRedirect() {
       '/morning',
       '/evening',
       '/search',
-      '/notebooks',
       '/settings',
       '/journal',
     ]
