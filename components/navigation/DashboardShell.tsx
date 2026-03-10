@@ -10,10 +10,12 @@ import { DASHBOARD_NAV_ITEMS } from '@/components/navigation/nav-items'
 type DashboardShellProps = {
   userEmail: string
   initials: string
+  isPro: boolean
+  isTrialing: boolean
   children: React.ReactNode
 }
 
-export default function DashboardShell({ userEmail, initials, children }: DashboardShellProps) {
+export default function DashboardShell({ userEmail, initials, isPro, isTrialing, children }: DashboardShellProps) {
   const pathname = usePathname()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -85,14 +87,16 @@ export default function DashboardShell({ userEmail, initials, children }: Dashbo
 
   return (
     <div className="dashboard-shell" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0A0B12' }}>
-      <button
-        type="button"
-        onClick={() => (sidebarOpen ? closeDrawer() : openDrawer())}
-        aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
-        className="dashboard-mobile-menu-btn"
-      >
-        <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>{sidebarOpen ? 'X' : '≡'}</span>
-      </button>
+      {!(isMobile && sidebarOpen) && (
+        <button
+          type="button"
+          onClick={() => openDrawer()}
+          aria-label="Open navigation menu"
+          className="dashboard-mobile-menu-btn"
+        >
+          <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>{'≡'}</span>
+        </button>
+      )}
 
       <button
         type="button"
@@ -101,11 +105,43 @@ export default function DashboardShell({ userEmail, initials, children }: Dashbo
         className={`dashboard-mobile-overlay${sidebarOpen ? ' open' : ''}`}
       />
 
-      <aside className={`sidebar${sidebarOpen ? ' sidebar-mobile-open' : ''}`}>
-        <div style={{ padding: '28px 22px 20px', borderBottom: '1px solid #1E2235' }}>
-          <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontWeight: 300, fontSize: '20px', color: '#E8E4D9' }}>
+      <aside className={`sidebar${sidebarOpen ? ' sidebar-mobile-open' : ''}`} style={{ overflowY: 'auto' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '20px 24px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontStyle: 'italic',
+              fontSize: '20px',
+              color: 'rgba(255,255,255,0.7)',
+            }}
+          >
             Somnia
-          </p>
+          </div>
+          {isMobile && sidebarOpen ? (
+            <button
+              type="button"
+              onClick={() => closeDrawer()}
+              aria-label="Close navigation menu"
+              style={{
+                border: '1px solid rgba(255,255,255,0.18)',
+                borderRadius: 6,
+                width: 30,
+                height: 30,
+                color: 'rgba(255,255,255,0.65)',
+                lineHeight: 1,
+              }}
+            >
+              X
+            </button>
+          ) : null}
         </div>
 
         <div style={{ padding: '20px 22px', borderBottom: '1px solid #1E2235' }}>
@@ -119,7 +155,7 @@ export default function DashboardShell({ userEmail, initials, children }: Dashbo
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: '12px 0' }}>
+        <nav style={{ padding: '12px 0' }}>
           {DASHBOARD_NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -134,6 +170,136 @@ export default function DashboardShell({ userEmail, initials, children }: Dashbo
             </Link>
           ))}
         </nav>
+
+        <div
+          style={{
+            margin: '24px 16px',
+            padding: '16px',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '8px',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '9px',
+              letterSpacing: '0.2em',
+              color: 'rgba(255,255,255,0.25)',
+              textTransform: 'uppercase',
+              marginBottom: '12px',
+            }}
+          >
+            Your Plan
+          </div>
+
+          {isPro ? (
+            <>
+              <div
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '16px',
+                  color: 'rgba(200,160,80,0.9)',
+                  marginBottom: '8px',
+                }}
+              >
+                Pro
+              </div>
+              <div
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '10px',
+                  color: 'rgba(255,255,255,0.3)',
+                  lineHeight: 1.8,
+                }}
+              >
+                {'✓ Dream journal'}<br />
+                {'✓ Morning capture'}<br />
+                {'✓ Seed planting'}<br />
+                {'✓ Seed insights'}<br />
+                {'✓ Success tracking'}
+              </div>
+            </>
+          ) : (
+            <>
+              <div
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '16px',
+                  color: 'rgba(255,255,255,0.7)',
+                  marginBottom: '8px',
+                }}
+              >
+                Free
+                {isTrialing && (
+                  <span
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: '9px',
+                      color: 'rgba(200,160,80,0.6)',
+                      marginLeft: '8px',
+                      letterSpacing: '0.1em',
+                    }}
+                  >
+                    PRO TRIAL
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '10px',
+                  color: 'rgba(255,255,255,0.3)',
+                  lineHeight: 1.8,
+                  marginBottom: '12px',
+                }}
+              >
+                {'✓ Dream journal'}<br />
+                {'✓ Morning capture'}<br />
+                {'✓ Streak tracking'}<br />
+                {'— Seed planting (Pro)'}<br />
+                {'— Seed insights (Pro)'}
+              </div>
+              <a
+                href="https://sushankhanal.gumroad.com/l/somniavault"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'block',
+                  padding: '8px 12px',
+                  border: '1px solid rgba(200,160,80,0.4)',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  fontSize: '9px',
+                  letterSpacing: '0.15em',
+                  color: 'rgba(200,160,80,0.8)',
+                  textTransform: 'uppercase',
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                }}
+              >
+                {'Upgrade to Pro ->'}
+              </a>
+            </>
+          )}
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <a
+            href="https://twitter.com/messages/compose?recipient_id=sirberialo007"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '9px',
+              letterSpacing: '0.15em',
+              color: 'rgba(255,255,255,0.2)',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+            }}
+          >
+            {'Contact founder ->'}
+          </a>
+        </div>
 
         <div style={{ borderTop: '1px solid #1E2235', padding: '14px 22px 20px' }}>
           <p style={{ fontFamily: "'Josefin Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '9px', color: '#6B6F85' }}>
