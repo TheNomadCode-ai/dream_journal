@@ -15,7 +15,16 @@ export default async function LandingPage() {
   } = await supabase.auth.getUser()
 
   return (
-    <div className="page-enter" style={{ minHeight: '100vh', background: '#06040f', color: '#f1e9ff' }}>
+    <main
+      className="page-enter"
+      style={{
+        minHeight: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        background: '#06040f',
+        color: '#f1e9ff',
+      }}
+    >
       <section style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '64px 24px' }}>
         <div style={{ maxWidth: 640, textAlign: 'center' }}>
           <p style={{ textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: 10, color: '#9f8abb', marginBottom: 18 }}>Somnia</p>
@@ -172,6 +181,6 @@ export default async function LandingPage() {
           <p>somniavault.me</p>
         </div>
       </footer>
-    </div>
+    </main>
   )
 }

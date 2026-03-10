@@ -2683,7 +2683,6 @@ button:disabled {
   html,
   body {
     background-color: #06040f;
-    overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
   }

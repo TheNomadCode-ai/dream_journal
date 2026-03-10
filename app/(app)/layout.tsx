@@ -13,7 +13,10 @@ export default function AppAuthPagesLayout({ children }: { children: React.React
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
-        minHeight: '100dvh',
+        minHeight: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        overscrollBehavior: 'none',
       }}
     >
       {children}
