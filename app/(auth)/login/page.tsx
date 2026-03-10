@@ -98,6 +98,23 @@ function LoginContent() {
     setLoading(false)
   }
 
+  async function handleGoogleAuth() {
+    setError(null)
+    setMissingAccountError(false)
+    setLoading(true)
+
+    const redirectTo = 'https://www.somniavault.me/install'
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    }
+  }
+
   if (magicLinkSent) {
     return (
       <div className="text-center" role="status" aria-live="polite">
@@ -142,6 +159,22 @@ function LoginContent() {
           Account created! You can sign in now.
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={handleGoogleAuth}
+        disabled={loading}
+        className="auth-submit w-full border border-white/20 bg-white/5 text-white hover:bg-white/10"
+        aria-label="Continue with Google"
+      >
+        Continue with Google
+      </button>
+
+      <div className="my-5 flex items-center gap-3" aria-hidden="true">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">or</span>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
 
       {/* Mode toggle */}
       <div className="auth-toggle mb-6 flex rounded-lg border border-surface-border bg-surface p-1">

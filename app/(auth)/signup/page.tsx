@@ -76,6 +76,22 @@ export default function SignupPage() {
     window.location.href = '/install'
   }
 
+  async function handleGoogleAuth() {
+    setError(null)
+    setLoading(true)
+
+    const redirectTo = 'https://www.somniavault.me/install'
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    }
+  }
+
   return (
     <>
       <div className="mb-8 text-center">
@@ -83,6 +99,22 @@ export default function SignupPage() {
         <p className="auth-subheading mt-1 text-sm text-muted-foreground">
           Create your free Somnia account
         </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogleAuth}
+        disabled={loading}
+        className="auth-submit w-full border border-white/20 bg-white/5 text-white hover:bg-white/10"
+        aria-label="Continue with Google"
+      >
+        Continue with Google
+      </button>
+
+      <div className="my-5 flex items-center gap-3" aria-hidden="true">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">or</span>
+        <div className="h-px flex-1 bg-white/10" />
       </div>
 
       <form onSubmit={handleSignup} noValidate aria-label="Sign up form">
