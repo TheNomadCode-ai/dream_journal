@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { usePathname } from 'next/navigation'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { cacheProfile, getCachedProfile } from '@/lib/profile-cache'
@@ -45,6 +46,7 @@ type AppContextValue = {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   const supabase = useMemo(() => createClient(), [])
   const [profile, setProfileState] = useState<AppProfile>(() => getCachedProfile<AppProfile>())
   const [user, setUser] = useState<AuthUser>(null)
@@ -94,8 +96,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [refreshProfile])
 
   const value = useMemo(() => ({ profile, user, loading, refreshProfile, setProfile }), [loading, profile, refreshProfile, setProfile, user])
+  const isAppPage =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/morning') ||
+    pathname.startsWith('/evening') ||
+    pathname.startsWith('/search') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/journal') ||
+    pathname.startsWith('/install')
 
-  if (loading) {
+  if (loading && isAppPage) {
     return <ContextualLoader />
   }
 
