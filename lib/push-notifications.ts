@@ -37,10 +37,39 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       return { success: false, error: err.message }
     }
 
-    alert(
-      'SW active state: ' +
-        (reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none')
-    )
+    alert('SW state: ' + (reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none'))
+
+    // Wait for SW to be active
+    if (!reg.active) {
+      alert('Waiting for SW to activate...')
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('SW activate timeout')), 10000)
+
+        // Check installing worker
+        const worker = reg.installing || reg.waiting
+
+        if (worker) {
+          worker.addEventListener('statechange', () => {
+            alert('SW state changed to: ' + worker.state)
+            if (worker.state === 'activated') {
+              clearTimeout(timeout)
+              resolve()
+            }
+            if (worker.state === 'redundant') {
+              clearTimeout(timeout)
+              reject(new Error('SW became redundant'))
+            }
+          })
+        } else if (reg.active) {
+          clearTimeout(timeout)
+          resolve()
+        } else {
+          clearTimeout(timeout)
+          reject(new Error('No SW worker found'))
+        }
+      })
+      alert('SW now active!')
+    }
 
     const vapidKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     console.log('VAPID key available:', !!vapidKeyRaw)
@@ -57,10 +86,7 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
 
     let sub: PushSubscription
     try {
-      let existingSub = await reg.pushManager.getSubscription()
-
-      if (existingSub) await existingSub.unsubscribe()
-
+      // NOW subscribe
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
