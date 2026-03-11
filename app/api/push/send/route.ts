@@ -15,14 +15,6 @@ type ProfileRow = {
   target_sleep_time: string | null
 }
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
-
-const CRON_SECRET = process.env.CRON_SECRET
-
 function formatTime(totalMinutes: number) {
   const day = 24 * 60
   const normalized = ((totalMinutes % day) + day) % day
@@ -32,8 +24,14 @@ function formatTime(totalMinutes: number) {
 }
 
 export async function POST(req: NextRequest) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL!,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  )
+
   const authHeader = req.headers.get('authorization')
-  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
