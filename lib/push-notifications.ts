@@ -20,11 +20,27 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       return { success: false, error: `Permission: ${permission}` }
     }
 
-    alert('Getting SW...')
-    const reg = await navigator.serviceWorker.ready
+    alert('About to register SW...')
 
-    const workerState = reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none'
-    alert('SW scope: ' + reg.scope + ' | state: ' + workerState)
+    let reg: ServiceWorkerRegistration
+
+    try {
+      reg = await Promise.race([
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('register() timed out after 5s')), 5000)
+        ),
+      ])
+      alert('Register success: ' + reg.scope)
+    } catch (err: any) {
+      alert('Register failed: ' + err.message)
+      return { success: false, error: err.message }
+    }
+
+    alert(
+      'SW active state: ' +
+        (reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none')
+    )
 
     const vapidKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     console.log('VAPID key available:', !!vapidKeyRaw)
