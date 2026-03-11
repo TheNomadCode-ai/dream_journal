@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { subscribeToPush } from '@/lib/push-notifications'
 import { createClient } from '@/lib/supabase/client'
 
 declare global {
@@ -25,6 +26,8 @@ export default function InstallPage() {
   const [countdown, setCountdown] = useState(5)
   const [message, setMessage] = useState<string | null>(null)
   const [installedReady, setInstalledReady] = useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [notificationError, setNotificationError] = useState<string | null>(null)
 
   const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !navigator.MSStream
   const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
@@ -59,6 +62,12 @@ export default function InstallPage() {
       if (isStandalone()) {
         router.push('/dashboard')
       }
+
+      if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready
+        const existingSub = await reg.pushManager.getSubscription()
+        setNotificationsEnabled(Boolean(existingSub))
+      }
     })()
 
     return () => {
@@ -77,12 +86,29 @@ export default function InstallPage() {
 
     if (outcome === 'accepted') {
       localStorage.setItem('somnia_installed', 'true')
-      setInstalledReady(true)
+      setMessage('Great. Next, enable notifications, then open from your home screen to continue.')
     }
+  }
+
+  const handleEnableNotifications = async () => {
+    setNotificationError(null)
+    const success = await subscribeToPush()
+    if (success) {
+      setNotificationsEnabled(true)
+      return
+    }
+
+    setNotificationsEnabled(false)
+    setNotificationError('Notifications are required for reliable morning/evening windows. Please allow notifications.')
   }
 
   const handleIOSContinue = () => {
     if (countdown > 0) return
+
+    if (!notificationsEnabled) {
+      setMessage('Enable notifications first, then continue from your home screen.')
+      return
+    }
 
     if (isStandalone()) {
       localStorage.setItem('somnia_installed', 'true')
@@ -132,7 +158,10 @@ export default function InstallPage() {
               Your morning and evening notifications only work reliably when Somnia is installed on your home screen.
             </p>
 
-            {isAndroid ? (
+            <section style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, marginBottom: 14 }}>
+              <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Step 1 - Add to Home Screen</p>
+
+              {isAndroid ? (
               <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16 }}>
                 <button className="btn-gold" style={{ width: '100%', justifyContent: 'center', opacity: canInstall ? 1 : 0.65 }} disabled={!canInstall} onClick={() => void handleInstall()}>
                   Add to Home Screen
@@ -141,11 +170,10 @@ export default function InstallPage() {
                   <p style={{ color: '#9f8abb', marginTop: 12, fontSize: 13 }}>Waiting for install prompt from Chrome...</p>
                 ) : null}
               </div>
-            ) : null}
+              ) : null}
 
-            {isIOS ? (
+              {isIOS ? (
               <div style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, textAlign: 'left' }}>
-                <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Before you continue</p>
                 <p style={{ color: '#d6c9eb', fontStyle: 'italic', lineHeight: 1.65, marginBottom: 14 }}>
                   Open Somnia from your home screen to continue setup. This takes less than 30 seconds.
                 </p>
@@ -163,18 +191,32 @@ export default function InstallPage() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M5 12l4 4L19 6" /></svg>
                     <p>Tap Add</p>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10, alignItems: 'center' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e9defa" strokeWidth="1.8"><path d="M3 10.5L12 3l9 7.5" /><path d="M6 9.5V21h12V9.5" /></svg>
-                    <p>Open Somnia from your home screen</p>
-                  </div>
                 </div>
-
-                <button className="btn-ghost-gold" style={{ width: '100%', justifyContent: 'center', opacity: countdown > 0 ? 0.45 : 1 }} disabled={countdown > 0} onClick={handleIOSContinue}>
-                  {countdown > 0 ? `I've added it - continue (${countdown})` : "I've added it - continue ->"}
-                </button>
-                {message ? <p style={{ color: '#ffb9ca', marginTop: 10, textAlign: 'center' }}>{message}</p> : null}
               </div>
             ) : null}
+            </section>
+
+            <section style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, marginBottom: 14, textAlign: 'left' }}>
+              <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Step 2 - Enable Notifications</p>
+              <p style={{ color: '#d6c9eb', fontStyle: 'italic', lineHeight: 1.65, marginBottom: 12 }}>
+                Enable notifications so Somnia can wake you at the right moment.
+              </p>
+              <button className="btn-gold" style={{ width: '100%', justifyContent: 'center' }} onClick={() => void handleEnableNotifications()}>
+                {notificationsEnabled ? 'Notifications Enabled' : 'Enable Notifications'}
+              </button>
+              {notificationError ? <p style={{ color: '#ffb9ca', marginTop: 10 }}>{notificationError}</p> : null}
+            </section>
+
+            <section style={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, background: '#100a22', padding: 16, textAlign: 'left' }}>
+              <p style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: '#a995ca', fontSize: 11, marginBottom: 10 }}>Step 3 - Open from Home Screen</p>
+              <p style={{ color: '#d6c9eb', fontStyle: 'italic', lineHeight: 1.65, marginBottom: 12 }}>
+                Open from home screen to continue.
+              </p>
+              <button className="btn-ghost-gold" style={{ width: '100%', justifyContent: 'center', opacity: countdown > 0 ? 0.45 : 1 }} disabled={countdown > 0} onClick={handleIOSContinue}>
+                {countdown > 0 ? `I've added it - continue (${countdown})` : "I've added it - continue ->"}
+              </button>
+              {message ? <p style={{ color: '#ffb9ca', marginTop: 10 }}>{message}</p> : null}
+            </section>
           </>
         )}
       </section>
