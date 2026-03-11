@@ -69,12 +69,8 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
 
   async function handleDisableNotifications() {
     await unsubscribeFromPush()
-    if ('Notification' in window) {
-      // Browser permission can remain granted even when unsubscribed.
-      setNotifStatus(Notification.permission)
-    } else {
-      setNotifStatus('default')
-    }
+    // Treat unsubscribed as app-level disabled, even if browser permission remains granted.
+    setNotifStatus('default')
   }
 
   return (

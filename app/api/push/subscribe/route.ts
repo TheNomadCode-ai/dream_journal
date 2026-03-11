@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   console.log('Subscribe route hit')
 
   try {
-    // Server-side Supabase client (cookie/session aware).
-    const supabase = await createClient()
+    // Server-side session-aware client used for identifying the current user.
+    const serverClient = await createServerClient()
+
+    // Service-role client used for writes so RLS cannot block subscription persistence.
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser()
+    } = await serverClient.auth.getUser()
 
     console.log('User:', user?.id)
     console.log('Auth error:', authError)
@@ -42,9 +49,11 @@ export async function POST(req: NextRequest) {
     console.log('Upsert error:', error)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Supabase error:', error)
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
     }
 
+    console.log('Saved successfully:', data)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Subscribe error:', err)
@@ -53,10 +62,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const supabase = await createClient()
+  const serverClient = await createServerClient()
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await serverClient.auth.getUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -68,7 +82,7 @@ export async function DELETE() {
     .eq('user_id', user.id)
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to delete subscription' }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
