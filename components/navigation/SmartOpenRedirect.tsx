@@ -23,19 +23,18 @@ export default function SmartOpenRedirect() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const protectedPrefixes = [
-      '/dashboard',
-      '/morning',
-      '/evening',
-      '/search',
-      '/settings',
-      '/journal',
-    ]
+    // Never redirect away from these pages — user navigated here intentionally.
+    if (
+      pathname === '/morning' ||
+      pathname === '/evening' ||
+      pathname === '/settings' ||
+      pathname === '/install' ||
+      pathname === '/signup' ||
+      pathname === '/login'
+    ) return
 
-    const isProtectedRoute = protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
-    if (!isProtectedRoute) {
-      return
-    }
+    // Only run redirect logic on /dashboard.
+    if (pathname !== '/dashboard') return
 
     // Never redirect crawlers/guests or unauthenticated sessions.
     if (!user) return
@@ -90,35 +89,16 @@ export default function SmartOpenRedirect() {
         return
       }
 
-      // During morning window with a planted seed, only /morning is allowed.
+      // During morning window with a planted seed, redirect dashboard → /morning.
       if (inMorningWindow && seedPlanted) {
-        if (pathname !== '/morning') {
-          window.location.href = '/morning'
-        }
+        window.location.href = '/morning'
         return
       }
 
       // ONLY redirect to evening if the evening window is open right now.
       if (hasSeedAccess && inEveningWindow && !seedPlanted) {
-        if (pathname !== '/evening') {
-          window.location.href = '/evening'
-        }
+        window.location.href = '/evening'
         return
-      }
-
-      // Free users should stay on dashboard rather than being routed to evening.
-      if (!hasSeedAccess && pathname === '/evening') {
-        window.location.href = '/dashboard'
-        return
-      }
-
-      // /morning is only valid during the morning capture window.
-      if (pathname === '/morning') {
-        if (inEveningWindow && hasSeedAccess && !seedPlanted) {
-          window.location.href = '/evening'
-        } else {
-          window.location.href = '/dashboard'
-        }
       }
     })()
   }, [pathname, profile, user])
