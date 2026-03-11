@@ -6,6 +6,7 @@ const pwa = withPWA({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  reloadOnOnline: false,
 })
 
 const nextConfig = {

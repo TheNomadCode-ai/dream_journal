@@ -21,19 +21,15 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
     }
 
     alert('Getting SW...')
-    let reg: ServiceWorkerRegistration
-
-    const regs = await navigator.serviceWorker.getRegistrations()
-    alert('Total SW regs: ' + regs.length + ' | scopes: ' + regs.map((r) => r.scope).join(', '))
-
-    if (regs.length === 0) {
-      return {
-        success: false,
-        error: 'No SW registered at all',
-      }
-    }
-
-    reg = regs[0]
+    const reg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('SW not ready after 15s')),
+          15000
+        )
+      ),
+    ])
 
     const workerState = reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none'
     alert('SW scope: ' + reg.scope + ' | state: ' + workerState)

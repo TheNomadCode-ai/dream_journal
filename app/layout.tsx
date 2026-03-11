@@ -4,7 +4,6 @@ import { Inter } from 'next/font/google'
 
 import InstalledAppBanner from '@/components/pwa/InstalledAppBanner'
 import RoutePrefetcher from '@/components/navigation/RoutePrefetcher'
-import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar'
 import TouchFeedback from '@/components/ui/TouchFeedback'
 import { ProfileProvider } from '@/lib/ProfileContext'
 import '../styles/globals.css'
@@ -116,7 +115,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         <InstalledAppBanner />
-        <ServiceWorkerRegistrar />
         <RoutePrefetcher />
         <TouchFeedback />
         <ProfileProvider>
