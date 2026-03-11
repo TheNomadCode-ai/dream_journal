@@ -21,10 +21,53 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
     }
 
     alert('Getting SW...')
-    console.log('Waiting for SW...')
-    const reg = await navigator.serviceWorker.ready
-    console.log('SW ready, scope:', reg.scope)
-    alert('SW ready: ' + reg.scope)
+    let reg: ServiceWorkerRegistration
+
+    try {
+      const existingReg = await navigator.serviceWorker.getRegistration('/')
+
+      if (existingReg) {
+        alert('Using existing SW reg')
+        reg = existingReg
+      } else {
+        alert('No existing SW, registering...')
+        reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        alert('SW registered: ' + reg.scope)
+      }
+
+      if (!reg.active) {
+        alert('SW not active, waiting...')
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('SW activation timeout'))
+          }, 5000)
+
+          const sw = reg.installing || reg.waiting
+          if (sw) {
+            if (sw.state === 'activated') {
+              clearTimeout(timeout)
+              resolve()
+              return
+            }
+
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'activated') {
+                clearTimeout(timeout)
+                resolve()
+              }
+            })
+          } else {
+            clearTimeout(timeout)
+            resolve()
+          }
+        })
+      }
+
+      alert('SW active, creating subscription...')
+    } catch (swErr: any) {
+      alert('SW error: ' + swErr.message)
+      return { success: false, error: swErr.message }
+    }
 
     alert('Getting existing subscription...')
     console.log('Getting existing subscription...')
