@@ -14,24 +14,32 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
 
     const permission = await Notification.requestPermission()
     console.log('Permission after request:', permission)
+    alert('Permission result: ' + permission)
 
     if (permission !== 'granted') {
-      return { success: false, error: `Permission is: ${permission}` }
+      return { success: false, error: `Permission: ${permission}` }
     }
 
+    alert('Getting SW...')
     console.log('Waiting for SW...')
     const reg = await navigator.serviceWorker.ready
     console.log('SW ready, scope:', reg.scope)
+    alert('SW ready: ' + reg.scope)
 
+    alert('Getting existing subscription...')
     console.log('Getting existing subscription...')
     let sub = await reg.pushManager.getSubscription()
     console.log('Existing sub:', sub ? 'yes' : 'none')
+    alert('Existing sub: ' + (sub ? 'yes' : 'none'))
 
     if (sub) {
+      alert('Unsubscribing...')
       console.log('Unsubscribing existing...')
       await sub.unsubscribe()
+      alert('Unsubscribed')
     }
 
+    alert('Creating new subscription...')
     console.log('Creating new subscription...')
     const vapidKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     console.log('VAPID key available:', !!vapidKeyRaw)
@@ -46,10 +54,16 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       .replace(/\//g, '_')
       .replace(/=/g, '')
 
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey),
-    })
+    try {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      })
+      alert('Subscription created: ' + sub.endpoint.slice(0, 40))
+    } catch (subErr: any) {
+      alert('Subscribe error: ' + subErr.message)
+      return { success: false, error: subErr.message }
+    }
     console.log('Subscription created:', sub.endpoint.slice(0, 50))
 
     console.log('Sending to server...')
