@@ -245,7 +245,11 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
               Morning and evening only. Nothing else.
             </p>
             <button
-              onClick={() => void handleEnableNotifications()}
+              onClick={() => {
+                console.log('Button tapped')
+                alert('Button tapped - starting subscription')
+                void handleEnableNotifications()
+              }}
               style={{
                 padding: '10px 20px',
                 background: 'transparent',
