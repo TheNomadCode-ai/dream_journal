@@ -24,10 +24,20 @@ function formatTime(totalMinutes: number) {
 }
 
 export async function POST(req: NextRequest) {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+
   webpush.setVapidDetails(
     process.env.VAPID_EMAIL!,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
+    vapidPublicKey,
+    vapidPrivateKey
   )
 
   const authHeader = req.headers.get('authorization')

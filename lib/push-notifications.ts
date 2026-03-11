@@ -12,11 +12,16 @@ export async function subscribeToPush() {
 
     let subscription = await reg.pushManager.getSubscription()
     if (!subscription) {
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidPublicKey) {
+      const vapidPublicKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidPublicKeyRaw) {
         console.error('Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY')
         return false
       }
+
+      const vapidPublicKey = vapidPublicKeyRaw
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '')
 
       subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
