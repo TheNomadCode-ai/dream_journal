@@ -1,46 +1,79 @@
-export async function subscribeToPush() {
-  if (typeof window === 'undefined') return false
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    return false
-  }
-
+export async function subscribeToPush(): Promise<{ success: boolean; error?: string }> {
   try {
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') return false
-
-    const reg = await navigator.serviceWorker.ready
-
-    let subscription = await reg.pushManager.getSubscription()
-    if (!subscription) {
-      const vapidPublicKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidPublicKeyRaw) {
-        console.error('Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY')
-        return false
-      }
-
-      const vapidPublicKey = vapidPublicKeyRaw
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
-
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      })
+    if (typeof window === 'undefined') {
+      return { success: false, error: 'No browser window' }
     }
 
-    await fetch('/api/push/subscribe', {
+    if (!('serviceWorker' in navigator)) {
+      return { success: false, error: 'No service worker support' }
+    }
+
+    if (!('PushManager' in window)) {
+      return { success: false, error: 'No PushManager support' }
+    }
+
+    const permission = Notification.permission
+    console.log('Current permission:', permission)
+
+    if (permission !== 'granted') {
+      return { success: false, error: `Permission is: ${permission}` }
+    }
+
+    console.log('Waiting for SW...')
+    const reg = await navigator.serviceWorker.ready
+    console.log('SW ready, scope:', reg.scope)
+
+    console.log('Getting existing subscription...')
+    let sub = await reg.pushManager.getSubscription()
+    console.log('Existing sub:', sub ? 'yes' : 'none')
+
+    if (sub) {
+      console.log('Unsubscribing existing...')
+      await sub.unsubscribe()
+    }
+
+    console.log('Creating new subscription...')
+    const vapidKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    console.log('VAPID key available:', !!vapidKeyRaw)
+    console.log('VAPID key length:', vapidKeyRaw?.length)
+
+    if (!vapidKeyRaw) {
+      return { success: false, error: 'Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY' }
+    }
+
+    const vapidKey = vapidKeyRaw
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '')
+
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+    })
+    console.log('Subscription created:', sub.endpoint.slice(0, 50))
+
+    console.log('Sending to server...')
+    const res = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(subscription),
+      credentials: 'include',
+      body: JSON.stringify(sub.toJSON()),
     })
 
-    return true
-  } catch (err) {
-    console.error('Push subscription failed:', err)
-    return false
+    console.log('Response status:', res.status)
+    const responseText = await res.text()
+    console.log('Response body:', responseText)
+
+    if (!res.ok) {
+      return { success: false, error: `Server ${res.status}: ${responseText}` }
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    console.error('subscribeToPush error:', err)
+    return { success: false, error: err?.message || String(err) }
   }
 }
 

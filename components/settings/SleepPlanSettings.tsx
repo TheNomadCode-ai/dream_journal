@@ -56,8 +56,14 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
   }
 
   async function handleEnableNotifications() {
-    const success = await subscribeToPush()
-    if (success) {
+    const result = await subscribeToPush()
+    console.log('Result:', result)
+
+    if (!result.success) {
+      alert('Notification error: ' + result.error)
+    }
+
+    if (result.success) {
       setNotifStatus('granted')
       return
     }

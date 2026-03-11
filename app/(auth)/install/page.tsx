@@ -92,14 +92,14 @@ export default function InstallPage() {
 
   const handleEnableNotifications = async () => {
     setNotificationError(null)
-    const success = await subscribeToPush()
-    if (success) {
+    const result = await subscribeToPush()
+    if (result.success) {
       setNotificationsEnabled(true)
       return
     }
 
     setNotificationsEnabled(false)
-    setNotificationError('Notifications are required for reliable morning/evening windows. Please allow notifications.')
+    setNotificationError(result.error || 'Notifications are required for reliable morning/evening windows. Please allow notifications.')
   }
 
   const handleIOSContinue = () => {
