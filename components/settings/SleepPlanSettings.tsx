@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import TimeWheelPicker from '@/components/TimeWheelPicker'
+import { subscribeToPush, unsubscribeFromPush } from '@/lib/push-notifications'
 import { createClient } from '@/lib/supabase/client'
 
 type Props = {
@@ -21,6 +22,13 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
   const [wakeTime, setWakeTime] = useState(toInput(initialWakeTime || '07:00:00'))
   const [sleepTime, setSleepTime] = useState(toInput(initialSleepTime || '23:00:00'))
   const [saving, setSaving] = useState(false)
+  const [notifStatus, setNotifStatus] = useState<'default' | 'granted' | 'denied'>('default')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!('Notification' in window)) return
+    setNotifStatus(Notification.permission)
+  }, [])
 
   async function handleSave() {
     if (saving) return
@@ -45,6 +53,28 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
       })
 
     window.location.href = '/dashboard'
+  }
+
+  async function handleEnableNotifications() {
+    const success = await subscribeToPush()
+    if (success) {
+      setNotifStatus('granted')
+      return
+    }
+
+    if ('Notification' in window) {
+      setNotifStatus(Notification.permission)
+    }
+  }
+
+  async function handleDisableNotifications() {
+    await unsubscribeFromPush()
+    if ('Notification' in window) {
+      // Browser permission can remain granted even when unsubscribed.
+      setNotifStatus(Notification.permission)
+    } else {
+      setNotifStatus('default')
+    }
   }
 
   return (
@@ -146,6 +176,90 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
               Upgrade to Pro - $4.99/mo
             </a>
           </>
+        )}
+      </section>
+
+      <section style={{ border: '1px solid rgba(255,255,255,0.06)', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
+        <div
+          style={{
+            fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
+            fontSize: '10px',
+            letterSpacing: '0.2em',
+            color: 'rgba(255,255,255,0.25)',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+          }}
+        >
+          Notifications
+        </div>
+
+        {notifStatus === 'denied' ? (
+          <p
+            style={{
+              fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
+              fontSize: '11px',
+              color: 'rgba(255,100,100,0.7)',
+            }}
+          >
+            Notifications blocked. Enable in your browser settings.
+          </p>
+        ) : notifStatus === 'granted' ? (
+          <div>
+            <p
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '12px',
+              }}
+            >
+              Notifications permission granted.
+            </p>
+            <button onClick={() => void handleDisableNotifications()} className="btn-gold">
+              Disable push subscription
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '4px',
+              }}
+            >
+              Get notified when your windows open.
+            </p>
+            <p
+              style={{
+                fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
+                fontSize: '10px',
+                color: 'rgba(255,255,255,0.3)',
+                marginBottom: '16px',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Morning and evening only. Nothing else.
+            </p>
+            <button
+              onClick={() => void handleEnableNotifications()}
+              style={{
+                padding: '10px 20px',
+                background: 'transparent',
+                border: '1px solid rgba(200,160,80,0.5)',
+                borderRadius: '4px',
+                fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace',
+                fontSize: '10px',
+                letterSpacing: '0.2em',
+                color: 'rgba(200,160,80,0.9)',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              Enable notifications
+            </button>
+          </div>
         )}
       </section>
       </div>
