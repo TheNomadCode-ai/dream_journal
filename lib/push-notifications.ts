@@ -12,8 +12,8 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       return { success: false, error: 'No PushManager support' }
     }
 
-    const permission = Notification.permission
-    console.log('Current permission:', permission)
+    const permission = await Notification.requestPermission()
+    console.log('Permission after request:', permission)
 
     if (permission !== 'granted') {
       return { success: false, error: `Permission is: ${permission}` }
