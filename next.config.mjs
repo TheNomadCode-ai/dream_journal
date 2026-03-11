@@ -29,6 +29,21 @@ const nextConfig = {
     ],
   },
   compress: true,
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'somniavault.me',
+          },
+        ],
+        destination: 'https://www.somniavault.me/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {
