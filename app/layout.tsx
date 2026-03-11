@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 import { Inter } from 'next/font/google'
 
 import InstalledAppBanner from '@/components/pwa/InstalledAppBanner'
+import PWARegistrar from '@/components/pwa/PWARegistrar'
 import RoutePrefetcher from '@/components/navigation/RoutePrefetcher'
 import TouchFeedback from '@/components/ui/TouchFeedback'
 import { ProfileProvider } from '@/lib/ProfileContext'
@@ -121,24 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SmartOpenRedirect />
           {children}
         </ProfileProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker
-                    .register('/sw.js', { scope: '/' })
-                    .then(function(reg) {
-                      console.log('SW registered:', reg.scope);
-                    })
-                    .catch(function(err) {
-                      console.error('SW failed:', err);
-                    });
-                });
-              }
-            `,
-          }}
-        />
+        <PWARegistrar />
       </body>
     </html>
   )

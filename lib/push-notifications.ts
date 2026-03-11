@@ -21,15 +21,7 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
     }
 
     alert('Getting SW...')
-    const reg = await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error('SW not ready after 15s')),
-          15000
-        )
-      ),
-    ])
+    const reg = await navigator.serviceWorker.ready
 
     const workerState = reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none'
     alert('SW scope: ' + reg.scope + ' | state: ' + workerState)
