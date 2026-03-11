@@ -53,6 +53,7 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
     console.log('Subscription created:', sub.endpoint.slice(0, 50))
 
     console.log('Sending to server...')
+    alert('About to fetch /api/push/subscribe')
     const res = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
@@ -61,6 +62,7 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       credentials: 'include',
       body: JSON.stringify(sub.toJSON()),
     })
+    alert('Fetch done, status: ' + res.status)
 
     console.log('Response status:', res.status)
     const responseText = await res.text()

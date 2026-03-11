@@ -55,21 +55,20 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
     window.location.href = '/dashboard'
   }
 
-  async function handleEnableNotifications() {
-    const result = await subscribeToPush()
-    console.log('Result:', result)
+  const handleEnableNotifications = async () => {
+    alert('handleEnableNotifications called')
 
-    if (!result.success) {
-      alert('Notification error: ' + result.error)
-    }
+    try {
+      const result = await subscribeToPush()
+      alert('subscribeToPush result: ' + JSON.stringify(result))
 
-    if (result.success) {
-      setNotifStatus('granted')
-      return
-    }
-
-    if ('Notification' in window) {
-      setNotifStatus(Notification.permission)
+      if (result.success) {
+        setNotifStatus('granted')
+      } else {
+        alert('Failed: ' + result.error)
+      }
+    } catch (err: any) {
+      alert('Exception: ' + err.message)
     }
   }
 
