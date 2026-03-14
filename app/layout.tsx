@@ -96,6 +96,7 @@ export const viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // push notification fix - force redeploy
   return (
     <html lang="en" className="dark">
       <head>
