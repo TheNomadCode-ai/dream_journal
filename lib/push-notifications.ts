@@ -20,56 +20,41 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       return { success: false, error: `Permission: ${permission}` }
     }
 
-    alert('About to register SW...')
+    alert('Checking for existing SW...')
 
-    let reg: ServiceWorkerRegistration
+    // Poll for an active SW registration
+    // next-pwa registers it automatically
+    const getActiveReg = (): Promise<ServiceWorkerRegistration> => {
+      return new Promise((resolve, reject) => {
+        let attempts = 0
+        const check = async () => {
+          attempts++
+          const regs = await navigator.serviceWorker.getRegistrations()
+          alert(
+            `Attempt ${attempts}: ${regs.length} regs, states: ${regs
+              .map((r) => r.active?.state || r.waiting?.state || r.installing?.state || 'none')
+              .join(', ')}`
+          )
 
-    try {
-      reg = await Promise.race([
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('register() timed out after 5s')), 5000)
-        ),
-      ])
-      alert('Register success: ' + reg.scope)
-    } catch (err: any) {
-      alert('Register failed: ' + err.message)
-      return { success: false, error: err.message }
-    }
+          const activeReg = regs.find((r) => r.active)
+          if (activeReg) {
+            resolve(activeReg)
+            return
+          }
 
-    alert('SW state: ' + (reg.active?.state || reg.waiting?.state || reg.installing?.state || 'none'))
+          if (attempts >= 10) {
+            reject(new Error(`No active SW after ${attempts} attempts`))
+            return
+          }
 
-    // Wait for SW to be active
-    if (!reg.active) {
-      alert('Waiting for SW to activate...')
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('SW activate timeout')), 10000)
-
-        // Check installing worker
-        const worker = reg.installing || reg.waiting
-
-        if (worker) {
-          worker.addEventListener('statechange', () => {
-            alert('SW state changed to: ' + worker.state)
-            if (worker.state === 'activated') {
-              clearTimeout(timeout)
-              resolve()
-            }
-            if (worker.state === 'redundant') {
-              clearTimeout(timeout)
-              reject(new Error('SW became redundant'))
-            }
-          })
-        } else if (reg.active) {
-          clearTimeout(timeout)
-          resolve()
-        } else {
-          clearTimeout(timeout)
-          reject(new Error('No SW worker found'))
+          setTimeout(check, 1000)
         }
+        check()
       })
-      alert('SW now active!')
     }
+
+    const reg = await getActiveReg()
+    alert('Found active SW: ' + reg.scope)
 
     const vapidKeyRaw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     console.log('VAPID key available:', !!vapidKeyRaw)
@@ -84,18 +69,12 @@ export async function subscribeToPush(): Promise<{ success: boolean; error?: str
       .replace(/\//g, '_')
       .replace(/=/g, '')
 
-    let sub: PushSubscription
-    try {
-      // NOW subscribe
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      })
-      alert('Sub created: ' + sub.endpoint.slice(0, 50))
-    } catch (subErr: any) {
-      alert('pushManager error: ' + subErr.message)
-      return { success: false, error: subErr.message }
-    }
+    // Now subscribe
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+    })
+    alert('Sub created: ' + sub.endpoint.slice(0, 50))
     console.log('Subscription created:', sub.endpoint.slice(0, 50))
 
     console.log('Sending to server...')
