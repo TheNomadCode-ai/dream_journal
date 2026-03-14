@@ -361,6 +361,8 @@ export default function EveningPage() {
 
   const descriptiveness = getDescriptiveness(seedText)
   const wordCount = getWordCount(seedText)
+  const minWordsRequired = 60
+  const canPlant = wordCount >= minWordsRequired && wordCount <= 500
   const sleepParts = parseTime(loaded ? sleepTime : `${profile.target_sleep_time}:00`, '23:00:00')
   const eveningParts = minusMinutes(sleepParts.hour, sleepParts.minute, 10)
 
@@ -682,10 +684,11 @@ export default function EveningPage() {
                 {descriptiveness.message}
               </p>
             ) : null}
-            {seedText.length > 0 ? <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} / 500 words</p> : null}
+            <p style={{ fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'right', marginTop: '4px', marginBottom: 12 }}>{wordCount} / 60 words</p>
+            {wordCount > 0 && wordCount < minWordsRequired ? <p style={{ color: '#9f8abb', marginBottom: 10 }}>Write at least 60 words to plant this seed.</p> : null}
             {wordCount > 500 ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>500 word maximum</p> : null}
             {error ? <p style={{ color: '#ffb6b6', marginBottom: 10 }}>{error}</p> : null}
-            <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !seedText.trim() || wordCount > 500}>
+            <button className={`btn-gold ${saving ? 'btn-loading' : ''}`} style={{ width: '100%', justifyContent: 'center' }} onClick={() => void plantSeed()} disabled={saving || !canPlant}>
               {saving ? 'Planting...' : 'Plant this seed'}
             </button>
           </div>

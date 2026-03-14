@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import DreamCycleDashboard from '../../../components/dashboard/DreamCycleDashboard'
 import { useApp } from '@/context/AppContext'
 import { getAllDreams, getAllSeeds, getStats, type DreamEntry, type SeedEntry } from '@/lib/local-db'
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { profile } = useApp()
   const [dreams, setDreams] = useState<DreamEntry[]>([])
   const [seeds, setSeeds] = useState<SeedEntry[]>([])
@@ -14,6 +16,13 @@ export default function DashboardPage() {
   const [successRate, setSuccessRate] = useState(0)
   const [totalSeeds, setTotalSeeds] = useState(0)
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false)
+
+  useEffect(() => {
+    const done = localStorage.getItem('onboarding_done')
+    if (!done) {
+      router.replace('/onboarding')
+    }
+  }, [router])
 
   useEffect(() => {
     const load = async () => {
