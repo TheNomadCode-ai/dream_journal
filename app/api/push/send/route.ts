@@ -7,6 +7,8 @@ type PushSubRow = {
   user_id: string
   subscription: webpush.PushSubscription
   updated_at: string
+  last_morning_sent: string | null
+  last_evening_sent: string | null
 }
 
 type ProfileRow = {
@@ -41,7 +43,7 @@ function circularMinuteDistance(a: number, b: number) {
   return Math.min(diff, day - diff)
 }
 
-function isWithinMinuteWindow(currentMinutes: number, targetMinutes: number, windowMinutes = 2) {
+function isWithinMinuteWindow(currentMinutes: number, targetMinutes: number, windowMinutes = 1) {
   return circularMinuteDistance(currentMinutes, targetMinutes) <= windowMinutes
 }
 
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
       .select('id,target_wake_time,target_sleep_time,timezone,wake_timezone'),
     supabase
       .from('push_subscriptions')
-      .select('user_id,subscription,updated_at'),
+      .select('user_id,subscription,updated_at,last_morning_sent,last_evening_sent'),
   ])
 
   if (profileError || subError) {
@@ -207,9 +209,18 @@ export async function POST(req: NextRequest) {
     console.log('Calculated evening window start:', eveningWindowStart)
     console.log('Is in evening window:', isInEveningWindow)
 
-    let payload: string | null = null
+    const sentMorningRecently = sub.last_morning_sent
+      ? now.getTime() - new Date(sub.last_morning_sent).getTime() < 60 * 60 * 1000
+      : false
+    const sentEveningRecently = sub.last_evening_sent
+      ? now.getTime() - new Date(sub.last_evening_sent).getTime() < 60 * 60 * 1000
+      : false
 
-    if (isInMorningWindow) {
+    let payload: string | null = null
+    let sentType: 'morning' | 'evening' | null = null
+
+    if (isInMorningWindow && !sentMorningRecently) {
+      sentType = 'morning'
       payload = JSON.stringify({
         title: 'Somnia',
         body: 'Your morning window is open. Write before it fades.',
@@ -222,7 +233,8 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    if (isInEveningWindow) {
+    if (isInEveningWindow && !sentEveningRecently) {
+      sentType = 'evening'
       payload = JSON.stringify({
         title: 'Somnia',
         body: 'Your planting window is open. What do you want to dream tonight?',
@@ -239,7 +251,12 @@ export async function POST(req: NextRequest) {
 
     try {
       await webpush.sendNotification(sub.subscription, payload)
-      console.log('Push sent to:', user.id)
+      console.log('Push sent to:', user.id, sentType)
+      if (sentType === 'morning') {
+        await supabase.from('push_subscriptions').update({ last_morning_sent: now.toISOString() }).eq('user_id', user.id)
+      } else if (sentType === 'evening') {
+        await supabase.from('push_subscriptions').update({ last_evening_sent: now.toISOString() }).eq('user_id', user.id)
+      }
       sent++
     } catch (err: any) {
       if (err?.statusCode === 410 || err?.statusCode === 404) {
