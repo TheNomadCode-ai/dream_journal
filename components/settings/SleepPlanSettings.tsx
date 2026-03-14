@@ -54,12 +54,16 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
       return
     }
 
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+
     const { error } = await supabase
       .from('profiles')
       .upsert({
         id: user.id,
         target_wake_time: `${wakeTime}:00`,
         target_sleep_time: `${sleepTime}:00`,
+        timezone,
+        wake_timezone: timezone,
       })
 
     if (error) {

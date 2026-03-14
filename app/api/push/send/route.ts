@@ -13,6 +13,8 @@ type ProfileRow = {
   id: string
   target_wake_time: string | null
   target_sleep_time: string | null
+  timezone: string | null
+  wake_timezone: string | null
 }
 
 function formatTime(totalMinutes: number) {
@@ -23,8 +25,55 @@ function formatTime(totalMinutes: number) {
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
 }
 
+function parseTimeToMinutes(value: string) {
+  const [hour, minute] = value.split(':').map(Number)
+  return hour * 60 + minute
+}
+
+function normalizeMinutes(totalMinutes: number) {
+  const day = 24 * 60
+  return ((totalMinutes % day) + day) % day
+}
+
+function circularMinuteDistance(a: number, b: number) {
+  const day = 24 * 60
+  const diff = Math.abs(normalizeMinutes(a) - normalizeMinutes(b))
+  return Math.min(diff, day - diff)
+}
+
+function isWithinMinuteWindow(currentMinutes: number, targetMinutes: number, windowMinutes = 2) {
+  return circularMinuteDistance(currentMinutes, targetMinutes) <= windowMinutes
+}
+
+function getCurrentMinutesForTimezone(now: Date, timezone: string | null | undefined) {
+  const resolvedTimezone = timezone || 'UTC'
+
+  try {
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: resolvedTimezone,
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    const parts = formatter.formatToParts(now)
+    const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0')
+    const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? '0')
+
+    return {
+      timezone: resolvedTimezone,
+      minutes: hour * 60 + minute,
+    }
+  } catch {
+    return {
+      timezone: 'UTC',
+      minutes: now.getUTCHours() * 60 + now.getUTCMinutes(),
+    }
+  }
+}
+
 export async function POST(req: NextRequest) {
   console.log('Cron fired at:', new Date().toISOString())
+  console.log('Server UTC time:', new Date().toISOString())
 
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
     .replace(/\+/g, '-')
@@ -50,12 +99,12 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient() as any
 
   const now = new Date()
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+  const currentTime = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}`
 
   const [{ data: profiles, error: profileError }, { data: subs, error: subError }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id,target_wake_time,target_sleep_time'),
+      .select('id,target_wake_time,target_sleep_time,timezone,wake_timezone'),
     supabase
       .from('push_subscriptions')
       .select('user_id,subscription,updated_at'),
@@ -70,7 +119,7 @@ export async function POST(req: NextRequest) {
 
   console.log('Total profiles found:', profileRows.length)
   profileRows.forEach(p => {
-    console.log('Profile:', p.id, 'sleep:', p.target_sleep_time, 'wake:', p.target_wake_time)
+    console.log('Profile:', p.id, 'sleep:', p.target_sleep_time, 'wake:', p.target_wake_time, 'timezone:', p.timezone, 'wake_timezone:', p.wake_timezone)
   })
   console.log('Subscriptions found:', subRows.length)
 
@@ -85,13 +134,33 @@ export async function POST(req: NextRequest) {
 
   const eveningUsers = profileRows.filter(user => {
     const sleep = user.target_sleep_time ?? '23:00:00'
-    const [sleepH, sleepM] = sleep.split(':').map(Number)
-    return currentTime === formatTime(sleepH * 60 + sleepM - 10)
+    const sleepTotal = parseTimeToMinutes(sleep)
+
+    const timezones = [
+      user.timezone,
+      'Asia/Kathmandu',
+      'UTC',
+    ]
+
+    return timezones.some(tz => {
+      const { minutes } = getCurrentMinutesForTimezone(now, tz)
+      return isWithinMinuteWindow(minutes, sleepTotal - 10)
+    })
   })
   const morningUsers = profileRows.filter(user => {
     const wake = user.target_wake_time ?? '07:00:00'
-    const [wakeH, wakeM] = wake.split(':').map(Number)
-    return currentTime === formatTime(wakeH * 60 + wakeM - 120)
+    const wakeTotal = parseTimeToMinutes(wake)
+
+    const timezones = [
+      user.wake_timezone ?? user.timezone,
+      'Asia/Kathmandu',
+      'UTC',
+    ]
+
+    return timezones.some(tz => {
+      const { minutes } = getCurrentMinutesForTimezone(now, tz)
+      return isWithinMinuteWindow(minutes, wakeTotal - 120)
+    })
   })
   console.log('Users in evening window:', eveningUsers.length)
   console.log('Users in morning window:', morningUsers.length)
@@ -106,18 +175,41 @@ export async function POST(req: NextRequest) {
     const wake = user.target_wake_time ?? '07:00:00'
     const sleep = user.target_sleep_time ?? '23:00:00'
 
-    const [wakeH, wakeM] = wake.split(':').map(Number)
-    const [sleepH, sleepM] = sleep.split(':').map(Number)
-
-    const wakeTotal = wakeH * 60 + wakeM
-    const sleepTotal = sleepH * 60 + sleepM
+    const wakeTotal = parseTimeToMinutes(wake)
+    const sleepTotal = parseTimeToMinutes(sleep)
+    const sleepTimezones = [
+      user.timezone,
+      'Asia/Kathmandu',
+      'UTC',
+    ]
+    const wakeTimezones = [
+      user.wake_timezone ?? user.timezone,
+      'Asia/Kathmandu',
+      'UTC',
+    ]
 
     const morningTime = formatTime(wakeTotal - 120)
     const eveningTime = formatTime(sleepTotal - 10)
+    const eveningWindowStart = eveningTime
+    const isInEveningWindow = sleepTimezones.some(tz => {
+      const { minutes } = getCurrentMinutesForTimezone(now, tz)
+      return isWithinMinuteWindow(minutes, sleepTotal - 10)
+    })
+    const isInMorningWindow = wakeTimezones.some(tz => {
+      const { minutes } = getCurrentMinutesForTimezone(now, tz)
+      return isWithinMinuteWindow(minutes, wakeTotal - 120)
+    })
+
+    console.log('Profile sleep time:', user.target_sleep_time)
+    console.log('Profile wake time:', user.target_wake_time)
+    console.log('Profile timezone:', user.timezone)
+    console.log('Profile wake timezone:', user.wake_timezone)
+    console.log('Calculated evening window start:', eveningWindowStart)
+    console.log('Is in evening window:', isInEveningWindow)
 
     let payload: string | null = null
 
-    if (currentTime === morningTime) {
+    if (isInMorningWindow) {
       payload = JSON.stringify({
         title: 'Somnia',
         body: 'Your morning window is open. Write before it fades.',
@@ -130,7 +222,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    if (currentTime === eveningTime) {
+    if (isInEveningWindow) {
       payload = JSON.stringify({
         title: 'Somnia',
         body: 'Your planting window is open. What do you want to dream tonight?',
