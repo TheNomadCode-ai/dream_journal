@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import BlurText from '@/components/ui/BlurText'
 import Iridescence from '@/components/ui/Iridescence'
 import { createClient } from '@/lib/supabase/server'
 
@@ -38,11 +39,21 @@ export default async function LandingPage() {
 
         <div style={{ maxWidth: 640, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <p style={{ textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: 10, color: '#9f8abb', marginBottom: 18 }}>Somnia</p>
-          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(52px,9vw,86px)', lineHeight: 1.03, marginBottom: 18 }}>
-            What if you could choose
-            <br />
-            what to dream about?
-          </h1>
+          <div style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(52px,9vw,86px)', lineHeight: 1.03, marginBottom: 18, color: '#f1e9ff' }}>
+            <BlurText
+              text="What if you could choose what to dream about?"
+              delay={120}
+              animateBy="words"
+              direction="top"
+              stepDuration={0.4}
+              className=""
+              animationFrom={{ filter: 'blur(12px)', opacity: 0, y: -30 }}
+              animationTo={[
+                { filter: 'blur(4px)', opacity: 0.6, y: -8 },
+                { filter: 'blur(0px)', opacity: 1, y: 0 },
+              ]}
+            />
+          </div>
           <p style={{ maxWidth: 480, margin: '0 auto 26px', color: '#baa7d8', lineHeight: 1.75 }}>
             Every evening you plant an intention.
             Every morning you find out what your subconscious did with it overnight.
