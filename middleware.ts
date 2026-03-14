@@ -6,6 +6,7 @@ const PUBLIC = ['/', '/login', '/signup', '/install', '/privacy', '/terms']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const isOnboardingPath = pathname === '/onboarding'
 
   if (
     PUBLIC.includes(pathname) ||
@@ -44,6 +45,11 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Onboarding is protected by auth only.
+  if (isOnboardingPath) {
+    return response
   }
 
   return response

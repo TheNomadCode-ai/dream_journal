@@ -181,46 +181,6 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
         </button>
       </div>
 
-      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
-        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Sleep schedule</p>
-
-        <div style={{ marginBottom: 16 }}>
-          <TimeWheelPicker
-            value={wakeTime}
-            label="Wake time"
-            onChange={setWakeTime}
-          />
-        </div>
-
-        <TimeWheelPicker
-          value={sleepTime}
-          label="Sleep time"
-          onChange={setSleepTime}
-        />
-      </section>
-
-      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
-        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Plan</p>
-        <p style={{ color: '#efe8ff', marginBottom: 8 }}>
-          Current: {isTrial ? 'Pro (trial)' : tier === 'pro' ? 'Pro' : 'Free'}
-        </p>
-        {isTrial ? (
-          <>
-            <p style={{ color: '#cbb7e4', marginBottom: 8 }}>{trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining</p>
-            <p style={{ color: '#cbb7e4' }}>Pro features unlocked during your trial.</p>
-          </>
-        ) : tier === 'pro' ? (
-          <p style={{ color: '#cbb7e4' }}>Pro features unlocked.</p>
-        ) : (
-          <>
-            <p style={{ color: '#cbb7e4', marginBottom: 12 }}>Free includes unlimited dream journaling and archive.</p>
-            <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" className="btn-gold">
-              Upgrade to Pro - $4.99/mo
-            </a>
-          </>
-        )}
-      </section>
-
       <section style={{ border: '1px solid rgba(255,255,255,0.06)', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
         <div
           style={{
@@ -306,6 +266,46 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
               Enable notifications
             </button>
           </div>
+        )}
+      </section>
+
+      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
+        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Wake time</p>
+        <TimeWheelPicker
+          value={wakeTime}
+          label="Wake time"
+          onChange={setWakeTime}
+        />
+      </section>
+
+      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
+        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Sleep time</p>
+        <TimeWheelPicker
+          value={sleepTime}
+          label="Sleep time"
+          onChange={setSleepTime}
+        />
+      </section>
+
+      <section style={{ border: '1px solid #2a1f45', background: '#0f0a20', borderRadius: 14, padding: 18 }}>
+        <p style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 11, color: '#a993cd', marginBottom: 12 }}>Plan</p>
+        <p style={{ color: '#efe8ff', marginBottom: 8 }}>
+          Current: {isTrial ? 'Pro (trial)' : tier === 'pro' ? 'Pro' : 'Free'}
+        </p>
+        {isTrial ? (
+          <>
+            <p style={{ color: '#cbb7e4', marginBottom: 8 }}>{trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining</p>
+            <p style={{ color: '#cbb7e4' }}>Pro features unlocked during your trial.</p>
+          </>
+        ) : tier === 'pro' ? (
+          <p style={{ color: '#cbb7e4' }}>Pro features unlocked.</p>
+        ) : (
+          <>
+            <p style={{ color: '#cbb7e4', marginBottom: 12 }}>Free includes unlimited dream journaling and archive.</p>
+            <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" className="btn-gold">
+              Upgrade to Pro - $4.99/mo
+            </a>
+          </>
         )}
       </section>
       {saveMessage ? <p style={{ color: '#e8dbff' }}>{saveMessage}</p> : null}

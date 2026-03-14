@@ -18,7 +18,7 @@ function isStandalone() {
 }
 
 function getPostInstallPath() {
-  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true'
+  const onboardingComplete = localStorage.getItem('onboarding_done') === 'true'
   return onboardingComplete ? '/dashboard' : '/onboarding'
 }
 
