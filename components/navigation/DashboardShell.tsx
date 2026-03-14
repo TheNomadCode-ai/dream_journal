@@ -6,8 +6,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 import { DASHBOARD_NAV_ITEMS } from '@/components/navigation/nav-items'
+import NotificationWarningBadge from '@/components/navigation/NotificationWarningBadge'
 
 type DashboardShellProps = {
+  userId: string
   userEmail: string
   initials: string
   isPro: boolean
@@ -15,7 +17,7 @@ type DashboardShellProps = {
   children: React.ReactNode
 }
 
-export default function DashboardShell({ userEmail, initials, isPro, isTrialing, children }: DashboardShellProps) {
+export default function DashboardShell({ userId, userEmail, initials, isPro, isTrialing, children }: DashboardShellProps) {
   const pathname = usePathname()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -87,6 +89,8 @@ export default function DashboardShell({ userEmail, initials, isPro, isTrialing,
 
   return (
     <div className="dashboard-shell" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0A0B12' }}>
+      <NotificationWarningBadge userId={userId} />
+
       {!(isMobile && sidebarOpen) && (
         <button
           type="button"

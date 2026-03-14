@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from 'react'
 
-import DashboardSetupFlow from '@/components/dashboard/DashboardSetupFlow'
 import DreamCycleDashboard from '../../../components/dashboard/DreamCycleDashboard'
 import { useApp } from '@/context/AppContext'
 import { getAllDreams, getAllSeeds, getStats, type DreamEntry, type SeedEntry } from '@/lib/local-db'
 
 export default function DashboardPage() {
-  const { profile, user } = useApp()
+  const { profile } = useApp()
   const [dreams, setDreams] = useState<DreamEntry[]>([])
   const [seeds, setSeeds] = useState<SeedEntry[]>([])
   const [streak, setStreak] = useState(0)
@@ -56,14 +55,6 @@ export default function DashboardPage() {
 
   return (
     <div className="page-content page-enter">
-      {user?.id ? (
-        <DashboardSetupFlow
-          userId={user.id}
-          initialWakeTime={profile?.target_wake_time ?? null}
-          initialSleepTime={profile?.target_sleep_time ?? null}
-        />
-      ) : null}
-
       <DreamCycleDashboard
         wakeTime={wakeTime}
         sleepTime={sleepTime}

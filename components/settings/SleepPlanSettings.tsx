@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import TimeWheelPicker from '@/components/TimeWheelPicker'
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/push-notifications'
+import { useProfile } from '@/lib/ProfileContext'
 import { createClient } from '@/lib/supabase/client'
 
 type Props = {
@@ -22,7 +23,14 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
   const [wakeTime, setWakeTime] = useState(toInput(initialWakeTime || '07:00:00'))
   const [sleepTime, setSleepTime] = useState(toInput(initialSleepTime || '23:00:00'))
   const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [notifStatus, setNotifStatus] = useState<'default' | 'granted' | 'denied'>('default')
+  const { refreshProfile, setProfile } = useProfile()
+
+  useEffect(() => {
+    setWakeTime(toInput(initialWakeTime || '07:00:00'))
+    setSleepTime(toInput(initialSleepTime || '23:00:00'))
+  }, [initialSleepTime, initialWakeTime])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -33,6 +41,7 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
   async function handleSave() {
     if (saving) return
     setSaving(true)
+    setSaveMessage(null)
 
     const supabase = createClient()
 
@@ -40,19 +49,47 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) {
+      setSaveMessage('Could not verify your session.')
       setSaving(false)
       return
     }
 
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .upsert({
         id: user.id,
-        target_wake_time: wakeTime,
-        target_sleep_time: sleepTime,
+        target_wake_time: `${wakeTime}:00`,
+        target_sleep_time: `${sleepTime}:00`,
       })
 
-    window.location.href = '/dashboard'
+    if (error) {
+      setSaveMessage('Could not save. Try again.')
+      setSaving(false)
+      return
+    }
+
+    const { data: refreshedProfile } = await supabase
+      .from('profiles')
+      .select('target_wake_time,target_sleep_time')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (refreshedProfile) {
+      setWakeTime(toInput(refreshedProfile.target_wake_time || `${wakeTime}:00`))
+      setSleepTime(toInput(refreshedProfile.target_sleep_time || `${sleepTime}:00`))
+      setProfile((current) => {
+        if (!current) return current
+        return {
+          ...current,
+          target_wake_time: refreshedProfile.target_wake_time,
+          target_sleep_time: refreshedProfile.target_sleep_time,
+        }
+      })
+    }
+
+    await refreshProfile()
+    setSaveMessage('Saved ✓')
+    setSaving(false)
   }
 
   const handleEnableNotifications = async () => {
@@ -267,6 +304,7 @@ export default function SleepPlanSettings({ initialWakeTime, initialSleepTime, t
           </div>
         )}
       </section>
+      {saveMessage ? <p style={{ color: '#e8dbff' }}>{saveMessage}</p> : null}
       </div>
     </>
   )

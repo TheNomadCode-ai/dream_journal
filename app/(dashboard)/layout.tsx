@@ -32,6 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DashboardShell
+      userId={user.id}
       userEmail={user.email?.split('@')[0] ?? 'user'}
       initials={initials}
       isPro={isPro}

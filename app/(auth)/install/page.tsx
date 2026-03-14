@@ -17,6 +17,11 @@ function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
 }
 
+function getPostInstallPath() {
+  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true'
+  return onboardingComplete ? '/dashboard' : '/onboarding'
+}
+
 export default function InstallPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -60,7 +65,7 @@ export default function InstallPage() {
       }
 
       if (isStandalone()) {
-        router.push('/dashboard')
+        router.push(getPostInstallPath())
       }
 
       if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
@@ -112,7 +117,7 @@ export default function InstallPage() {
 
     if (isStandalone()) {
       localStorage.setItem('somnia_installed', 'true')
-      setInstalledReady(true)
+      router.push(getPostInstallPath())
       return
     }
 
