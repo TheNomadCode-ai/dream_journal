@@ -24,6 +24,8 @@ function formatTime(totalMinutes: number) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log('Cron fired at:', new Date().toISOString())
+
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
@@ -66,6 +68,12 @@ export async function POST(req: NextRequest) {
   const profileRows = (profiles ?? []) as ProfileRow[]
   const subRows = (subs ?? []) as PushSubRow[]
 
+  console.log('Total profiles found:', profileRows.length)
+  profileRows.forEach(p => {
+    console.log('Profile:', p.id, 'sleep:', p.target_sleep_time, 'wake:', p.target_wake_time)
+  })
+  console.log('Subscriptions found:', subRows.length)
+
   if (profileRows.length === 0 || subRows.length === 0) {
     return NextResponse.json({ sent: 0, time: currentTime })
   }
@@ -74,6 +82,19 @@ export async function POST(req: NextRequest) {
   for (const row of subRows) {
     subsByUser.set(row.user_id, row)
   }
+
+  const eveningUsers = profileRows.filter(user => {
+    const sleep = user.target_sleep_time ?? '23:00:00'
+    const [sleepH, sleepM] = sleep.split(':').map(Number)
+    return currentTime === formatTime(sleepH * 60 + sleepM - 10)
+  })
+  const morningUsers = profileRows.filter(user => {
+    const wake = user.target_wake_time ?? '07:00:00'
+    const [wakeH, wakeM] = wake.split(':').map(Number)
+    return currentTime === formatTime(wakeH * 60 + wakeM - 120)
+  })
+  console.log('Users in evening window:', eveningUsers.length)
+  console.log('Users in morning window:', morningUsers.length)
 
   let sent = 0
   const errors: string[] = []
@@ -118,6 +139,7 @@ export async function POST(req: NextRequest) {
 
     try {
       await webpush.sendNotification(sub.subscription, payload)
+      console.log('Push sent to:', user.id)
       sent++
     } catch (err: any) {
       if (err?.statusCode === 410 || err?.statusCode === 404) {
