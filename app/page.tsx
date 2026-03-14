@@ -53,9 +53,9 @@ export default async function LandingPage() {
               margin: '8px auto 0',
             }}
           >
-            No notifications. No reminders.
+            A notification when your window opens.
             <br />
-            Just rhythm.
+            Nothing else.
           </p>
 
           <p style={{ color: '#9f8abb', fontSize: 13, maxWidth: 520, margin: '18px auto 0', lineHeight: 1.6 }}>
@@ -97,6 +97,19 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px 90px', textAlign: 'center' }}>
+        <p style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: '#9f8abb', marginBottom: 24 }}>It finds you at the right moment</p>
+        <p style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(28px,4vw,42px)', lineHeight: 1.3, maxWidth: 600, margin: '0 auto 20px', color: '#f1e9ff' }}>
+          You don't have to remember.<br />
+          Somnia does.
+        </p>
+        <p style={{ color: '#baa7d8', lineHeight: 1.75, maxWidth: 480, margin: '0 auto' }}>
+          Ten minutes before you sleep, your planting window opens.
+          Two hours before you wake, your morning window begins.
+          Two gentle nudges. Nothing else. Ever.
+        </p>
+      </section>
+
       <section style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px 90px', display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 18 }}>
         <div>
           <p style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 10, color: '#9f8abb', marginBottom: 12 }}>The science</p>
@@ -117,9 +130,10 @@ export default async function LandingPage() {
       </section>
 
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px 90px', textAlign: 'center' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 42 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 42 }}>
           <div><p style={{ fontSize: 40 }}>10</p><p style={{ color: '#aa95cd' }}>minutes<br />to plant</p></div>
           <div><p style={{ fontSize: 40 }}>8 hrs</p><p style={{ color: '#aa95cd' }}>every night<br />your brain is working</p></div>
+          <div><p style={{ fontSize: 40 }}>2</p><p style={{ color: '#aa95cd' }}>notifications per day.<br />That&apos;s it.</p></div>
         </div>
       </section>
 
