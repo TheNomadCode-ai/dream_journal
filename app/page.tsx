@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import BlurText from '@/components/ui/BlurText'
-import Iridescence from '@/components/ui/Iridescence'
+import LightPillar from '@/components/ui/LightPillar'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -28,12 +28,25 @@ export default async function LandingPage() {
       }}
     >
       <section style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '64px 24px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.15, zIndex: 0 }}>
-          <Iridescence
-            color={[0.4, 0.2, 0.8]}
-            speed={0.4}
-            amplitude={0.08}
-            mouseReact={true}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          opacity: 0.6
+        }}>
+          <LightPillar
+            topColor="#9b6dff"
+            bottomColor="#3d1a6e"
+            intensity={1.0}
+            rotationSpeed={0.3}
+            glowAmount={0.003}
+            pillarWidth={3}
+            pillarHeight={0.4}
+            noiseIntensity={0.3}
+            pillarRotation={0}
+            interactive={false}
+            mixBlendMode="screen"
+            quality="medium"
           />
         </div>
 
