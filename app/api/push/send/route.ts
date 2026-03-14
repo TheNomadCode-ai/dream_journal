@@ -121,8 +121,12 @@ export async function POST(req: NextRequest) {
       payload = JSON.stringify({
         title: 'Somnia',
         body: 'Your morning window is open. Write before it fades.',
-        url: '/morning',
-        tag: 'morning',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-96.png',
+        vibrate: [200, 100, 200],
+        tag: 'somnia-morning',
+        renotify: true,
+        data: { url: '/morning' },
       })
     }
 
@@ -130,8 +134,12 @@ export async function POST(req: NextRequest) {
       payload = JSON.stringify({
         title: 'Somnia',
         body: 'Your planting window is open. What do you want to dream tonight?',
-        url: '/evening',
-        tag: 'evening',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-96.png',
+        vibrate: [100, 50, 200],
+        tag: 'somnia-evening',
+        renotify: true,
+        data: { url: '/evening' },
       })
     }
 
