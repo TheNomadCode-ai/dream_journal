@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import Iridescence from '@/components/ui/Iridescence'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -25,8 +26,17 @@ export default async function LandingPage() {
         color: '#f1e9ff',
       }}
     >
-      <section style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '64px 24px' }}>
-        <div style={{ maxWidth: 640, textAlign: 'center' }}>
+      <section style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '64px 24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.15, zIndex: 0 }}>
+          <Iridescence
+            color={[0.4, 0.2, 0.8]}
+            speed={0.4}
+            amplitude={0.08}
+            mouseReact={true}
+          />
+        </div>
+
+        <div style={{ maxWidth: 640, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <p style={{ textTransform: 'uppercase', letterSpacing: '0.22em', fontSize: 10, color: '#9f8abb', marginBottom: 18 }}>Somnia</p>
           <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(52px,9vw,86px)', lineHeight: 1.03, marginBottom: 18 }}>
             What if you could choose
