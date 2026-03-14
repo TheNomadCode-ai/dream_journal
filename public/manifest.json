@@ -2,7 +2,7 @@
   "name": "Somnia",
   "short_name": "Somnia",
   "description": "Dream programming practice.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
