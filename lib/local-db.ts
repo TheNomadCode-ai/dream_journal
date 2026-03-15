@@ -118,10 +118,8 @@ export async function getStats() {
   const seeds = await getAllSeeds()
 
   const totalSeeds = seeds.length
-  const dreamedSeeds = seeds.filter((s) => s.wasDreamed === true).length
-  const successRate = totalSeeds > 0 ? Math.round((dreamedSeeds / totalSeeds) * 100) : 0
-  const withMatch = seeds.filter((s) => typeof s.matchPercentage === 'number')
-  const seedMatchRate = withMatch.length > 0
+  const withMatch = seeds.filter((s) => s.matchPercentage !== undefined && s.matchPercentage !== null)
+  const successRate = withMatch.length > 0
     ? Math.round(withMatch.reduce((sum, seed) => sum + (seed.matchPercentage ?? 0), 0) / withMatch.length)
     : 0
 
@@ -140,7 +138,6 @@ export async function getStats() {
     totalDreams: dreams.length,
     totalSeeds,
     successRate,
-    seedMatchRate,
     streak,
   }
 }
