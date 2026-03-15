@@ -1,24 +1,41 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DASHBOARD_NAV_ITEMS } from '@/components/navigation/nav-items'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
-import type { DreamSearchResponse, DreamSearchResult, Tag } from '@/types/dream'
-
-type SearchApiResponse = DreamSearchResponse
-
-const PER_PAGE = 20
+import { getAllDreams, getAllSeeds, type DreamEntry, type SeedEntry } from '@/lib/local-db'
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
+  const parsed = new Date(`${date}T00:00:00`)
+  if (Number.isNaN(parsed.getTime())) return date
+  return parsed.toLocaleDateString('en-US', {
+    month: 'long',
     day: 'numeric',
-    year: 'numeric',
   })
+}
+
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0]
+}
+
+function buildDateRange(startDate: string, endDate: string): string[] {
+  const start = new Date(`${startDate}T00:00:00`)
+  const end = new Date(`${endDate}T00:00:00`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return []
+
+  const values: string[] = []
+  const cursor = new Date(start)
+
+  while (cursor <= end) {
+    values.push(cursor.toISOString().split('T')[0])
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return values
 }
 
 function SkeletonCard() {
@@ -40,25 +57,32 @@ function MetaPill({ children }: { children: React.ReactNode }) {
   return <span className="search-meta-pill">{children}</span>
 }
 
-function RenderSnippet({ snippet }: { snippet: string }) {
-  return (
-    <p
-      className="search-result-snippet"
-      // Search API returns only plain snippets + ts_headline mark tags.
-      dangerouslySetInnerHTML={{ __html: snippet }}
-    />
-  )
+type ArchiveRow = {
+  date: string
+  dream: DreamEntry | null
+  seed: SeedEntry | null
+  hasDream: boolean
+  hasSeed: boolean
+  morningDone: boolean
+  isMissed: boolean
+  matchedSeed: boolean
+  matchedDream: boolean
+  hasAnyMatch: boolean
+}
+
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '').trim()
 }
 
 export default function SearchPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<DreamSearchResult[]>([])
-  const [total, setTotal] = useState(0)
+  const initialQuery = searchParams.get('q') ?? ''
+  const [query, setQuery] = useState(initialQuery)
+  const [rows, setRows] = useState<ArchiveRow[]>([])
   const [loading, setLoading] = useState(false)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const debouncedQuery = useDebounce(query.trim(), 300)
@@ -73,92 +97,79 @@ export default function SearchPage() {
     inputRef.current?.select()
   })
 
-  const canLoadMore = useMemo(() => results.length < total, [results.length, total])
+  const filteredRows = useMemo(() => {
+    if (!debouncedQuery) return rows
+    return rows.filter((row) => row.hasAnyMatch)
+  }, [debouncedQuery, rows])
 
-  const runSearch = useCallback(async (targetQuery: string, page: number) => {
-    if (!targetQuery) {
-      setResults([])
-      setTotal(0)
-      setLoading(false)
-      setLoadingMore(false)
-      setError(null)
-      return
-    }
-
-    const isFirstPage = page === 1
-    if (isFirstPage) {
-      setLoading(true)
-      setError(null)
-    } else {
-      setLoadingMore(true)
-    }
+  const runSearch = useCallback(async (targetQuery: string) => {
+    setLoading(true)
+    setError(null)
 
     try {
-      const params = new URLSearchParams({ q: targetQuery, page: String(page), per_page: String(PER_PAGE) })
-      const response = await fetch(`/api/dreams/search?${params.toString()}`, { cache: 'no-store' })
+      const [dreams, seeds] = await Promise.all([getAllDreams(), getAllSeeds()])
+      const dreamByDate = new Map(dreams.map((dream) => [dream.date, dream]))
+      const seedByDate = new Map(seeds.map((seed) => [seed.date, seed]))
+      const allDates = [...new Set([...dreams.map((dream) => dream.date), ...seeds.map((seed) => seed.date)])].sort()
 
-      if (!response.ok) {
-        throw new Error('Search request failed')
+      if (allDates.length === 0) {
+        setRows([])
+        setError(null)
+        return
       }
 
-      const data = (await response.json()) as SearchApiResponse
+      const range = buildDateRange(allDates[0], getTodayKey())
+      const queryLower = targetQuery.toLowerCase()
 
-      if (isFirstPage) {
-        setResults(data.results)
-      } else {
-        setResults((current) => {
-          const seen = new Set(current.map((item) => item.id))
-          const deduped = data.results.filter((item) => !seen.has(item.id))
-          return [...current, ...deduped]
+      const merged = range
+        .map((date) => {
+          const seed = seedByDate.get(date) ?? null
+          const dream = dreamByDate.get(date) ?? null
+          const dreamText = normalizeText(dream?.content)
+          const seedText = normalizeText(seed?.seedText)
+          const matchedSeed = Boolean(queryLower) && seedText.toLowerCase().includes(queryLower)
+          const matchedDream = Boolean(queryLower) && dreamText.toLowerCase().includes(queryLower)
+
+          const morningDone = Boolean(seed?.morningEntryWritten) || Boolean(dream)
+          const isPast = date < getTodayKey()
+          const isMissed = !morningDone && isPast
+
+          return {
+            date,
+            dream,
+            seed,
+            hasDream: Boolean(dream),
+            hasSeed: Boolean(seed),
+            morningDone,
+            isMissed,
+            matchedSeed,
+            matchedDream,
+            hasAnyMatch: matchedSeed || matchedDream,
+          }
         })
-      }
+        .reverse()
 
-      setTotal(data.total)
+      setRows(merged)
       setError(null)
     } catch {
-      setError('We could not search your dreams right now. Please try again.')
-      if (isFirstPage) {
-        setResults([])
-        setTotal(0)
-      }
+      setError('We could not load your archive right now. Please try again.')
+      setRows([])
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
   }, [])
 
   useEffect(() => {
-    void runSearch(debouncedQuery, 1)
+    void runSearch(debouncedQuery)
   }, [debouncedQuery, runSearch])
 
   function clearSearch() {
     setQuery('')
-    setResults([])
-    setTotal(0)
     setError(null)
     inputRef.current?.focus()
   }
 
-  function handleLoadMore() {
-    if (!debouncedQuery || loadingMore || !canLoadMore) return
-    const page = Math.floor(results.length / PER_PAGE) + 1
-    void runSearch(debouncedQuery, page)
-  }
-
   function renderEmptyState() {
-    if (!debouncedQuery) {
-      return (
-        <section className="search-empty-shell" aria-live="polite">
-          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.32 }}>
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.2-3.2" />
-          </svg>
-          <p className="search-empty-title">Search across all your dreams</p>
-          <p className="search-empty-subtitle">Every word of every entry is indexed.</p>
-        </section>
-      )
-    }
-
     if (loading) {
       return (
         <section aria-label="Loading search results">
@@ -169,11 +180,20 @@ export default function SearchPage() {
       )
     }
 
-    if (results.length === 0 && !error) {
+    if (rows.length === 0 && !error) {
       return (
         <section className="search-empty-shell" aria-live="polite">
-          <p className="search-empty-title">No dreams match that search</p>
-          <p className="search-empty-subtitle">Try a different word, symbol, or feeling.</p>
+          <p className="search-empty-title">No archive entries yet</p>
+          <p className="search-empty-subtitle">Plant a seed tonight or capture a dream tomorrow morning.</p>
+        </section>
+      )
+    }
+
+    if (debouncedQuery && filteredRows.length === 0 && !error) {
+      return (
+        <section className="search-empty-shell" aria-live="polite">
+          <p className="search-empty-title">No entries match that search</p>
+          <p className="search-empty-subtitle">Try a different keyword from your seed or dream text.</p>
         </section>
       )
     }
@@ -218,7 +238,7 @@ export default function SearchPage() {
               aria-label="Search your dreams"
             />
 
-            {loading && debouncedQuery ? (
+            {loading ? (
               <span className="search-spinner" aria-hidden="true" />
             ) : null}
 
@@ -235,60 +255,51 @@ export default function SearchPage() {
 
           {renderEmptyState()}
 
-          {results.length > 0 ? (
+          {filteredRows.length > 0 ? (
             <>
-              {results.map((result) => (
+              {filteredRows.map((row) => (
                 <article
-                  key={result.id}
+                  key={row.date}
                   className="search-result-card"
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push(`/dreams/${result.id}`)}
+                  onClick={() => router.push(`/entry/${row.date}`)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault()
-                      router.push(`/dreams/${result.id}`)
+                      router.push(`/entry/${row.date}`)
                     }
                   }}
+                  style={
+                    !row.hasDream && !row.hasSeed
+                      ? { opacity: 0.58, borderColor: 'rgba(130,110,180,0.35)' }
+                      : undefined
+                  }
                 >
                   <div className="search-result-top">
-                    <h3 className="search-result-title">{result.title || 'Untitled dream'}</h3>
-                    <p className="search-result-date">{formatDate(result.date_of_dream)}</p>
+                    <h3 className="search-result-title">{formatDate(row.date)}</h3>
+                    <p className="search-result-date">
+                      {row.isMissed ? 'Missed' : 'Completed'}
+                    </p>
                   </div>
 
-                  {result.headline ? (
-                    <RenderSnippet snippet={result.headline} />
-                  ) : (
-                    <p className="search-result-snippet">{result.body_text ?? 'No excerpt available.'}</p>
-                  )}
+                  <p className="search-result-snippet" style={{ marginBottom: 6 }}>
+                    <strong>Seed:</strong>{' '}
+                    {row.seed?.seedText ? row.seed.seedText : (!row.hasDream && !row.hasSeed ? '— Missed' : 'No seed recorded')}
+                  </p>
+
+                  <p className="search-result-snippet">
+                    <strong>Dream:</strong>{' '}
+                    {row.dream?.content ? row.dream.content : (!row.hasDream && !row.hasSeed ? '— Missed' : 'No dream recorded')}
+                  </p>
 
                   <div className="search-result-bottom">
-                    {typeof result.mood_score === 'number' ? <MetaPill>Mood {result.mood_score}/5</MetaPill> : null}
-                    {result.lucid ? <MetaPill>Lucid</MetaPill> : null}
-                    {(result.tags as Tag[] | undefined)?.map((tag) => (
-                      <MetaPill key={tag.id}>#{tag.name}</MetaPill>
-                    ))}
+                    {row.matchedSeed ? <MetaPill>Matched seed</MetaPill> : null}
+                    {row.matchedDream ? <MetaPill>Matched dream</MetaPill> : null}
+                    {!debouncedQuery && !row.hasDream && !row.hasSeed ? <MetaPill>Gap day</MetaPill> : null}
                   </div>
                 </article>
               ))}
-
-              {canLoadMore ? (
-                <button
-                  type="button"
-                  className="search-load-more"
-                  disabled={loadingMore}
-                  onClick={handleLoadMore}
-                >
-                  {loadingMore ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                      <span className="search-spinner" aria-hidden="true" />
-                      Loading more dreams...
-                    </span>
-                  ) : (
-                    'Load more dreams'
-                  )}
-                </button>
-              ) : null}
             </>
           ) : null}
         </section>

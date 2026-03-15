@@ -318,7 +318,28 @@ export default function DreamCycleDashboard({
               const appearedText = seed?.wasDreamed === true ? 'Yes' : seed?.wasDreamed === false ? 'No' : 'Unconfirmed'
               return (
                 <article key={dream.id} style={{ background: '#100a22', borderBottom: '1px solid #231840', padding: 14 }}>
-                  <p style={{ color: '#a993cd', fontSize: 12, marginBottom: 8 }}>{dream.date}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                    <p style={{ color: '#a993cd', fontSize: 12 }}>{dream.date}</p>
+                    {seed ? (
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/entry/${dream.date}`)}
+                        style={{
+                          border: '1px solid #4a3a6d',
+                          background: 'transparent',
+                          color: '#d6c7ef',
+                          borderRadius: 999,
+                          padding: '3px 10px',
+                          fontSize: 11,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        View
+                      </button>
+                    ) : null}
+                  </div>
                   <div style={{ height: 1, background: 'rgba(255,255,255,0.09)', marginBottom: 10 }} />
                   {seed ? (
                     <>
@@ -397,9 +418,31 @@ export default function DreamCycleDashboard({
               <div style={{ display: 'grid', gap: 10 }}>
                 {seedHistory.map((seed) => (
                   <article key={seed.id} style={{ border: '1px solid #2a1f45', borderRadius: 12, background: '#100a22', padding: 14 }}>
-                    <p style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: '#8e7cae', marginBottom: 10 }}>
-                      {formatSeedDate(seed.date)}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                      <p style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: '#8e7cae' }}>
+                        {formatSeedDate(seed.date)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSeedHistory(false)
+                          router.push(`/entry/${seed.date}`)
+                        }}
+                        style={{
+                          border: '1px solid #4a3a6d',
+                          background: 'transparent',
+                          color: '#d6c7ef',
+                          borderRadius: 999,
+                          padding: '3px 10px',
+                          fontSize: 11,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        View
+                      </button>
+                    </div>
                     <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'rgba(255,255,255,0.7)', marginBottom: 10 }}>
                       "{seed.seedText}"
                     </p>

@@ -100,6 +100,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/morning') ||
     pathname.startsWith('/evening') ||
+    pathname.startsWith('/entry') ||
     pathname.startsWith('/search') ||
     pathname.startsWith('/settings') ||
     pathname.startsWith('/journal') ||
