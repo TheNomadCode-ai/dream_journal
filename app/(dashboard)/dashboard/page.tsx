@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [seeds, setSeeds] = useState<SeedEntry[]>([])
   const [streak, setStreak] = useState(0)
   const [successRate, setSuccessRate] = useState(0)
+  const [seedMatchRate, setSeedMatchRate] = useState(0)
   const [totalSeeds, setTotalSeeds] = useState(0)
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false)
 
@@ -36,6 +37,7 @@ export default function DashboardPage() {
       setSeeds(seedRows)
       setStreak(stats.streak)
       setSuccessRate(stats.successRate)
+      setSeedMatchRate(stats.seedMatchRate)
       setTotalSeeds(stats.totalSeeds)
     }
 
@@ -71,6 +73,7 @@ export default function DashboardPage() {
         seeds={seeds}
         streak={streak}
         successRate={successRate}
+        seedMatchRate={seedMatchRate}
         totalSeeds={totalSeeds}
         showNotificationReminderBanner={showNotificationReminderBanner}
         isProOrTrial={isProOrTrial}

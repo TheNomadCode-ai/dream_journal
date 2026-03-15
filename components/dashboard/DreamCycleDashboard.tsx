@@ -12,6 +12,7 @@ type Props = {
   seeds: SeedEntry[]
   streak: number
   successRate: number
+  seedMatchRate: number
   totalSeeds: number
   showNotificationReminderBanner: boolean
   isProOrTrial: boolean
@@ -38,6 +39,7 @@ export default function DreamCycleDashboard({
   seeds,
   streak,
   successRate,
+  seedMatchRate,
   totalSeeds,
   showNotificationReminderBanner,
   isProOrTrial,
@@ -296,6 +298,23 @@ export default function DreamCycleDashboard({
             <>
               <p style={{ color: '#c9a84c', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 6 }}>Pro feature</p>
               <p style={{ color: '#bca7de', fontSize: 12, marginTop: 8, marginBottom: 8 }}>Seed metrics unlock on Pro.</p>
+              <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" style={{ color: '#d6c57f', fontSize: 12, textDecoration: 'none' }}>
+                {'Upgrade to Pro ->'}
+              </a>
+            </>
+          )}
+        </article>
+        <article style={{ border: '1px solid #2a1f45', borderRadius: 12, background: '#100a22', padding: 14 }}>
+          <p style={{ textTransform: 'uppercase', fontSize: 11, color: '#9f8abb', letterSpacing: '0.12em' }}>Seed match rate</p>
+          {isProOrTrial ? (
+            <>
+              <p style={{ fontSize: 32, marginTop: 4 }}>{seedMatchRate}%</p>
+              <p style={{ color: '#bca7de', fontSize: 12 }}>average match</p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 32, marginTop: 4, filter: 'blur(3px)', opacity: 0.6 }}>--%</p>
+              <p style={{ color: '#c9a84c', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Pro feature</p>
               <a href="https://sushankhanal.gumroad.com/l/somniavault" target="_blank" rel="noreferrer" style={{ color: '#d6c57f', fontSize: 12, textDecoration: 'none' }}>
                 {'Upgrade to Pro ->'}
               </a>

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import CountdownTimer from '@/components/ui/CountdownTimer'
 import { useApp } from '@/context/AppContext'
 import { dateKeyLocal, formatClock, getMorningWindowState, parseTime } from '@/lib/dream-cycle'
-import { getDreamByDate, getSeedByDate, getStats, saveDream, updateSeed, type SeedEntry } from '@/lib/local-db'
+import { getDreamByDate, getSeedByDate, saveDream, updateSeed, type SeedEntry } from '@/lib/local-db'
 import { createClient } from '@/lib/supabase/client'
 
 const MorningRichEditor = dynamic(() => import('@/components/morning/MorningRichEditor'), {
@@ -22,8 +22,7 @@ const MorningRichEditor = dynamic(() => import('@/components/morning/MorningRich
 
 type SeedRow = SeedEntry
 
-type Stage = 'loading' | 'too-early' | 'passed' | 'time-up' | 'already-captured' | 'write' | 'reveal' | 'saved' | 'result'
-type ResultState = 'yes' | 'no' | null
+type Stage = 'loading' | 'too-early' | 'passed' | 'time-up' | 'already-captured' | 'write' | 'reveal'
 
 function MorningSkeleton() {
   return (
@@ -44,12 +43,11 @@ export default function MorningPage() {
   const { profile: appProfile, user: appUser, loading: appLoading, setProfile: setAppProfile } = useApp()
 
   const [stage, setStage] = useState<Stage>('loading')
-  const [result, setResult] = useState<ResultState>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [wakeTime, setWakeTime] = useState('07:00:00')
   const [timerStarted, setTimerStarted] = useState(false)
   const [yesterdaySeed, setYesterdaySeed] = useState<SeedRow | null>(null)
-  const [successRate, setSuccessRate] = useState(0)
+  const [matchPercentage, setMatchPercentage] = useState(0)
   const [minutesUntilWindow, setMinutesUntilWindow] = useState(0)
   const [bodyText, setBodyText] = useState('')
   const [bodyJson, setBodyJson] = useState<Record<string, unknown> | null>(null)
@@ -116,8 +114,6 @@ export default function MorningPage() {
 
       const wake = profile?.target_wake_time ?? '07:00:00'
       setWakeTime(wake)
-      const stats = await getStats()
-      setSuccessRate(stats.successRate)
 
       const windowState = getMorningWindowState(wake)
       const today = dateKeyLocal(0)
@@ -142,12 +138,18 @@ export default function MorningPage() {
       setYesterdaySeed(seed)
 
       const hasEntryToday = Boolean(todayDreamResult) || Boolean(seed?.morningEntryWritten)
+      const hasMatchValue = typeof seed?.matchPercentage === 'number'
       const nowTotal = windowState.nowMinutes
       const windowStart = windowState.windowStartMinutes
       const windowEnd = windowState.windowEndMinutes
 
       if (hasEntryToday) {
-        setStage('already-captured')
+        if (seed && !hasMatchValue) {
+          setStage('reveal')
+          return
+        }
+
+        router.replace('/dashboard')
         return
       }
 
@@ -177,6 +179,7 @@ export default function MorningPage() {
 
     setShowSeedText(false)
     setShowRevealQuestion(false)
+    setMatchPercentage(0)
 
     const seedTimer = window.setTimeout(() => setShowSeedText(true), 800)
     const questionTimer = window.setTimeout(() => setShowRevealQuestion(true), 1800)
@@ -223,7 +226,7 @@ export default function MorningPage() {
 
     localStorage.setItem('somnia_morning_entry_date', dateKeyLocal(0))
 
-    if (yesterdaySeed) {
+    if (yesterdaySeed && typeof yesterdaySeed.matchPercentage !== 'number') {
       setYesterdaySeed({
         ...yesterdaySeed,
         morningEntryWritten: true,
@@ -235,28 +238,39 @@ export default function MorningPage() {
         setWriteFadingOut(false)
       }, 600)
     } else {
-      setStage('saved')
+      router.replace('/dashboard')
     }
 
     setSaving(false)
   }
 
-  async function confirmSeedAppeared(value: boolean) {
-    if (!yesterdaySeed || confirming) return
+  async function saveMatchAndContinue() {
+    if (!yesterdaySeed || confirming) {
+      router.replace('/dashboard')
+      return
+    }
 
     setConfirming(true)
 
-    await updateSeed(yesterdaySeed.date, {
-      wasDreamed: value,
-      morningEntryWritten: true,
-    })
+    const clamped = Math.max(0, Math.min(100, Math.round(matchPercentage)))
 
-    const stats = await getStats()
-    setSuccessRate(stats.successRate)
-    setYesterdaySeed({ ...yesterdaySeed, wasDreamed: value, morningEntryWritten: true })
-    setResult(value ? 'yes' : 'no')
-    setStage('result')
-    setConfirming(false)
+    try {
+      await updateSeed(yesterdaySeed.date, {
+        wasDreamed: clamped > 0,
+        morningEntryWritten: true,
+        matchPercentage: clamped,
+      })
+
+      setYesterdaySeed({
+        ...yesterdaySeed,
+        wasDreamed: clamped > 0,
+        morningEntryWritten: true,
+        matchPercentage: clamped,
+      })
+      router.replace('/dashboard')
+    } finally {
+      setConfirming(false)
+    }
   }
 
   function onTimeout() {
@@ -322,17 +336,7 @@ export default function MorningPage() {
     )
   }
 
-  if (stage === 'already-captured') {
-    return (
-      <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', display: 'grid', placeItems: 'center', padding: 24 }}>
-        <section style={{ width: 'min(680px, 100%)', textAlign: 'center' }}>
-          <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontStyle: 'italic', fontSize: 46, marginBottom: 12 }}>Dream captured today.</h1>
-          <p style={{ color: '#bca7de', marginBottom: 20 }}>You can review it in your dashboard archive.</p>
-          <Link className="btn-gold" href="/dashboard">Go to Dashboard</Link>
-        </section>
-      </main>
-    )
-  }
+  if (stage === 'already-captured') return null
 
   return (
     <main className="page-enter page-content" style={{ minHeight: '100vh', background: '#06040f', color: '#efe8ff', padding: 22 }}>
@@ -382,20 +386,14 @@ export default function MorningPage() {
           </div>
         ) : null}
 
-        {stage === 'saved' ? (
-          <div style={{ textAlign: 'center', paddingTop: 80 }}>
-            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontSize: 58, marginBottom: 10 }}>Dream captured today.</h1>
-            <p style={{ color: '#c8bbdf', fontStyle: 'italic', marginBottom: 20 }}>
-              Nice work. Keep the morning streak alive.
-            </p>
-            <Link href="/dashboard" className="btn-gold">Go to dashboard</Link>
-          </div>
-        ) : null}
-
         {stage === 'reveal' && yesterdaySeed ? (
           <div style={{ minHeight: 'calc(100vh - 120px)', display: 'grid', placeItems: 'center', textAlign: 'center', opacity: 1, transition: 'opacity 600ms ease' }}>
             <div style={{ width: '100%' }}>
-              <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 18 }}>Last night&apos;s seed</p>
+              <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Step 1</p>
+              <p style={{ color: '#7de8ad', marginBottom: 22 }}>Dream submitted ✓</p>
+
+              <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Step 2</p>
+              <p style={{ color: '#cdbde7', marginBottom: 12 }}>Last night you planted:</p>
               <p
                 style={{
                   fontFamily: "'Cormorant', Georgia, serif",
@@ -412,48 +410,52 @@ export default function MorningPage() {
               </p>
 
               <div style={{ opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>
-                <p style={{ color: '#a99abc', marginBottom: 16 }}>Did this appear in your dream?</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, maxWidth: 520, margin: '0 auto' }}>
-                  <button
-                    className="btn-gold"
-                    style={{ minHeight: 56, justifyContent: 'center' }}
-                    disabled={confirming}
-                    onClick={() => void confirmSeedAppeared(true)}
-                  >
-                    Yes, it appeared
-                  </button>
-                  <button
-                    className="btn-ghost-gold"
-                    style={{ minHeight: 56, border: '1px solid #3a2c61', borderRadius: 10, justifyContent: 'center', padding: '0 12px', color: '#d6caeb' }}
-                    disabled={confirming}
-                    onClick={() => void confirmSeedAppeared(false)}
-                  >
-                    Not that I recall
-                  </button>
+                <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Step 3</p>
+                <p style={{ color: '#a99abc', marginBottom: 14 }}>How much did it match your dream?</p>
+
+                <div style={{ maxWidth: 560, margin: '0 auto 10px' }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={matchPercentage}
+                    onChange={(event) => setMatchPercentage(Number(event.target.value))}
+                    style={{ width: '100%' }}
+                    aria-label="Seed to dream match percentage"
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b6a6d0', fontSize: 12, marginTop: 6 }}>
+                    <span>0%</span>
+                    <span>100%</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 12, color: '#9f8abb', fontSize: 11 }}>
+                    <span>Not at all</span>
+                    <span>Faint traces</span>
+                    <span>Somewhat</span>
+                    <span>Strongly</span>
+                    <span>Completely</span>
+                  </div>
                 </div>
+
+                <button
+                  className="btn-gold"
+                  style={{ minHeight: 56, justifyContent: 'center' }}
+                  disabled={confirming}
+                  onClick={() => void saveMatchAndContinue()}
+                >
+                  {confirming ? 'Saving...' : 'Save & continue'}
+                </button>
+
+                <p style={{ color: '#c9a84c', marginTop: 8 }}>{matchPercentage}%</p>
               </div>
             </div>
           </div>
         ) : null}
 
-        {stage === 'result' && result === 'yes' ? (
+        {stage === 'reveal' && !yesterdaySeed ? (
           <div style={{ textAlign: 'center', paddingTop: 80 }}>
-            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontSize: 58, marginBottom: 10 }}>It worked.</h1>
-            <p style={{ color: '#c8bbdf', fontStyle: 'italic', marginBottom: 12 }}>
-              Your subconscious processed the intention you planted.
-            </p>
-            <p style={{ color: 'rgba(200,160,80,0.90)', marginBottom: 20 }}>Your success rate: {successRate}%</p>
-            <Link href="/dashboard" className="btn-gold">Go to dashboard</Link>
-          </div>
-        ) : null}
-
-        {stage === 'result' && result === 'no' ? (
-          <div style={{ textAlign: 'center', paddingTop: 80 }}>
-            <h1 style={{ fontFamily: "'Cormorant', Georgia, serif", fontSize: 58, marginBottom: 10 }}>Not this time.</h1>
-            <p style={{ color: '#c8bbdf', fontStyle: 'italic', marginBottom: 12 }}>
-              Dream incubation takes practice. Most people see results within 7 to 14 nights of consistent planting. Keep going.
-            </p>
-            <p style={{ color: '#a99abc', marginBottom: 20 }}>Your seed is saved in your archive.</p>
+            <p style={{ color: '#bca7de', marginBottom: 20 }}>No seed was planted last night.</p>
             <Link href="/dashboard" className="btn-gold">Go to dashboard</Link>
           </div>
         ) : null}

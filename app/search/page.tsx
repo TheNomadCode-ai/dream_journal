@@ -294,6 +294,14 @@ export default function SearchPage() {
                   </p>
 
                   <div className="search-result-bottom">
+                    {typeof row.seed?.matchPercentage === 'number' ? (
+                      <span
+                        className="search-meta-pill"
+                        style={{ color: '#1d1200', background: 'rgba(201,168,76,0.95)', borderColor: 'rgba(201,168,76,0.95)' }}
+                      >
+                        {row.seed.matchPercentage}% match
+                      </span>
+                    ) : null}
                     {row.matchedSeed ? <MetaPill>Matched seed</MetaPill> : null}
                     {row.matchedDream ? <MetaPill>Matched dream</MetaPill> : null}
                     {!debouncedQuery && !row.hasDream && !row.hasSeed ? <MetaPill>Gap day</MetaPill> : null}

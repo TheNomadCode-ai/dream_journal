@@ -125,6 +125,23 @@ export default function EntryPage() {
               <p style={{ color: '#efe8ff' }}>
                 {status === 'dreamed' ? 'Dreamed it' : status === 'missed' ? "Didn't dream it" : 'Awaiting confirmation'}
               </p>
+
+              {typeof seed?.matchPercentage === 'number' ? (
+                <div style={{ marginTop: 14 }}>
+                  <p style={{ color: '#d6c57f', marginBottom: 8 }}>
+                    You rated this dream a {seed.matchPercentage}% match to your seed
+                  </p>
+                  <div style={{ height: 10, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${seed.matchPercentage}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, rgba(201,168,76,0.55), rgba(201,168,76,0.95))',
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </section>
           </>
         )}

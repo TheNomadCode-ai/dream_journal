@@ -13,6 +13,7 @@ export interface SeedEntry {
   date: string // YYYY-MM-DD
   seedText: string
   wasDreamed: boolean | null
+  matchPercentage?: number
   morningEntryWritten: boolean
   createdAt: number
 }
@@ -119,6 +120,10 @@ export async function getStats() {
   const totalSeeds = seeds.length
   const dreamedSeeds = seeds.filter((s) => s.wasDreamed === true).length
   const successRate = totalSeeds > 0 ? Math.round((dreamedSeeds / totalSeeds) * 100) : 0
+  const withMatch = seeds.filter((s) => typeof s.matchPercentage === 'number')
+  const seedMatchRate = withMatch.length > 0
+    ? Math.round(withMatch.reduce((sum, seed) => sum + (seed.matchPercentage ?? 0), 0) / withMatch.length)
+    : 0
 
   let streak = 0
   const today = new Date()
@@ -135,6 +140,7 @@ export async function getStats() {
     totalDreams: dreams.length,
     totalSeeds,
     successRate,
+    seedMatchRate,
     streak,
   }
 }
