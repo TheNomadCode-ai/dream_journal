@@ -8,6 +8,37 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isOnboardingPath = pathname === '/onboarding'
 
+  if (pathname === '/') {
+    const rootResponse = NextResponse.next({
+      request: { headers: request.headers },
+    })
+
+    const rootSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet: any[]) {
+            cookiesToSet.forEach(({ name, value, options }: any) => rootResponse.cookies.set(name, value, options))
+          },
+        },
+      }
+    )
+
+    const {
+      data: { user },
+    } = await rootSupabase.auth.getUser()
+
+    if (user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    return rootResponse
+  }
+
   if (
     PUBLIC.includes(pathname) ||
     pathname.startsWith('/blog') ||

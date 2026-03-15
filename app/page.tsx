@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import BlurText from '@/components/ui/BlurText'
 import LightPillar from '@/components/ui/LightPillar'
@@ -15,6 +16,10 @@ export default async function LandingPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect('/dashboard')
+  }
 
   return (
     <main
