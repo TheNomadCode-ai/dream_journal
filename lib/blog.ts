@@ -7,6 +7,7 @@ export type BlogFrontmatter = {
   title: string
   date: string
   excerpt: string
+  metaDescription?: string
   slug: string
   readingTime: string
   tags: string[]
@@ -30,6 +31,7 @@ function assertFrontmatter(value: Partial<BlogFrontmatter>, source: string): Blo
     title: value.title,
     date: value.date,
     excerpt: value.excerpt,
+    metaDescription: value.metaDescription,
     slug: value.slug,
     readingTime: value.readingTime,
     tags: value.tags,

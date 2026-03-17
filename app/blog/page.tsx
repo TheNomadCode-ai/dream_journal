@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { getAllBlogPostsMeta, formatBlogDate } from '@/lib/blog'
 
 export const metadata: Metadata = {
-  title: 'The Somnia Journal — Sleep Science & Dream Journaling',
+  title: 'The Somnia Journal — Dream Incubation & Sleep Science',
   description:
-    'Articles about dream journaling, sleep science, lucid dreaming, and the neuroscience of why we forget our dreams.',
+    'Articles about dream incubation, dream programming, sleep science, and the neuroscience of dreaming.',
   alternates: {
     canonical: 'https://somniavault.me/blog',
   },
@@ -22,7 +22,7 @@ export default async function BlogIndexPage() {
           <p className="blog-kicker">Journal</p>
           <h1 className="blog-index-title">The Somnia Journal</h1>
           <p className="blog-index-subtitle">
-            Sleep science, dream journaling, and the art of remembering
+            Dream programming, sleep science, and the practice of dream incubation
           </p>
         </header>
 

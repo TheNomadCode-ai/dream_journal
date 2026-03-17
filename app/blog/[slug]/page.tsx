@@ -40,13 +40,13 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   return {
     title: `${post.frontmatter.title} | The Somnia Journal`,
-    description: post.frontmatter.excerpt,
+    description: post.frontmatter.metaDescription ?? post.frontmatter.excerpt,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
       title: post.frontmatter.title,
-      description: post.frontmatter.excerpt,
+      description: post.frontmatter.metaDescription ?? post.frontmatter.excerpt,
       url: canonicalUrl,
       type: 'article',
     },
@@ -67,15 +67,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.frontmatter.title,
-    description: post.frontmatter.excerpt,
-    author: {
-      '@type': 'Organization',
-      name: 'Somnia Team',
-    },
     datePublished: post.frontmatter.date,
-    dateModified: post.frontmatter.date,
-    mainEntityOfPage: canonicalUrl,
-    url: canonicalUrl,
+    author: {
+      '@type': 'Person',
+      name: 'Sushan Khanal',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Somnia',
+    },
   }
 
   return (
