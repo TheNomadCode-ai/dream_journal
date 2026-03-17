@@ -387,68 +387,91 @@ export default function MorningPage() {
         ) : null}
 
         {stage === 'reveal' && yesterdaySeed ? (
-          <div style={{ minHeight: 'calc(100vh - 120px)', display: 'grid', placeItems: 'center', textAlign: 'center', opacity: 1, transition: 'opacity 600ms ease' }}>
-            <div style={{ width: '100%' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', overflowY: 'auto', textAlign: 'center', padding: '20px 16px' }}>
+            <div style={{ flex: '0 0 auto', paddingBottom: 20 }}>
               <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Step 1</p>
               <p style={{ color: '#7de8ad', marginBottom: 22 }}>Dream submitted ✓</p>
 
               <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Step 2</p>
               <p style={{ color: '#cdbde7', marginBottom: 12 }}>Last night you planted:</p>
-              <p
+            </div>
+
+            <div
+              style={{
+                flex: '1 1 auto',
+                minHeight: 0,
+                display: 'flex',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                marginBottom: 20,
+              }}
+            >
+              <div
                 style={{
-                  fontFamily: "'Cormorant', Georgia, serif",
-                  fontStyle: 'italic',
-                  fontSize: 44,
-                  color: 'rgba(200,160,80,0.90)',
-                  maxWidth: 320,
-                  margin: '0 auto 18px',
-                  opacity: showSeedText ? 1 : 0,
-                  transition: 'opacity 600ms ease',
+                  border: '1px solid rgba(201,168,76,0.35)',
+                  borderRadius: 12,
+                  padding: 16,
+                  maxWidth: 400,
+                  overflowY: 'auto',
+                  maxHeight: 150,
+                  background: 'rgba(15,10,29,0.5)',
                 }}
               >
-                &quot;{yesterdaySeed.seedText}&quot;
-              </p>
+                <p
+                  style={{
+                    fontFamily: "'Cormorant', Georgia, serif",
+                    fontStyle: 'italic',
+                    fontSize: 'clamp(16px, 5vw, 24px)',
+                    color: 'rgba(200,160,80,0.90)',
+                    margin: 0,
+                    opacity: showSeedText ? 1 : 0,
+                    transition: 'opacity 600ms ease',
+                  }}
+                >
+                  &quot;{yesterdaySeed.seedText}&quot;
+                </p>
+              </div>
+            </div>
 
-              <div style={{ opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>
-                <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8 }}>Step 3</p>
-                <p style={{ color: '#a99abc', marginBottom: 14 }}>How much did it match your dream?</p>
+            <div style={{ flex: '0 0 auto', minHeight: 0, pointerEvents: showRevealQuestion ? 'auto' : 'none' }}>
+              <p style={{ textTransform: 'uppercase', letterSpacing: '0.14em', color: '#aa95cd', fontSize: 11, marginBottom: 8, opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>Step 3</p>
+              <p style={{ color: '#a99abc', marginBottom: 14, opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>How much did it match your dream?</p>
 
-                <div style={{ maxWidth: 560, margin: '0 auto 10px' }}>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={matchPercentage}
-                    onChange={(event) => setMatchPercentage(Number(event.target.value))}
-                    style={{ width: '100%' }}
-                    aria-label="Seed to dream match percentage"
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b6a6d0', fontSize: 12, marginTop: 6 }}>
-                    <span>0%</span>
-                    <span>100%</span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 12, color: '#9f8abb', fontSize: 11 }}>
-                    <span>Not at all</span>
-                    <span>Faint traces</span>
-                    <span>Somewhat</span>
-                    <span>Strongly</span>
-                    <span>Completely</span>
-                  </div>
+              <div style={{ maxWidth: 560, margin: '0 auto 10px', opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={matchPercentage}
+                  onChange={(event) => setMatchPercentage(Number(event.target.value))}
+                  style={{ width: '100%' }}
+                  aria-label="Seed to dream match percentage"
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b6a6d0', fontSize: 12, marginTop: 6 }}>
+                  <span>0%</span>
+                  <span>100%</span>
                 </div>
 
-                <button
-                  className="btn-gold"
-                  style={{ minHeight: 56, justifyContent: 'center' }}
-                  disabled={confirming}
-                  onClick={() => void saveMatchAndContinue()}
-                >
-                  {confirming ? 'Saving...' : 'Save & continue'}
-                </button>
-
-                <p style={{ color: '#c9a84c', marginTop: 8 }}>{matchPercentage}%</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 8, marginTop: 12, color: '#9f8abb', fontSize: 11 }}>
+                  <span>Not at all</span>
+                  <span>Faint traces</span>
+                  <span>Somewhat</span>
+                  <span>Strongly</span>
+                  <span>Completely</span>
+                </div>
               </div>
+
+              <button
+                className="btn-gold"
+                style={{ minHeight: 56, justifyContent: 'center', opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}
+                disabled={confirming || !showRevealQuestion}
+                onClick={() => void saveMatchAndContinue()}
+              >
+                {confirming ? 'Saving...' : 'Save & continue'}
+              </button>
+
+              <p style={{ color: '#c9a84c', marginTop: 8, opacity: showRevealQuestion ? 1 : 0, transition: 'opacity 600ms ease' }}>{matchPercentage}%</p>
             </div>
           </div>
         ) : null}

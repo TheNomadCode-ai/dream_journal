@@ -56,7 +56,12 @@ export async function getDreamByDate(date: string): Promise<DreamEntry | null> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('dreams', 'readonly')
     const req = tx.objectStore('dreams').index('date').get(date)
-    req.onsuccess = () => resolve(req.result || null)
+    req.onsuccess = () => {
+      const dream = req.result || null
+      console.log('Looking for date:', date)
+      console.log('Dream found:', dream)
+      resolve(dream)
+    }
     req.onerror = () => reject(req.error)
   })
 }
