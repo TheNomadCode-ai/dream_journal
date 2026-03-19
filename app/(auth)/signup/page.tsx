@@ -35,6 +35,20 @@ export default function SignupPage() {
     return () => clearInterval(interval)
   }, [loading])
 
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        window.location.href = '/dashboard'
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
+
   function validatePassword(pw: string): string | null {
     if (pw.length < 8 || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
       return 'Password must be at least 8 characters and include an uppercase letter, a number, and a symbol.'

@@ -43,6 +43,20 @@ function LoginContent() {
     return () => clearInterval(interval)
   }, [loading])
 
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        window.location.href = '/dashboard'
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
+
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
